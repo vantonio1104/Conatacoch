@@ -34,4 +34,15 @@ class RutValidatorTest {
     }
 
     @Test fun cuerpoDemasiadoLargoInvalido() = assertFalse(RutValidator.isValid("123456789-2"))
+
+    @Test fun espaciosAlrededorSeIgnoran() = assertTrue(RutValidator.isValid(" 12.345.678-5 "))
+
+    @Test fun cuerpoMuyCortoInvalido() {
+        assertFalse(RutValidator.isValid("1-9"))
+        assertFalse(RutValidator.isValid("123.456-0"))
+    }
+
+    @Test fun guionFueraDeLugarInvalido() = assertFalse(RutValidator.isValid("12-345.678-5"))
+
+    @Test fun rutDeEjemploDeFigmaValido() = assertTrue(RutValidator.isValid("15.234.567-4"))
 }

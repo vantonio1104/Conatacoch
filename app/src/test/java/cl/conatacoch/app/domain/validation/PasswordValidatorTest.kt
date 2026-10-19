@@ -13,4 +13,6 @@ class PasswordValidatorTest {
     @Test fun masDeQuinceValida() = assertTrue(PasswordValidator.isValid("una frase larga y segura"))
 
     @Test fun vaciaInvalida() = assertFalse(PasswordValidator.isValid(""))
+
+    @Test fun emojisCuentanComoUnCaracter() = assertFalse(PasswordValidator.isValid("🚕".repeat(14)))
 }
