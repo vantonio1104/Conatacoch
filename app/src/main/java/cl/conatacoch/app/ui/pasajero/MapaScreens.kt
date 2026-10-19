@@ -79,9 +79,10 @@ fun textoAsientos(c: Colectivo): String = when (c.estado) {
 }
 
 @Composable
-fun MapaScreen(vm: PasajeroViewModel, onColectivo: (String) -> Unit, modifier: Modifier = Modifier) {
+fun MapaScreen(vm: PasajeroViewModel, onColectivo: (String) -> Unit, onVerReserva: () -> Unit, modifier: Modifier = Modifier) {
     val colectivos by vm.colectivos.collectAsState()
     val recorrido by vm.recorrido.collectAsState()
+    val reserva by vm.reserva.collectAsState()
 
     Column(modifier.fillMaxSize()) {
         Box(Modifier.weight(1f).fillMaxWidth().background(Extra.neutroFondo)) {
@@ -111,8 +112,27 @@ fun MapaScreen(vm: PasajeroViewModel, onColectivo: (String) -> Unit, modifier: M
                         .background(MaterialTheme.colorScheme.outline)
                 )
                 Text("Cerca de tu paradero", style = MaterialTheme.typography.titleLarge)
+                reserva?.let { TarjetaReservaActiva(it, onVerReserva) }
                 colectivos.forEach { c -> TarjetaColectivo(c) { onColectivo(c.patente) } }
             }
+        }
+    }
+}
+
+/** Reserva activa del pasajero; se muestra en el mapa y en Historial > Reservas. */
+@Composable
+fun TarjetaReservaActiva(r: Reserva, onVer: () -> Unit) {
+    val cs = MaterialTheme.colorScheme
+    Tarjeta(borde = cs.secondary, grosor = 2.dp, onClick = onVer) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            CirculoIcono(Icons.Filled.Check, cs.primaryContainer, Extra.verdeTexto)
+            Spacer(Modifier.width(16.dp))
+            Column(Modifier.weight(1f)) {
+                Etiqueta("RESERVA ACTIVA", cs.primaryContainer, cs.onPrimaryContainer)
+                Text("${r.colectivo.patente} · ${r.colectivo.recorrido}", style = MaterialTheme.typography.titleMedium)
+                Text("Llega en ${r.colectivo.minutosLlegada} min", color = cs.onSurfaceVariant)
+            }
+            Text("Ver", color = Extra.verdeTexto, style = MaterialTheme.typography.titleMedium)
         }
     }
 }
@@ -183,8 +203,9 @@ private fun TarjetaColectivo(c: Colectivo, onClick: () -> Unit) {
 }
 
 @Composable
-fun DetalleColectivoScreen(vm: PasajeroViewModel, patente: String, onAtras: () -> Unit, onReservado: () -> Unit) {
+fun DetalleColectivoScreen(vm: PasajeroViewModel, patente: String, onAtras: () -> Unit, onVerReserva: () -> Unit) {
     val c = vm.colectivo(patente)
+    val reserva by vm.reserva.collectAsState()
     LaunchedEffect(c) { if (c == null) onAtras() }
     if (c == null) return
 
@@ -192,10 +213,16 @@ fun DetalleColectivoScreen(vm: PasajeroViewModel, patente: String, onAtras: () -
         containerColor = MaterialTheme.colorScheme.surfaceContainer,
         bottomBar = {
             Box(Modifier.background(MaterialTheme.colorScheme.background).padding(16.dp)) {
-                BotonPrincipal(
-                    "Reservar asiento", { vm.reservar(c.patente, onReservado) },
-                    enabled = c.estado == EstadoOcupacion.CON_ASIENTOS,
-                )
+                val actual = reserva
+                when {
+                    // Solo una reserva activa a la vez.
+                    actual == null -> BotonPrincipal(
+                        "Reservar asiento", { vm.reservar(c.patente, onVerReserva) },
+                        enabled = c.estado == EstadoOcupacion.CON_ASIENTOS,
+                    )
+                    actual.colectivo.patente == c.patente -> BotonPrincipal("Ver mi reserva", onVerReserva)
+                    else -> BotonPrincipal("Ya tienes una reserva activa", {}, enabled = false)
+                }
             }
         },
     ) { padding ->

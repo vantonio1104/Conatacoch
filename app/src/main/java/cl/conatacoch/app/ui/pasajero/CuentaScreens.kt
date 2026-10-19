@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -20,7 +21,10 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DirectionsCar
 import androidx.compose.material.icons.outlined.DarkMode
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.PrimaryTabRow
+import androidx.compose.material3.Tab
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
@@ -30,12 +34,18 @@ import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import cl.conatacoch.app.domain.model.EstadoReserva
 import cl.conatacoch.app.domain.model.Preferencias
+import cl.conatacoch.app.ui.components.BotonSecundario
+import cl.conatacoch.app.ui.components.Etiqueta
 import cl.conatacoch.app.ui.components.CirculoIcono
 import cl.conatacoch.app.ui.components.CuerpoLista
 import cl.conatacoch.app.ui.components.Encabezado
@@ -46,24 +56,81 @@ import cl.conatacoch.app.ui.components.Tarjeta
 import cl.conatacoch.app.ui.components.pesos
 import cl.conatacoch.app.ui.theme.Extra
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HistorialScreen(vm: PasajeroViewModel, modifier: Modifier = Modifier) {
-    val pagos by vm.historial.collectAsState()
+fun HistorialScreen(vm: PasajeroViewModel, onVerReserva: () -> Unit, modifier: Modifier = Modifier) {
+    var pestana by rememberSaveable { mutableIntStateOf(0) }
     Column(modifier.fillMaxSize()) {
-        Encabezado("Historial de pagos", "Pagos realizados con Rutpay")
-        CuerpoLista {
-            LazyColumn(contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                items(pagos, key = { it.operacion }) { p ->
+        if (pestana == 0) {
+            Encabezado("Historial de pagos", "Pagos realizados con Rutpay")
+        } else {
+            Encabezado("Mis reservas", "Activas e historial de reservas")
+        }
+        PrimaryTabRow(selectedTabIndex = pestana, containerColor = MaterialTheme.colorScheme.surfaceContainer) {
+            listOf("Pagos", "Reservas").forEachIndexed { i, titulo ->
+                Tab(
+                    selected = pestana == i,
+                    onClick = { pestana = i },
+                    text = { Text(titulo, style = MaterialTheme.typography.titleSmall) },
+                    selectedContentColor = Extra.verdeTexto,
+                    unselectedContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        }
+        if (pestana == 0) ListaPagos(vm) else ListaReservas(vm, onVerReserva)
+    }
+}
+
+@Composable
+private fun ListaReservas(vm: PasajeroViewModel, onVerReserva: () -> Unit) {
+    val reservas by vm.reservas.collectAsState()
+    val cs = MaterialTheme.colorScheme
+    CuerpoLista {
+        LazyColumn(contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            if (reservas.none { it.estado == EstadoReserva.ACTIVA }) {
+                item { Text("No tienes reservas activas.", color = cs.onSurfaceVariant) }
+            }
+            items(reservas) { r ->
+                if (r.estado == EstadoReserva.ACTIVA) {
+                    TarjetaReservaActiva(r, onVerReserva)
+                } else {
+                    val (texto, fondo, color) = when (r.estado) {
+                        EstadoReserva.COMPLETADA -> Triple("COMPLETADA", cs.primaryContainer, cs.onPrimaryContainer)
+                        EstadoReserva.EXPIRADA -> Triple("EXPIRADA", Extra.avisoFondo, Extra.avisoTexto)
+                        else -> Triple("CANCELADA", Extra.neutroFondo, cs.onSurfaceVariant)
+                    }
                     Tarjeta {
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            CirculoIcono(Icons.Filled.DirectionsCar, MaterialTheme.colorScheme.primaryContainer, Extra.verdeTexto)
+                            CirculoIcono(Icons.Filled.DirectionsCar, cs.primaryContainer, Extra.verdeTexto)
                             Spacer(Modifier.width(16.dp))
                             Column(Modifier.weight(1f)) {
-                                Text(p.patente, style = MaterialTheme.typography.titleMedium)
-                                Text(p.fecha.format(FormatoFechaHora), color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                Text("${r.colectivo.patente} · ${r.colectivo.recorrido}", style = MaterialTheme.typography.titleMedium)
+                                Text(r.fecha.format(FormatoFechaHora), color = cs.onSurfaceVariant)
                             }
-                            Text(pesos(p.monto), style = MaterialTheme.typography.titleLarge)
+                            Etiqueta(texto, fondo, color)
                         }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ListaPagos(vm: PasajeroViewModel) {
+    val pagos by vm.historial.collectAsState()
+    CuerpoLista {
+        LazyColumn(contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            items(pagos, key = { it.operacion }) { p ->
+                Tarjeta {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        CirculoIcono(Icons.Filled.DirectionsCar, MaterialTheme.colorScheme.primaryContainer, Extra.verdeTexto)
+                        Spacer(Modifier.width(16.dp))
+                        Column(Modifier.weight(1f)) {
+                            Text(p.patente, style = MaterialTheme.typography.titleMedium)
+                            Text(p.fecha.format(FormatoFechaHora), color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                        Text(pesos(p.monto), style = MaterialTheme.typography.titleLarge)
                     }
                 }
             }
@@ -92,7 +159,7 @@ fun NotificacionesPasajeroScreen(vm: PasajeroViewModel, modifier: Modifier = Mod
 }
 
 @Composable
-fun PreferenciasScreen(vm: PasajeroViewModel, nombre: String, modifier: Modifier = Modifier) {
+fun PreferenciasScreen(vm: PasajeroViewModel, nombre: String, onCerrarSesion: () -> Unit, modifier: Modifier = Modifier) {
     val p by vm.preferencias.collectAsState()
     val oscuro = p.modoOscuro ?: isSystemInDarkTheme()
     val cambiar = vm::actualizarPreferencias
@@ -146,6 +213,11 @@ fun PreferenciasScreen(vm: PasajeroViewModel, nombre: String, modifier: Modifier
                 Divisor()
                 FilaSwitch("Ubicación del colectivo no disponible", p.sinUbicacion) { v -> cambiar { it.copy(sinUbicacion = v) } }
             }
+            Spacer(Modifier.height(24.dp))
+            BotonSecundario(
+                "Cerrar sesión", onCerrarSesion,
+                color = MaterialTheme.colorScheme.error, borde = MaterialTheme.colorScheme.error,
+            )
         }
     }
 }

@@ -33,6 +33,7 @@ class PasajeroViewModel(
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
     val reserva = repo.reservaActiva
+    val reservas = repo.reservas.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
     val historial = repo.historial.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
     val notificaciones = repo.notificaciones.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
     val preferencias: StateFlow<Preferencias> = prefs.preferencias

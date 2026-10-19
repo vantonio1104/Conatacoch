@@ -34,6 +34,8 @@ interface PasajeroRepository {
     fun colectivosCercanos(recorrido: String): Flow<List<Colectivo>>
     suspend fun colectivo(patente: String): Colectivo?
     val reservaActiva: StateFlow<Reserva?>
+    /** La activa (si hay) primero y luego el historial, del más reciente al más antiguo. */
+    val reservas: Flow<List<Reserva>>
     suspend fun reservar(patente: String)
     suspend fun cancelarReserva()
     /** Datos que trae el QR del vehículo más la tarifa del recorrido. */

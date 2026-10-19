@@ -20,8 +20,14 @@ data class Colectivo(
         }
 }
 
+enum class EstadoReserva { ACTIVA, COMPLETADA, EXPIRADA, CANCELADA }
+
 /** La reserva vence 3 minutos después de que el colectivo llega al paradero. */
-data class Reserva(val colectivo: Colectivo) {
+data class Reserva(
+    val colectivo: Colectivo,
+    val fecha: LocalDateTime,
+    val estado: EstadoReserva = EstadoReserva.ACTIVA,
+) {
     companion object { const val MINUTOS_PARA_ABORDAR = 3 }
 }
 

@@ -2,6 +2,7 @@ package cl.conatacoch.app.data.fake
 
 import cl.conatacoch.app.domain.model.Colectivo
 import cl.conatacoch.app.domain.model.DatosPago
+import cl.conatacoch.app.domain.model.EstadoReserva
 import cl.conatacoch.app.domain.model.Notificacion
 import cl.conatacoch.app.domain.model.Pago
 import cl.conatacoch.app.domain.model.Reserva
@@ -10,6 +11,7 @@ import cl.conatacoch.app.domain.repository.PasajeroRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.update
 import java.time.LocalDateTime
@@ -36,13 +38,29 @@ class FakePasajeroRepository : PasajeroRepository {
     private val _reserva = MutableStateFlow<Reserva?>(null)
     override val reservaActiva: StateFlow<Reserva?> = _reserva
 
+    private val _historialReservas = MutableStateFlow(
+        listOf(
+            reservaPasada("GHJK-34", "Recorrido 1", "2026-10-14T19:32", EstadoReserva.COMPLETADA),
+            reservaPasada("ABCD-12", "Recorrido 1", "2026-10-14T07:50", EstadoReserva.COMPLETADA),
+            reservaPasada("LMNP-56", "Recorrido 2", "2026-10-13T18:15", EstadoReserva.EXPIRADA),
+            reservaPasada("BCDF-21", "Recorrido 2", "2026-10-12T13:02", EstadoReserva.CANCELADA),
+        )
+    )
+    override val reservas: Flow<List<Reserva>> =
+        combine(_reserva, _historialReservas) { activa, pasadas -> listOfNotNull(activa) + pasadas }
+
     override suspend fun reservar(patente: String) {
-        _reserva.value = colectivo(patente)?.let { Reserva(it) }
+        _reserva.value = colectivo(patente)?.let { Reserva(it, LocalDateTime.now()) }
     }
 
     override suspend fun cancelarReserva() {
+        val actual = _reserva.value ?: return
+        _historialReservas.update { listOf(actual.copy(estado = EstadoReserva.CANCELADA)) + it }
         _reserva.value = null
     }
+
+    private fun reservaPasada(patente: String, recorrido: String, fecha: String, estado: EstadoReserva) =
+        Reserva(Colectivo(patente, recorrido, asientosDisponibles = null, minutosLlegada = 0), LocalDateTime.parse(fecha), estado)
 
     override suspend fun datosPago(patente: String): DatosPago {
         val recorrido = colectivo(patente)?.recorrido ?: "Recorrido 1"

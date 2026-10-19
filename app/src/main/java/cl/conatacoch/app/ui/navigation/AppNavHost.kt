@@ -156,26 +156,30 @@ fun AppNavHost() {
             CodigoVerificacionScreen(pasajeroAuth, onAtras = { nav.popBackStack() }, onVerificado = { irAInicio(Rutas.P_MAPA) })
         }
         composable(Rutas.P_MAPA) {
-            ConBarra(nav, PestanasPasajero, Rutas.P_MAPA) { MapaScreen(pasajero, { nav.navigate(Rutas.detalle(it)) }, it) }
+            ConBarra(nav, PestanasPasajero, Rutas.P_MAPA) {
+                MapaScreen(pasajero, { p -> nav.navigate(Rutas.detalle(p)) }, { nav.navigate(Rutas.P_RESERVA) }, it)
+            }
         }
         composable(Rutas.P_PAGAR) {
             ConBarra(nav, PestanasPasajero, Rutas.P_PAGAR) { PagarScreen(pasajero, ::resultadoPago, it) }
         }
         composable(Rutas.P_HISTORIAL) {
-            ConBarra(nav, PestanasPasajero, Rutas.P_HISTORIAL) { HistorialScreen(pasajero, it) }
+            ConBarra(nav, PestanasPasajero, Rutas.P_HISTORIAL) { HistorialScreen(pasajero, { nav.navigate(Rutas.P_RESERVA) }, it) }
         }
         composable(Rutas.P_AVISOS) {
             ConBarra(nav, PestanasPasajero, Rutas.P_AVISOS) { NotificacionesPasajeroScreen(pasajero, it) }
         }
         composable(Rutas.P_PERFIL) {
-            ConBarra(nav, PestanasPasajero, Rutas.P_PERFIL) { PreferenciasScreen(pasajero, pasajeroAuth.nombre, it) }
+            ConBarra(nav, PestanasPasajero, Rutas.P_PERFIL) {
+                PreferenciasScreen(pasajero, pasajeroAuth.nombre, onCerrarSesion = { irAInicio(Rutas.PERFIL) }, it)
+            }
         }
         composable(Rutas.P_DETALLE) { entrada ->
             DetalleColectivoScreen(
                 pasajero,
                 patente = entrada.arguments?.getString("patente").orEmpty(),
                 onAtras = { nav.popBackStack() },
-                onReservado = { nav.navigate(Rutas.P_RESERVA) { popUpTo(Rutas.P_MAPA) } },
+                onVerReserva = { nav.navigate(Rutas.P_RESERVA) { popUpTo(Rutas.P_MAPA) } },
             )
         }
         composable(Rutas.P_RESERVA) {

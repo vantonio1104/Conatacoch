@@ -85,4 +85,7 @@ El build necesita acceso a `dl.google.com` / `maven.google.com` (Android SDK, AG
 - Código de verificación: cualquier código de 6 dígitos.
 - Pago: el primer intento se rechaza y el siguiente se aprueba (para ver ambas pantallas).
 - Escanear QR simula leer el vehículo `ABCD-12`.
+- Reservas: solo una activa a la vez. Aparece en el mapa ("Cerca de tu paradero") y en Historial > Reservas,
+  junto al historial (completadas, expiradas, canceladas).
+- Cerrar sesión (al final de Perfil) vuelve al selector de perfil.
 - Estado "Detenido / En movimiento" del conductor: se cambia tocando el chip (luego vendrá del GPS).
