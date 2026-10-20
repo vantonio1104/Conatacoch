@@ -2,6 +2,7 @@ package cl.conatacoch.app.ui.conductor
 
 import android.content.ActivityNotFoundException
 import android.widget.Toast
+import androidx.activity.compose.LocalActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
@@ -241,7 +242,7 @@ fun LoginConductorScreen(vm: ConductorAuthViewModel, onIrARegistro: () -> Unit, 
     var correo by rememberSaveable { mutableStateOf("") }
     var password by rememberSaveable { mutableStateOf("") }
     var pendiente by rememberSaveable { mutableStateOf<EstadoCuenta?>(null) }
-    val activity = LocalContext.current as FragmentActivity
+    val activity = LocalActivity.current as FragmentActivity
 
     Formulario(abajo = { EnlaceTexto("¿No tienes cuenta?", "Regístrate", onIrARegistro, Modifier.padding(bottom = 16.dp)) }) {
         Logo(Modifier.align(Alignment.CenterHorizontally).padding(top = 24.dp))
