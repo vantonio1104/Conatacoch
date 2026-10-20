@@ -14,7 +14,10 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 
-/** Flujo de pago: Pagar → patente y tarifa (monto no editable) → Continuar → Pago aprobado. */
+/**
+ * Flujo de pago: Pagar → patente y tarifa (monto no editable) → Continuar.
+ * El repositorio de ejemplo rechaza el primer intento: se prueba Pago rechazado → Intentar de nuevo → Pago aprobado.
+ */
 @RunWith(AndroidJUnit4::class)
 class PagoTest {
 
@@ -22,7 +25,7 @@ class PagoTest {
     val rule = createAndroidComposeRule<MainActivity>()
 
     @Test
-    fun pagoQr_muestraPatenteYTarifa_yApruebaElPago() {
+    fun pagoQr_rechazoYReintento_apruebaElPago() {
         rule.onNodeWithText("Soy pasajero").performClick()
         val campos = rule.onAllNodes(hasSetTextAction())
         campos[0].performTextInput("camila.reyes@correo.cl")
@@ -39,6 +42,9 @@ class PagoTest {
         rule.onAllNodes(hasSetTextAction()).assertCountEquals(0)
 
         rule.onNodeWithText("Continuar en Rutpay").performScrollTo().performClick()
+        rule.onNodeWithText("Pago rechazado").assertIsDisplayed()
+
+        rule.onNodeWithText("Intentar de nuevo").performClick()
         rule.onNodeWithText("Pago aprobado").assertIsDisplayed()
     }
 }

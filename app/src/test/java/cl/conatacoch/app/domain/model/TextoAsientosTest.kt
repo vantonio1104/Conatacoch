@@ -12,5 +12,6 @@ class TextoAsientosTest {
 
     @Test fun pu12_dosAsientos_muestraDisponibles() = assertEquals("2 asientos disponibles", textoAsientos(colectivo(2)))
 
-    @Test fun pu12_sinDato_muestraSinDato() = assertEquals("Sin dato", textoAsientos(colectivo(null)))
+    // La leyenda del mapa dice "Sin dato"; la tarjeta y el detalle muestran el texto completo.
+    @Test fun pu12_sinDato_muestraSinDato() = assertEquals("Sin dato de asientos", textoAsientos(colectivo(null)))
 }

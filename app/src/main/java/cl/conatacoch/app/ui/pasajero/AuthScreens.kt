@@ -89,7 +89,12 @@ fun RegistroPasajeroScreen(vm: PasajeroAuthViewModel, onRegistrado: () -> Unit, 
         )
         CampoTexto(
             "Contraseña", password, { password = it }, password = true,
-            error = vm.passwordError, ayuda = "Mínimo ${PasswordValidator.MIN_LENGTH} caracteres",
+            error = vm.passwordError,
+            ayuda = if (vm.passwordError && password.length > PasswordValidator.MAX_LENGTH) {
+                "Máximo ${PasswordValidator.MAX_LENGTH} caracteres"
+            } else {
+                "Mínimo ${PasswordValidator.MIN_LENGTH} caracteres"
+            },
         )
         BotonPrincipal("Crear cuenta", { vm.registrar(nombre, correo, password, onRegistrado) })
         BotonesSociales("o regístrate con")

@@ -125,7 +125,7 @@ fun RegistroConductorPaso1Screen(vm: ConductorAuthViewModel, onAtras: () -> Unit
         CampoTexto(
             "Contraseña (mínimo ${PasswordValidator.MIN_LENGTH} caracteres)", f.password, { vm.form = f.copy(password = it) },
             password = true, error = vm.passwordError,
-            ayuda = "Debe tener al menos ${PasswordValidator.MIN_LENGTH} caracteres".takeIf { vm.passwordError },
+            ayuda = "Debe tener entre ${PasswordValidator.MIN_LENGTH} y ${PasswordValidator.MAX_LENGTH} caracteres".takeIf { vm.passwordError },
         )
     }
 }
