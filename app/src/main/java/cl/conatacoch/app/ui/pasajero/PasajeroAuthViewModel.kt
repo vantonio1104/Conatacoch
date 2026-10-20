@@ -39,7 +39,7 @@ class PasajeroAuthViewModel(private val auth: AuthRepository) : ViewModel() {
         viewModelScope.launch {
             auth.registrarPasajero(nombre.trim(), correo.trim(), password)
             correoPendiente = correo.trim()
-            this.nombre = nombre.trim()
+            this@PasajeroAuthViewModel.nombre = nombre.trim()
             onListo()
         }
     }
