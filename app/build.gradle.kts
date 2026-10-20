@@ -30,8 +30,11 @@ android {
     }
 }
 
+// Compila para Java 17 con el JDK que use Gradle (por ejemplo, el 21 de Android Studio).
 kotlin {
-    jvmToolchain(17)
+    compilerOptions {
+        jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
+    }
 }
 
 dependencies {
