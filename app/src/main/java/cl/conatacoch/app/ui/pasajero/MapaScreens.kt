@@ -52,6 +52,7 @@ import androidx.compose.ui.unit.dp
 import cl.conatacoch.app.domain.model.Colectivo
 import cl.conatacoch.app.domain.model.EstadoOcupacion
 import cl.conatacoch.app.domain.model.Reserva
+import cl.conatacoch.app.domain.model.textoAsientos
 import cl.conatacoch.app.ui.components.BotonPrincipal
 import cl.conatacoch.app.ui.components.BotonSecundario
 import cl.conatacoch.app.ui.components.BarraAtras
@@ -69,13 +70,6 @@ fun colorEstado(estado: EstadoOcupacion): Color = when (estado) {
     EstadoOcupacion.CON_ASIENTOS -> VerdeMarca
     EstadoOcupacion.LLENO -> RojoLleno
     EstadoOcupacion.SIN_DATO -> GrisSinDato
-}
-
-fun textoAsientos(c: Colectivo): String = when (c.estado) {
-    EstadoOcupacion.CON_ASIENTOS ->
-        if (c.asientosDisponibles == 1) "1 asiento disponible" else "${c.asientosDisponibles} asientos disponibles"
-    EstadoOcupacion.LLENO -> "Lleno"
-    EstadoOcupacion.SIN_DATO -> "Sin dato de asientos"
 }
 
 @Composable

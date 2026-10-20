@@ -22,6 +22,14 @@ data class Colectivo(
 
 enum class EstadoReserva { ACTIVA, COMPLETADA, EXPIRADA, CANCELADA }
 
+/** Texto de asientos que se muestra en el mapa y en el detalle. */
+fun textoAsientos(c: Colectivo): String = when (c.estado) {
+    EstadoOcupacion.CON_ASIENTOS ->
+        if (c.asientosDisponibles == 1) "1 asiento disponible" else "${c.asientosDisponibles} asientos disponibles"
+    EstadoOcupacion.LLENO -> "Lleno"
+    EstadoOcupacion.SIN_DATO -> "Sin dato de asientos"
+}
+
 /** La reserva vence 3 minutos después de que el colectivo llega al paradero. */
 data class Reserva(
     val colectivo: Colectivo,
