@@ -1,0 +1,16 @@
+folio,linea,tipo_servicio,operador,flota_vigente,origen_comuna,origen_calle,destino_comuna,destino_calle,comunas_que_atraviesa
+235003,5003,Automóvil urbano taxi colectivo,Trans-Uruguay S.A.,30,La Cisterna,José Ureta,La Granja,Cordillera de Los Andes,"La Cisterna, La Granja"
+235005,5005,Automóvil urbano taxi colectivo,Santa Laura S.A.,17,El Bosque,Cacique Pelantaro,La Cisterna,Av. Ossa,"El Bosque, La Cisterna"
+235007,5007,Automóvil urbano taxi colectivo,Transviñita S.A.,17,La Cisterna,Carvajal,La Cisterna,Av. Goycolea,La Cisterna
+235011,5011,Automóvil urbano taxi colectivo,Transtome S.A.,59,San Ramón,Av. Ossa,La Florida,Av. Vicuña Mackenna Oriente,"La Florida, La Granja, San Ramón"
+235030,5030,Automóvil urbano taxi colectivo,Etsa S.A.,16,La Cisterna,Mohamet Batich Malek,La Cisterna,Inés Rivas,La Cisterna
+235034,5034,Automóvil urbano taxi colectivo,Los Naranjos Treinta y Tres S.A.,33,La Cisterna,Riquelme,San Bernardo,Av. Padre Hurtado,"El Bosque, La Cisterna, San Bernardo"
+235035,5035,Automóvil urbano taxi colectivo,Los Naranjos Treinta y Tres S.A.,21,La Cisterna,Riquelme,San Bernardo,Av. Padre Hurtado,"El Bosque, La Cisterna, San Bernardo"
+235036,5036,Automóvil urbano taxi colectivo,Transalbano S.A.,17,La Cisterna,Locarno,La Cisterna,Av. Fernández Albano,"La Cisterna, La Granja"
+235065,5065,Automóvil urbano taxi colectivo,El Trébol E.I.R.L.,58,La Cisterna,Av. Ossa,La Pintana,Luis Cruz Martínez,"El Bosque, La Cisterna, La Pintana, San Ramón"
+235067,5067,Automóvil urbano taxi colectivo,S.T.P. 176 Ltda.,17,La Cisterna,José Ureta,San Bernardo,Almirante Riveros,"El Bosque, La Cisterna, San Bernardo"
+235068,5068,Automóvil urbano taxi colectivo,S.T.P. 176 Ltda.,9,La Cisterna,José Ureta,San Bernardo,Almirante Riveros,"El Bosque, La Cisterna, San Bernardo"
+235070,5070,Automóvil urbano taxi colectivo,Línea Tres Ltda.,5,La Cisterna,José Ureta,San Ramón,Santa Ana,"La Cisterna, San Ramón"
+233003,3003,Automóvil urbano taxi colectivo,No informado,38,La Granja,Av. Santa Rosa,La Florida,Av. Vicuña Mackenna Poniente,"La Florida, La Granja"
+233005,3005,Automóvil urbano taxi colectivo,Las Brisas S.A.,17,La Granja,Av. San Gregorio,La Cisterna,José Ureta,"La Cisterna, La Granja, San Ramón"
+235054,5054,Automóvil urbano taxi colectivo,Transparron S.A.,30,La Cisterna,Briones Luco,La Florida,Av. Vicuña Mackenna Oriente,"La Cisterna, La Florida, La Granja"

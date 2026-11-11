@@ -1,0 +1,3 @@
+nombre_completo,rut,direccion,fono_celular,fono_domicilio,fecha_incorporacion,tipo_licencia,municipio_licencia,fecha_obtencion_licencia,duracion_licencia_anos
+Pedro Soto,12345678-9,"Av. La Marina 123, San Ramón",+56912345678,225554433,2023-03-15,A2,San Ramón,2015-03-15,5
+Juan Pérez,9876543-K,"Calle Central 456, La Cisterna",+56987654321,226667788,2022-06-10,A3,La Cisterna,2018-06-10,4

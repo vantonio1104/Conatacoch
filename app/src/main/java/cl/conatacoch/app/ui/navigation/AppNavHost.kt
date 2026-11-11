@@ -66,6 +66,7 @@ import cl.conatacoch.app.ui.pasajero.PreferenciasScreen
 import cl.conatacoch.app.ui.pasajero.RegistroPasajeroScreen
 import cl.conatacoch.app.ui.pasajero.ReservaActivaScreen
 import cl.conatacoch.app.ui.theme.Extra
+import cl.conatacoch.app.ui.admin.*
 
 object Rutas {
     const val PERFIL = "perfil"
@@ -92,6 +93,13 @@ object Rutas {
     const val C_RUTAS = "conductor/rutas"
     const val C_ALERTAS = "conductor/alertas"
     const val C_CORRECCION = "conductor/correccion"
+
+    const val A_LOGIN = "admin/login"
+    const val A_DASHBOARD = "admin/dashboard"
+    const val A_CONDUCTORES = "admin/conductores"
+    const val A_AUTOMOVILES = "admin/automoviles"
+    const val A_MAPA = "admin/mapa"
+    const val A_RUTAS = "admin/rutas"
 
     fun detalle(patente: String) = "pasajero/detalle/$patente"
 }
@@ -134,7 +142,35 @@ fun AppNavHost() {
 
     NavHost(nav, startDestination = Rutas.PERFIL) {
         composable(Rutas.PERFIL) {
-            SelectorPerfil(onPasajero = { nav.navigate(Rutas.P_LOGIN) }, onConductor = { nav.navigate(Rutas.C_LOGIN) })
+            SelectorPerfil(
+                onPasajero = { nav.navigate(Rutas.P_LOGIN) },
+                onConductor = { nav.navigate(Rutas.C_LOGIN) },
+                onAdmin = { nav.navigate(Rutas.A_LOGIN) }
+            )
+        }
+        composable(Rutas.A_LOGIN) {
+            AdminLoginScreen(onLoginSuccess = { nav.navigate(Rutas.A_DASHBOARD) { popUpTo(Rutas.A_LOGIN) { inclusive = true } } })
+        }
+        composable(Rutas.A_DASHBOARD) {
+            AdminDashboardScreen(
+                onNavigateToConductores = { nav.navigate(Rutas.A_CONDUCTORES) },
+                onNavigateToAutomoviles = { nav.navigate(Rutas.A_AUTOMOVILES) },
+                onNavigateToRutas = { nav.navigate(Rutas.A_RUTAS) },
+                onNavigateToMapa = { nav.navigate(Rutas.A_MAPA) },
+                onCerrarSesion = { irAInicio(Rutas.PERFIL) }
+            )
+        }
+        composable(Rutas.A_CONDUCTORES) {
+            AdminConductoresScreen(onBack = { nav.popBackStack() })
+        }
+        composable(Rutas.A_AUTOMOVILES) {
+            AdminAutomovilesScreen(onBack = { nav.popBackStack() })
+        }
+        composable(Rutas.A_MAPA) {
+            AdminMapaGlobalScreen(onBack = { nav.popBackStack() })
+        }
+        composable(Rutas.A_RUTAS) {
+            AdminRutasScreen(onBack = { nav.popBackStack() })
         }
 
         // --- Pasajero ---
@@ -277,7 +313,7 @@ private fun ConBarra(
 
 /** Entrada a la app. No está en Figma: solo elige el perfil. */
 @Composable
-private fun SelectorPerfil(onPasajero: () -> Unit, onConductor: () -> Unit) {
+private fun SelectorPerfil(onPasajero: () -> Unit, onConductor: () -> Unit, onAdmin: () -> Unit) {
     Scaffold { padding ->
         Column(
             Modifier.padding(padding).fillMaxSize().padding(MargenPantalla),
@@ -291,6 +327,8 @@ private fun SelectorPerfil(onPasajero: () -> Unit, onConductor: () -> Unit) {
             BotonPrincipal("Soy pasajero", onPasajero)
             Spacer(Modifier.height(12.dp))
             BotonSecundario("Soy conductor", onConductor)
+            Spacer(Modifier.height(12.dp))
+            BotonSecundario("Soy administrador", onAdmin)
         }
     }
 }

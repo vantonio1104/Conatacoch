@@ -1,0 +1,452 @@
+folio,sentido,orden,calle,comuna
+235003,IDA,1,José Ureta,La Cisterna
+235003,IDA,2,Iquique,La Cisterna
+235003,IDA,3,Blas Vial,La Cisterna
+235003,IDA,4,Uruguay,La Cisterna
+235003,IDA,5,Av. Fernández Albano,La Cisterna
+235003,IDA,6,Argentina,La Cisterna
+235003,IDA,7,Av. Santa Rosa,La Granja
+235003,IDA,8,Av. San Gregorio,La Granja
+235003,IDA,9,Los Vilos,La Granja
+235003,IDA,10,Tacora,La Granja
+235003,IDA,11,Cordillera de Los Andes,La Granja
+235003,REGRESO,12,Cordillera de Los Andes,La Granja
+235003,REGRESO,13,Condores de Chile,La Granja
+235003,REGRESO,14,Manutara,La Granja
+235003,REGRESO,15,Av. Santa Rosa,La Granja
+235003,REGRESO,16,Uruguay,La Cisterna
+235003,REGRESO,17,Santa María,La Cisterna
+235003,REGRESO,18,Manuel Domingo Correa,La Cisterna
+235003,REGRESO,19,Gran Avenida José Miguel Carrera,La Cisterna
+235003,REGRESO,20,José Ureta,La Cisterna
+235005,IDA,1,Cacique Pelantaro,El Bosque
+235005,IDA,2,El Pillán,El Bosque
+235005,IDA,3,Rengo,El Bosque
+235005,IDA,4,General Korner,El Bosque
+235005,IDA,5,Galvarino,El Bosque
+235005,IDA,6,Amunátegui,El Bosque
+235005,IDA,7,Pedro A. González,El Bosque
+235005,IDA,8,Picton,El Bosque
+235005,IDA,9,Los Nogales,El Bosque
+235005,IDA,10,Domingo Gómez Rojas,El Bosque
+235005,IDA,11,Rancagua,El Bosque
+235005,IDA,12,18 de Septiembre,El Bosque
+235005,IDA,13,Gran Avenida José Miguel Carrera,El Bosque
+235005,IDA,14,Gran Avenida José Miguel Carrera,La Cisterna
+235005,IDA,15,Av. Goycolea,La Cisterna
+235005,IDA,16,Concha,La Cisterna
+235005,IDA,17,Av. Ossa,La Cisterna
+235005,REGRESO,18,Av. Ossa,La Cisterna
+235005,REGRESO,19,Concha,La Cisterna
+235005,REGRESO,20,Av. Goycolea,La Cisterna
+235005,REGRESO,21,Gran Avenida José Miguel Carrera,La Cisterna
+235005,REGRESO,22,Gran Avenida José Miguel Carrera,El Bosque
+235005,REGRESO,23,Heliotropos,El Bosque
+235005,REGRESO,24,Domingo Gómez Rojas,El Bosque
+235005,REGRESO,25,Los Nogales,El Bosque
+235005,REGRESO,26,Picton,El Bosque
+235005,REGRESO,27,Antonio Bórquez del Solar,El Bosque
+235005,REGRESO,28,Rengo,El Bosque
+235005,REGRESO,29,El Pillán,El Bosque
+235005,REGRESO,30,Cacique Pelantaro,El Bosque
+235007,IDA,1,Carvajal,La Cisterna
+235007,IDA,2,Ciencias,La Cisterna
+235007,IDA,3,Av. El Parrón,La Cisterna
+235007,IDA,4,Colón,La Cisterna
+235007,IDA,5,Isabel La Católica,La Cisterna
+235007,IDA,6,Letras,La Cisterna
+235007,IDA,7,Augusto Biaut,La Cisterna
+235007,IDA,8,Gran Avenida José Miguel Carrera,La Cisterna
+235007,IDA,9,Av. Ossa,La Cisterna
+235007,IDA,10,Capricornio,La Cisterna
+235007,IDA,11,Av. Goycolea,La Cisterna
+235007,REGRESO,12,Av. Goycolea,La Cisterna
+235007,REGRESO,13,Capricornio,La Cisterna
+235007,REGRESO,14,Av. Ossa,La Cisterna
+235007,REGRESO,15,Tucumán,La Cisterna
+235007,REGRESO,16,Av. Circunvalación Américo Vespucio (Vía Local),La Cisterna
+235007,REGRESO,17,Puente de Retorno Oriente de Gran Avenida,La Cisterna
+235007,REGRESO,18,Av. Circunvalación Américo Vespucio (Vía Local),La Cisterna
+235007,REGRESO,19,Letras,La Cisterna
+235007,REGRESO,20,Isabel La Católica,La Cisterna
+235007,REGRESO,21,Colón,La Cisterna
+235007,REGRESO,22,Av. El Parrón,La Cisterna
+235007,REGRESO,23,Paulina,La Cisterna
+235007,REGRESO,24,Briones Luco,La Cisterna
+235007,REGRESO,25,Gran Avenida José Miguel Carrera,La Cisterna
+235007,REGRESO,26,Carvajal,La Cisterna
+235011,IDA,1,Av. Ossa,San Ramón
+235011,IDA,2,Av. La Bandera,San Ramón
+235011,IDA,3,Goycolea,San Ramón
+235011,IDA,4,Ismael Tocornal,San Ramón
+235011,IDA,5,Esperanza,San Ramón
+235011,IDA,6,La Bandera,San Ramón
+235011,IDA,7,Juan Williams,San Ramón
+235011,IDA,8,Esperanza,San Ramón
+235011,IDA,9,Caupolicán,San Ramón
+235011,IDA,10,Riquelme,San Ramón
+235011,IDA,11,Pedro Aguirre Cerda,San Ramón
+235011,IDA,12,Los Franciscanos,San Ramón
+235011,IDA,13,Av. Santa Rosa,San Ramón
+235011,IDA,14,Tomé,La Granja
+235011,IDA,15,Punta Arenas,La Granja
+235011,IDA,16,Gerónimo de Alderete,La Florida
+235011,IDA,17,Fresia,La Florida
+235011,IDA,18,Lia Aguirre,La Florida
+235011,IDA,19,Av. Circunvalación Américo Vespucio (Vía Local),La Florida
+235011,IDA,20,Av. Vicuña Mackenna Oriente,La Florida
+235011,REGRESO,21,Av. Vicuña Mackenna Oriente,La Florida
+235011,REGRESO,22,Barcelona,La Florida
+235011,REGRESO,23,Millaray,La Florida
+235011,REGRESO,24,Punta Arenas,La Florida
+235011,REGRESO,25,Tomé,La Granja
+235011,REGRESO,26,Av. Santa Rosa,La Granja
+235011,REGRESO,27,Los Franciscanos,San Ramón
+235011,REGRESO,28,Pedro Aguirre Cerda,San Ramón
+235011,REGRESO,29,Riquelme,San Ramón
+235011,REGRESO,30,Caupolicán,San Ramón
+235011,REGRESO,31,Esperanza,San Ramón
+235011,REGRESO,32,Almirante Latorre,San Ramón
+235011,REGRESO,33,Esperanza,San Ramón
+235011,REGRESO,34,Ismael Tocornal,San Ramón
+235011,REGRESO,35,Vicuña Mackenna,San Ramón
+235011,REGRESO,36,Almirante Latorre,San Ramón
+235011,REGRESO,37,Av. Ossa,San Ramón
+235030,IDA,1,Mohamet Batich Malek,La Cisterna
+235030,IDA,2,Gran Avenida José Miguel Carrera,La Cisterna
+235030,IDA,3,Santa Anselma,La Cisterna
+235030,IDA,4,La Paz,La Cisterna
+235030,IDA,5,Isabel La Católica,La Cisterna
+235030,IDA,6,Chile - España,La Cisterna
+235030,IDA,7,Industria,La Cisterna
+235030,IDA,8,Río de Janeiro,La Cisterna
+235030,IDA,9,Ciencias,La Cisterna
+235030,IDA,10,Augusto Biaut,La Cisterna
+235030,IDA,11,Gran Avenida José Miguel Carrera,La Cisterna
+235030,IDA,12,Av. Ossa,La Cisterna
+235030,IDA,13,Baldomero Lillo,La Cisterna
+235030,IDA,14,Comandante Soza,La Cisterna
+235030,IDA,15,Inés Rivas,La Cisterna
+235030,REGRESO,16,Inés Rivas,La Cisterna
+235030,REGRESO,17,Argentina,La Cisterna
+235030,REGRESO,18,Joaquín Díaz Garcés,La Cisterna
+235030,REGRESO,19,Av. Circunvalación Américo Vespucio (Vía Local),La Cisterna
+235030,REGRESO,20,Puente de Retorno Oriente de Gran Avenida,La Cisterna
+235030,REGRESO,21,Av. Circunvalación Américo Vespucio (Vía Local),La Cisterna
+235030,REGRESO,22,Paulina,La Cisterna
+235030,REGRESO,23,Pedro Aguirre Cerda,La Cisterna
+235030,REGRESO,24,Industria,La Cisterna
+235030,REGRESO,25,Colón,La Cisterna
+235030,REGRESO,26,Isabel La Católica,La Cisterna
+235030,REGRESO,27,Gran Avenida José Miguel Carrera,La Cisterna
+235030,REGRESO,28,Santa Teresa,La Cisterna
+235030,REGRESO,29,Paulina,La Cisterna
+235030,REGRESO,30,Briones Luco,La Cisterna
+235030,REGRESO,31,Gran Avenida José Miguel Carrera,La Cisterna
+235030,REGRESO,32,Mohamet Batich Malek,La Cisterna
+235034,IDA,1,Riquelme,La Cisterna
+235034,IDA,2,Patricio Lynch,La Cisterna
+235034,IDA,3,Vicuña Mackenna,La Cisterna
+235034,IDA,4,Pero,La Cisterna
+235034,IDA,5,Goycolea,La Cisterna
+235034,IDA,6,Pero,La Cisterna
+235034,IDA,7,Av. Ossa,La Cisterna
+235034,IDA,8,Gran Avenida José Miguel Carrera,La Cisterna
+235034,IDA,9,Caletera Vespucio Sur,La Cisterna
+235034,IDA,10,San Carlos,La Cisterna
+235034,IDA,11,Av. Ossa,La Cisterna
+235034,IDA,12,Pero,La Cisterna
+235034,IDA,13,Goycolea,La Cisterna
+235034,IDA,14,Pero,La Cisterna
+235034,IDA,15,Vicuña Mackenna,La Cisterna
+235034,IDA,16,Patricio Lynch,La Cisterna
+235034,IDA,17,Riquelme,El Bosque
+235034,IDA,18,Julio Covarrubias,El Bosque
+235034,IDA,19,Alejandro Guzmán,El Bosque
+235034,IDA,20,Av. Padre Hurtado,El Bosque
+235034,IDA,21,Av. Padre Hurtado,San Bernardo
+235034,IDA,22,Calderón de La Barca,San Bernardo
+235034,IDA,23,Martín de Solís,San Bernardo
+235034,IDA,24,Santa Marta,San Bernardo
+235034,IDA,25,Sánchez,San Bernardo
+235034,IDA,26,San Martín,San Bernardo
+235034,IDA,27,O'Higgins,San Bernardo
+235034,IDA,28,José Joaquín Pérez,San Bernardo
+235034,IDA,29,Covadonga,San Bernardo
+235034,IDA,30,Victoria,San Bernardo
+235034,IDA,31,Av. Colón Norte,San Bernardo
+235034,IDA,32,Freire,San Bernardo
+235034,IDA,33,Gran Avenida José Miguel Carrera,San Bernardo
+235034,IDA,34,Santa Marta,San Bernardo
+235034,IDA,35,Martín de Solís,San Bernardo
+235034,IDA,36,Bartolomé Díaz,San Bernardo
+235034,IDA,37,Av. Padre Hurtado,San Bernardo
+235034,REGRESO,38,Av. Padre Hurtado,El Bosque
+235034,REGRESO,39,Alejandro Guzmán,El Bosque
+235034,REGRESO,40,Julio Covarrubias,El Bosque
+235034,REGRESO,41,Riquelme,La Cisterna
+235034,REGRESO,42,Patricio Lynch,La Cisterna
+235034,REGRESO,43,Vicuña Mackenna,La Cisterna
+235034,REGRESO,44,Pero,La Cisterna
+235034,REGRESO,45,Goycolea,La Cisterna
+235034,REGRESO,46,Pero,La Cisterna
+235034,REGRESO,47,Av. Ossa,La Cisterna
+235034,REGRESO,48,Gran Avenida José Miguel Carrera,La Cisterna
+235034,REGRESO,49,Caletera Vespucio Sur,La Cisterna
+235034,REGRESO,50,San Carlos,La Cisterna
+235034,REGRESO,51,Av. Ossa,La Cisterna
+235034,REGRESO,52,Pero,La Cisterna
+235034,REGRESO,53,Goycolea,La Cisterna
+235034,REGRESO,54,Pero,La Cisterna
+235034,REGRESO,55,Vicuña Mackenna,La Cisterna
+235034,REGRESO,56,Patricio Lynch,La Cisterna
+235034,REGRESO,57,Riquelme,La Cisterna
+235035,IDA,1,Riquelme,La Cisterna
+235035,IDA,2,Patricio Lynch,La Cisterna
+235035,IDA,3,Vicuña Mackenna,La Cisterna
+235035,IDA,4,Pero,La Cisterna
+235035,IDA,5,Goycolea,La Cisterna
+235035,IDA,6,Pero,La Cisterna
+235035,IDA,7,Av. Ossa,La Cisterna
+235035,IDA,8,Gran Avenida José Miguel Carrera,La Cisterna
+235035,IDA,9,Caletera Vespucio Sur,La Cisterna
+235035,IDA,10,San Carlos,La Cisterna
+235035,IDA,11,Av. Ossa,La Cisterna
+235035,IDA,12,Pero,La Cisterna
+235035,IDA,13,Goycolea,La Cisterna
+235035,IDA,14,Pero,La Cisterna
+235035,IDA,15,Vicuña Mackenna,La Cisterna
+235035,IDA,16,Patricio Lynch,La Cisterna
+235035,IDA,17,Tomás Yavar,El Bosque
+235035,IDA,18,Almirante Riveros,El Bosque
+235035,IDA,19,Alejandro Guzmán,El Bosque
+235035,IDA,20,Av. Padre Hurtado,El Bosque
+235035,IDA,21,Av. Padre Hurtado,San Bernardo
+235035,IDA,22,Santa Marta,San Bernardo
+235035,IDA,23,Martín de Solís,San Bernardo
+235035,IDA,24,Av. Colón Norte,San Bernardo
+235035,IDA,25,Bulnes,San Bernardo
+235035,IDA,26,Av. Colón Sur,San Bernardo
+235035,IDA,27,José Joaquín Pérez,San Bernardo
+235035,IDA,28,Covadonga,San Bernardo
+235035,IDA,29,Victoria,San Bernardo
+235035,IDA,30,Av. Colón Sur,San Bernardo
+235035,IDA,31,San Martín,San Bernardo
+235035,IDA,32,Santa Marta,San Bernardo
+235035,IDA,33,Av. Padre Hurtado,San Bernardo
+235035,REGRESO,34,Av. Padre Hurtado,El Bosque
+235035,REGRESO,35,Alejandro Guzmán,El Bosque
+235035,REGRESO,36,Almirante Riveros,El Bosque
+235035,REGRESO,37,Tomás Yavar,El Bosque
+235035,REGRESO,38,Patricio Lynch,El Bosque
+235035,REGRESO,39,Patricio Lynch,La Cisterna
+235035,REGRESO,40,Vicuña Mackenna,La Cisterna
+235035,REGRESO,41,Pero,La Cisterna
+235035,REGRESO,42,Goycolea,La Cisterna
+235035,REGRESO,43,Pero,La Cisterna
+235035,REGRESO,44,Av. Ossa,La Cisterna
+235035,REGRESO,45,Gran Avenida José Miguel Carrera,La Cisterna
+235035,REGRESO,46,Caletera Vespucio Sur,La Cisterna
+235035,REGRESO,47,San Carlos,La Cisterna
+235035,REGRESO,48,Av. Ossa,La Cisterna
+235035,REGRESO,49,Pero,La Cisterna
+235035,REGRESO,50,Goycolea,La Cisterna
+235035,REGRESO,51,Pero,La Cisterna
+235035,REGRESO,52,Vicuña Mackenna,La Cisterna
+235035,REGRESO,53,Patricio Lynch,La Cisterna
+235035,REGRESO,54,Riquelme,La Cisterna
+235036,IDA,1,Locarno,La Cisterna
+235036,IDA,2,Gran Avenida José Miguel Carrera,La Cisterna
+235036,IDA,3,Av. Fernández Albano,La Cisterna
+235036,REGRESO,4,Av. Fernández Albano,La Granja
+235036,REGRESO,5,Paulina,La Cisterna
+235036,REGRESO,6,Locarno,La Cisterna
+235065,IDA,1,Av. Ossa,La Cisterna
+235065,IDA,2,Pero,La Cisterna
+235065,IDA,3,Av. Goycolea,La Cisterna
+235065,IDA,4,Pero,La Cisterna
+235065,IDA,5,Vicuña Mackenna,La Cisterna
+235065,IDA,6,Nueva Oriente,La Cisterna
+235065,IDA,7,Nueva Oriente,El Bosque
+235065,IDA,8,Esperanza,San Ramón
+235065,IDA,9,San Francisco,San Ramón
+235065,IDA,10,Venancia Leiva,La Pintana
+235065,IDA,11,San Manuel,La Pintana
+235065,IDA,12,General Francisco Franco,La Pintana
+235065,IDA,13,Los Almendros,La Pintana
+235065,IDA,14,Antonio Machado,La Pintana
+235065,IDA,15,Poeta Pío Baroja,La Pintana
+235065,IDA,16,Av. Observatorio,La Pintana
+235065,IDA,17,Av. Santa Rosa,La Pintana
+235065,IDA,18,Baldomero Lillo,La Pintana
+235065,IDA,19,Porto Alegre,La Pintana
+235065,IDA,20,Gabriela,La Pintana
+235065,IDA,21,Julio Barrenechea,La Pintana
+235065,IDA,22,Luis Cruz Martínez,La Pintana
+235065,REGRESO,23,Luis Cruz Martínez,La Pintana
+235065,REGRESO,24,Domingo Santa Cruz,La Pintana
+235065,REGRESO,25,San Francisco,El Bosque
+235065,REGRESO,26,Julio Barrenechea,La Pintana
+235065,REGRESO,27,Gabriela,La Pintana
+235065,REGRESO,28,Porto Alegre,La Pintana
+235065,REGRESO,29,Ciudad de México,La Pintana
+235065,REGRESO,30,Patagonia,La Pintana
+235065,REGRESO,31,Baldomero Lillo,La Pintana
+235065,REGRESO,32,Av. Santa Rosa,La Pintana
+235065,REGRESO,33,Av. Observatorio,La Pintana
+235065,REGRESO,34,Poeta Pío Baroja,La Pintana
+235065,REGRESO,35,Antonio Machado,La Pintana
+235065,REGRESO,36,Los Almendros,La Pintana
+235065,REGRESO,37,General Francisco Franco,La Pintana
+235065,REGRESO,38,San Manuel,La Pintana
+235065,REGRESO,39,Venancia Leiva,La Pintana
+235065,REGRESO,40,San Francisco,San Ramón
+235065,REGRESO,41,Esperanza,San Ramón
+235065,REGRESO,42,Nueva Oriente,San Ramón
+235065,REGRESO,43,Nueva Oriente,La Cisterna
+235065,REGRESO,44,Vicuña Mackenna,La Cisterna
+235065,REGRESO,45,Pero,La Cisterna
+235065,REGRESO,46,Av. Goycolea,La Cisterna
+235065,REGRESO,47,Pero,La Cisterna
+235065,REGRESO,48,Av. Ossa,La Cisterna
+235067,IDA,1,José Ureta,La Cisterna
+235067,IDA,2,Esmeralda,La Cisterna
+235067,IDA,3,General Freire,La Cisterna
+235067,IDA,4,Gran Avenida José Miguel Carrera,La Cisterna
+235067,IDA,5,Gran Avenida José Miguel Carrera,El Bosque
+235067,IDA,6,Gran Avenida José Miguel Carrera,San Bernardo
+235067,IDA,7,Balmaceda,San Bernardo
+235067,IDA,8,Urmeneta,San Bernardo
+235067,IDA,9,San José,San Bernardo
+235067,IDA,10,Francisco Bilbao,San Bernardo
+235067,IDA,11,Baquedano,San Bernardo
+235067,IDA,12,Portales Oriente,San Bernardo
+235067,IDA,13,Almirante Riveros,San Bernardo
+235067,REGRESO,14,Almirante Riveros,San Bernardo
+235067,REGRESO,15,Camino Padre Hurtado,San Bernardo
+235067,REGRESO,16,San José,San Bernardo
+235067,REGRESO,17,Barros Arana,San Bernardo
+235067,REGRESO,18,Covadonga,San Bernardo
+235067,REGRESO,19,José Joaquín Pérez,San Bernardo
+235067,REGRESO,20,Esmeralda,San Bernardo
+235067,REGRESO,21,Freire,San Bernardo
+235067,REGRESO,22,Gran Avenida José Miguel Carrera,San Bernardo
+235067,REGRESO,23,José Ureta,San Bernardo
+235068,IDA,1,José Ureta,La Cisterna
+235068,IDA,2,Esmeralda,La Cisterna
+235068,IDA,3,General Freire,La Cisterna
+235068,IDA,4,Gran Avenida José Miguel Carrera,La Cisterna
+235068,IDA,5,Gran Avenida José Miguel Carrera,El Bosque
+235068,IDA,6,Gran Avenida José Miguel Carrera,San Bernardo
+235068,IDA,7,Balmaceda,San Bernardo
+235068,IDA,8,Urmeneta,San Bernardo
+235068,IDA,9,San José,San Bernardo
+235068,IDA,10,Camino Padre Hurtado,San Bernardo
+235068,IDA,11,Almirante Riveros,San Bernardo
+235068,REGRESO,12,Almirante Riveros,San Bernardo
+235068,REGRESO,13,Portales Oriente,San Bernardo
+235068,REGRESO,14,Baquedano,San Bernardo
+235068,REGRESO,15,Mac-Iver,San Bernardo
+235068,REGRESO,16,San José,San Bernardo
+235068,REGRESO,17,Barros Arana,San Bernardo
+235068,REGRESO,18,Covadonga,San Bernardo
+235068,REGRESO,19,José Joaquín Pérez,San Bernardo
+235068,REGRESO,20,Esmeralda,San Bernardo
+235068,REGRESO,21,Freire,San Bernardo
+235068,REGRESO,22,Gran Avenida José Miguel Carrera,San Bernardo
+235068,REGRESO,23,Gran Avenida José Miguel Carrera,El Bosque
+235068,REGRESO,24,Gran Avenida José Miguel Carrera,La Cisterna
+235068,REGRESO,25,José Ureta,La Cisterna
+235070,IDA,1,José Ureta,La Cisterna
+235070,IDA,2,Iquique,La Cisterna
+235070,IDA,3,Santa Clara,La Cisterna
+235070,IDA,4,Covadonga,La Cisterna
+235070,IDA,5,General Freire,La Cisterna
+235070,IDA,6,Santa Ana,San Ramón
+235070,REGRESO,7,Santa Ana,San Ramón
+235070,REGRESO,8,General Freire,La Cisterna
+235070,REGRESO,9,Angamos,La Cisterna
+235070,REGRESO,10,Santa Elisa,La Cisterna
+235070,REGRESO,11,Gran Avenida José Miguel Carrera,La Cisterna
+235070,REGRESO,12,José Ureta,La Cisterna
+233003,IDA,1,Av. Santa Rosa,La Granja
+233003,IDA,2,Canto General,La Granja
+233003,IDA,3,Sofía Eastman de Hunneus,La Granja
+233003,IDA,4,Diagonal Sur Oriente,La Granja
+233003,IDA,5,Alborada,La Granja
+233003,IDA,6,Av. Santa Rosa,La Granja
+233003,IDA,7,Tomé,La Granja
+233003,IDA,8,Punta Arenas,La Granja
+233003,IDA,9,Gerónimo de Alderete,La Florida
+233003,IDA,10,Fresia,La Florida
+233003,IDA,11,Lia Aguirre,La Florida
+233003,IDA,12,El Litre,La Florida
+233003,IDA,13,Av. Circunvalación Américo Vespucio,La Florida
+233003,IDA,14,Av. Vicuña Mackenna Oriente,La Florida
+233003,IDA,15,Paso El Roble,La Florida
+233003,IDA,16,Av. Vicuña Mackenna Poniente,La Florida
+233003,REGRESO,17,Av. Vicuña Mackenna Oriente,La Florida
+233003,REGRESO,18,Barcelona,La Florida
+233003,REGRESO,19,Millaray,La Florida
+233003,REGRESO,20,Fresia,La Florida
+233003,REGRESO,21,Gerónimo de Alderete,La Florida
+233003,REGRESO,22,Punta Arenas,La Granja
+233003,REGRESO,23,Tomé,La Granja
+233003,REGRESO,24,Av. Santa Rosa,La Granja
+233003,REGRESO,25,Av. Circunvalación Américo Vespucio(Vía Local Sur),La Granja
+233003,REGRESO,26,Av. Manuel Rodríguez,La Granja
+233003,REGRESO,27,Tacora,La Granja
+233003,REGRESO,28,Sofía Eastman de Hunneus,La Granja
+233003,REGRESO,29,Benjamín Subercaseaux,La Granja
+233003,REGRESO,30,Av. Santa Rosa,La Granja
+233005,IDA,1,Av. San Gregorio,La Granja
+233005,IDA,2,Av. Santa Rosa,San Ramón
+233005,IDA,3,Doñihue,San Ramón
+233005,IDA,4,Carlos Dávila,San Ramón
+233005,IDA,5,Ecuador,San Ramón
+233005,IDA,6,Futaleufú,San Ramón
+233005,IDA,7,Ecuador,San Ramón
+233005,IDA,8,Ecuador,La Cisterna
+233005,IDA,9,Las Brisas,La Cisterna
+233005,IDA,10,Gran Avenida José Miguel Carrera,La Cisterna
+233005,IDA,11,José Ureta,La Cisterna
+233005,REGRESO,12,José Ureta,La Cisterna
+233005,REGRESO,13,Esmeralda,La Cisterna
+233005,REGRESO,14,General Freire,La Cisterna
+233005,REGRESO,15,Gran Avenida José Miguel Carrera,La Cisterna
+233005,REGRESO,16,Las Brisas,La Cisterna
+233005,REGRESO,17,Ecuador,La Cisterna
+233005,REGRESO,18,Ecuador,San Ramón
+233005,REGRESO,19,Futaleufú,San Ramón
+233005,REGRESO,20,Ecuador,San Ramón
+233005,REGRESO,21,Carlos Dávila,San Ramón
+233005,REGRESO,22,Doñihue,San Ramón
+233005,REGRESO,23,Av. Santa Rosa,La Granja
+233005,REGRESO,24,Av. San Gregorio,La Granja
+235054,IDA,1,Briones Luco,La Cisterna
+235054,IDA,2,Gran Avenida José Miguel Carrera,La Cisterna
+235054,IDA,3,Carvajal,La Cisterna
+235054,IDA,4,Ciencias,La Cisterna
+235054,IDA,5,Av. El Parrón,La Cisterna
+235054,IDA,6,Combarbalá,La Granja
+235054,IDA,7,La Serena,La Granja
+235054,IDA,8,Tomé,La Granja
+235054,IDA,9,Punta Arenas,La Granja
+235054,IDA,10,Santa Julia,La Florida
+235054,IDA,11,Santa Raquel,La Florida
+235054,IDA,12,Av. Circunvalación Américo Vespucio,La Florida
+235054,IDA,13,Av. Vicuña Mackenna Oriente,La Florida
+235054,REGRESO,14,Av. Vicuña Mackenna Oriente,La Florida
+235054,REGRESO,15,Paso El Roble,La Florida
+235054,REGRESO,16,Av. Vicuña Mackenna Poniente,La Florida
+235054,REGRESO,17,Av. Doctor Luis Calvo Mackenna,La Florida
+235054,REGRESO,18,Santa Raquel,La Florida
+235054,REGRESO,19,Av. Circunvalación Américo Vespucio,La Florida
+235054,REGRESO,20,Santa Julia,La Florida
+235054,REGRESO,21,Punta Arenas,La Florida
+235054,REGRESO,22,Tomé,La Granja
+235054,REGRESO,23,La Serena,La Granja
+235054,REGRESO,24,Combarbalá,La Granja
+235054,REGRESO,25,Av. El Parrón,La Cisterna
+235054,REGRESO,26,Paulina,La Cisterna
+235054,REGRESO,27,Briones Luco,La Cisterna

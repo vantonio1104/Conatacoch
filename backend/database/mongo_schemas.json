@@ -1,0 +1,62 @@
+{
+  "colecciones": {
+    "auditoria": {
+      "descripcion": "Registra operaciones críticas (quién, qué, cuándo, IP, entidad)",
+      "documento_ejemplo": {
+        "usuario_id": 1,
+        "email": "admin@conatacoch.cl",
+        "rol": "ADMIN",
+        "accion": "CREAR_CONDUCTOR",
+        "entidad": "conductores",
+        "entidad_id": 12,
+        "detalles": "Se creó el conductor Juan Pérez RUT 12.345.678-9",
+        "timestamp": "2026-06-01T10:30:00Z",
+        "ip": "10.0.2.2"
+      }
+    },
+    "historial_rutas": {
+      "descripcion": "Guarda versión anterior de cada recorrido modificado",
+      "documento_ejemplo": {
+        "ruta_folio": "L-01",
+        "version_anterior": 1,
+        "datos": {
+          "linea": "La Cisterna - La Florida",
+          "comunas_que_atraviesa": ["La Cisterna", "San Ramón", "La Florida"],
+          "calles": []
+        },
+        "modificado_por": 1,
+        "fecha_modificacion": "2026-06-01T11:00:00Z"
+      }
+    },
+    "posiciones_vehiculos": {
+      "descripcion": "Posiciones GPS en tiempo real enviadas por conductores en servicio (con índice TTL)",
+      "documento_ejemplo": {
+        "conductor_id": 5,
+        "patente": "ABCD-12",
+        "ruta_folio": "L-01",
+        "sentido": "IDA",
+        "ubicacion": {
+          "type": "Point",
+          "coordinates": [-70.6506, -33.4489]
+        },
+        "rumbo": 180.5,
+        "velocidad": 45.2,
+        "timestamp": "2026-06-01T12:00:00Z"
+      },
+      "indices": {
+        "ubicacion": "2dsphere",
+        "timestamp": "expireAfterSeconds: 86400"
+      }
+    },
+    "notificaciones": {
+      "descripcion": "Alertas de vencimiento y eventos del sistema",
+      "documento_ejemplo": {
+        "usuario_id": 5,
+        "titulo": "Licencia próxima a vencer",
+        "mensaje": "Su licencia de conducir vence en 15 días.",
+        "leida": false,
+        "timestamp": "2026-06-01T08:00:00Z"
+      }
+    }
+  }
+}
