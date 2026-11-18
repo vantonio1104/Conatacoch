@@ -87,7 +87,7 @@ fun PagarScreen(vm: PasajeroViewModel, onResultado: (aprobado: Boolean) -> Unit,
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Column(Modifier.weight(1f)) {
                                 Text("Monto a pagar", style = MaterialTheme.typography.titleMedium)
-                                Text("Tarifa del ${datos.recorrido}", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                Text("Tarifa de la ${datos.recorrido}", color = MaterialTheme.colorScheme.onSurfaceVariant)
                             }
                             // Solo lectura: el pasajero no puede editar el monto.
                             Text(pesos(datos.monto), style = MaterialTheme.typography.headlineLarge)

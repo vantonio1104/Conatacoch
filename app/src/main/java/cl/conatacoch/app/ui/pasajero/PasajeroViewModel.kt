@@ -9,23 +9,62 @@ import cl.conatacoch.app.domain.model.Colectivo
 import cl.conatacoch.app.domain.model.DatosPago
 import cl.conatacoch.app.domain.model.Pago
 import cl.conatacoch.app.domain.model.Preferencias
+import cl.conatacoch.app.domain.model.Recorrido
+import cl.conatacoch.app.domain.model.Trazado
+import cl.conatacoch.app.domain.repository.MapaRepository
 import cl.conatacoch.app.domain.repository.PasajeroRepository
 import cl.conatacoch.app.domain.repository.PreferenciasRepository
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+
+/** Estado de la línea del recorrido sobre el mapa. */
+sealed interface EstadoTrazado {
+    data object Cargando : EstadoTrazado
+    data class Listo(val trazado: Trazado) : EstadoTrazado
+    data class Error(val mensaje: String) : EstadoTrazado
+}
 
 class PasajeroViewModel(
     private val repo: PasajeroRepository,
     private val prefs: PreferenciasRepository,
+    private val mapa: MapaRepository,
 ) : ViewModel() {
 
-    val recorridos = repo.recorridos
-    val recorrido = MutableStateFlow(recorridos.first())
+    /** Recorridos oficiales (desde la base de datos si hay servidor). */
+    val recorridos: StateFlow<List<Recorrido>> = repo.recorridos
+    val recorrido = MutableStateFlow(recorridos.value.first())
+
+    /** Error al reservar o cancelar (sin asientos, sin conexión, etc.). null = sin error. */
+    var errorReserva by mutableStateOf<String?>(null)
+        private set
+
+    private val reintentos = MutableStateFlow(0)
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val trazado: StateFlow<EstadoTrazado> = combine(recorrido, reintentos) { r, _ -> r }
+        .flatMapLatest { r ->
+            flow<EstadoTrazado> {
+                emit(EstadoTrazado.Cargando)
+                emit(
+                    runCatching { mapa.trazado(r) }.fold(
+                        { EstadoTrazado.Listo(it) },
+                        { EstadoTrazado.Error(it.message ?: "No se pudo cargar el recorrido") },
+                    )
+                )
+            }
+        }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), EstadoTrazado.Cargando)
+
+    fun reintentarTrazado() {
+        reintentos.value++
+    }
 
     @OptIn(ExperimentalCoroutinesApi::class)
     val colectivos: StateFlow<List<Colectivo>> = recorrido
@@ -47,17 +86,31 @@ class PasajeroViewModel(
     fun colectivo(patente: String): Colectivo? = colectivos.value.find { it.patente == patente }
 
     fun reservar(patente: String, onListo: () -> Unit) {
+        errorReserva = null
         viewModelScope.launch {
-            repo.reservar(patente)
-            onListo()
+            try {
+                repo.reservar(patente)
+                onListo()
+            } catch (e: Exception) {
+                errorReserva = e.message ?: "No se pudo reservar. Inténtalo de nuevo."
+            }
         }
     }
 
     fun cancelarReserva(onListo: () -> Unit) {
+        errorReserva = null
         viewModelScope.launch {
-            repo.cancelarReserva()
-            onListo()
+            try {
+                repo.cancelarReserva()
+                onListo()
+            } catch (e: Exception) {
+                errorReserva = e.message ?: "No se pudo cancelar. Inténtalo de nuevo."
+            }
         }
+    }
+
+    fun limpiarErrorReserva() {
+        errorReserva = null
     }
 
     /** Simula la lectura del QR impreso en el colectivo (aún sin cámara ni lector). */

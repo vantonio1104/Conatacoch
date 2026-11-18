@@ -166,6 +166,7 @@ fun RegistroConductorPaso2Screen(vm: ConductorAuthViewModel, onAtras: () -> Unit
             BotonFoto("Foto reverso", vm.fotoReverso != null, Modifier.weight(1f)) { abrir { camaraReverso.launch(null) } }
         }
         if (vm.fotosError) Text("Agrega ambas fotos de la licencia", color = MaterialTheme.colorScheme.error)
+        vm.errorServidor?.let { ErrorGenerico(it) }
         Text("Activa tu acceso biométrico", style = MaterialTheme.typography.labelLarge)
         Row(Modifier.selectableGroup(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             listOf(Biometria.HUELLA to "Huella", Biometria.ROSTRO to "Rostro").forEach { (b, texto) ->
@@ -248,6 +249,7 @@ fun LoginConductorScreen(vm: ConductorAuthViewModel, onIrARegistro: () -> Unit, 
         Logo(Modifier.align(Alignment.CenterHorizontally).padding(top = 24.dp))
         Text("App del conductor", Modifier.fillMaxWidth(), style = MaterialTheme.typography.headlineMedium, textAlign = TextAlign.Center)
         if (vm.loginError) ErrorGenerico("Correo o contraseña incorrectos")
+        vm.errorServidor?.let { ErrorGenerico(it) }
         CampoTexto("Correo", correo, { correo = it }, error = vm.loginError, teclado = KeyboardType.Email)
         CampoTexto("Contraseña", password, { password = it }, error = vm.loginError, password = true)
         BotonPrincipal("Ingresar", { vm.verificarCredenciales(correo, password) { pendiente = it } })

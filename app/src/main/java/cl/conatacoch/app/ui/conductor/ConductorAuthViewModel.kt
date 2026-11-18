@@ -40,6 +40,27 @@ class ConductorAuthViewModel(private val auth: AuthRepository) : ViewModel() {
     var fotoReverso by mutableStateOf<Bitmap?>(null)
     var biometria by mutableStateOf(Biometria.HUELLA)
 
+    /** Mensaje del servidor o de la conexión (RUT ya registrado, sin internet, etc.). */
+    var errorServidor by mutableStateOf<String?>(null)
+        private set
+    private var cargando = false
+
+    /** Ejecuta una llamada al servidor mostrando el error en pantalla en vez de cerrar la app. */
+    private fun conServidor(accion: suspend () -> Unit) {
+        if (cargando) return
+        errorServidor = null
+        cargando = true
+        viewModelScope.launch {
+            try {
+                accion()
+            } catch (e: Exception) {
+                errorServidor = e.message ?: "Ocurrió un error. Inténtalo de nuevo."
+            } finally {
+                cargando = false
+            }
+        }
+    }
+
     private var revisarPaso1 by mutableStateOf(false)
     private var revisarPaso2 by mutableStateOf(false)
 
@@ -63,7 +84,7 @@ class ConductorAuthViewModel(private val auth: AuthRepository) : ViewModel() {
         revisarPaso2 = true
         val f = form
         if (listOf(f.emision, f.vencimiento, f.comunaEmision).any { it.isBlank() } || fotosError) return
-        viewModelScope.launch {
+        conServidor {
             auth.registrarConductor(
                 RegistroConductor(
                     rut = f.rut.trim(), nombre = f.nombre.trim(), direccion = f.direccion.trim(),
@@ -85,9 +106,11 @@ class ConductorAuthViewModel(private val auth: AuthRepository) : ViewModel() {
     var loginError by mutableStateOf(false)
         private set
 
+    fun cerrarSesion() = auth.cerrarSesion()
+
     /** Paso 1 del login: correo y contraseña. La biometría se pide después. */
     fun verificarCredenciales(correo: String, password: String, onListo: (EstadoCuenta) -> Unit) {
-        viewModelScope.launch {
+        conServidor {
             val estado = auth.loginConductor(correo, password)
             loginError = estado == null
             if (estado != null) onListo(estado)

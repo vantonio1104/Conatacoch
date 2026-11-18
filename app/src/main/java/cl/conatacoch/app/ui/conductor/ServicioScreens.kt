@@ -24,27 +24,20 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material.icons.outlined.Build
-import androidx.compose.material.icons.outlined.NoPhotography
-import androidx.compose.material.icons.outlined.PhotoCamera
+import androidx.compose.material.icons.outlined.EventSeat
 import androidx.compose.material.icons.outlined.PowerSettingsNew
 import androidx.compose.material.icons.outlined.QrCode2
 import androidx.compose.material.icons.outlined.Schedule
 import androidx.compose.material.icons.outlined.TurnRight
 import androidx.compose.material.icons.outlined.WarningAmber
-import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedIconButton
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.ButtonDefaults
@@ -71,9 +64,7 @@ import androidx.compose.ui.unit.sp
 import cl.conatacoch.app.domain.model.Aviso
 import cl.conatacoch.app.domain.model.EstadoServicio
 import cl.conatacoch.app.domain.model.PasajeroEnEspera
-import cl.conatacoch.app.ui.components.BarraAtras
-import cl.conatacoch.app.ui.components.BotonPrincipal
-import cl.conatacoch.app.ui.components.CirculoIcono
+import cl.conatacoch.app.ui.pasajero.MapaRecorrido
 import cl.conatacoch.app.ui.components.CuerpoLista
 import cl.conatacoch.app.ui.components.Encabezado
 import cl.conatacoch.app.ui.components.Etiqueta
@@ -98,7 +89,26 @@ import java.time.LocalDateTime
 @Composable
 fun ServicioScreen(vm: ConductorViewModel, modifier: Modifier = Modifier) {
     val s by vm.servicio.collectAsState()
+    LaunchedEffect(Unit) { vm.cargar() }
+    ErrorComoAviso(vm)
+    // En servicio, la ubicación del teléfono se guarda en la base de datos y la ven los pasajeros.
+    SeguirUbicacion(s.enServicio) { u ->
+        vm.enviarPosicion(u.latitude, u.longitude, if (u.hasSpeed()) u.speed else null, if (u.hasBearing()) u.bearing else null)
+    }
     if (s.enServicio) PantallaServicio(vm, s, modifier) else InicioServicio(vm, modifier)
+}
+
+/** Muestra los errores del servidor (sin vehículo asignado, sin conexión...) como aviso breve. */
+@Composable
+fun ErrorComoAviso(vm: ConductorViewModel) {
+    val contexto = LocalContext.current
+    val error = vm.error
+    LaunchedEffect(error) {
+        if (error != null) {
+            Toast.makeText(contexto, error, Toast.LENGTH_LONG).show()
+            vm.limpiarError()
+        }
+    }
 }
 
 @Composable
@@ -127,6 +137,15 @@ private fun InicioServicio(vm: ConductorViewModel, modifier: Modifier) {
                         Text(hoy.recorrido, style = MaterialTheme.typography.headlineMedium)
                         Text("${hoy.patente} · ${hoy.horario}", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
+                } else {
+                    Tarjeta {
+                        val asignacion = vm.asignacion
+                        Text(if (asignacion != null) "Hoy no tienes turno" else "Sin vehículo asignado", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(
+                            asignacion?.let { "Tu vehículo: $it" } ?: "La administración debe asignarte un vehículo para iniciar servicio.",
+                            style = MaterialTheme.typography.titleMedium,
+                        )
+                    }
                 }
                 FilaModoOscuro(prefs.modoOscuro ?: isSystemInDarkTheme(), subtitulo = null) { vm.modoOscuro(it) }
                 Box(
@@ -138,7 +157,8 @@ private fun InicioServicio(vm: ConductorViewModel, modifier: Modifier) {
                         onClick = vm::iniciarServicio,
                         modifier = Modifier.size(200.dp),
                         shape = CircleShape,
-                        enabled = hoy?.recorrido != null,
+                        // Se puede iniciar fuera de turno si tiene vehículo asignado.
+                        enabled = hoy?.recorrido != null || vm.asignacion != null,
                     ) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
                             Icon(Icons.Filled.PlayArrow, contentDescription = null, Modifier.size(56.dp))
@@ -199,16 +219,27 @@ private fun PantallaServicio(vm: ConductorViewModel, s: EstadoServicio, modifier
             Spacer(Modifier.height(16.dp))
             Surface(color = Color.White.copy(alpha = 0.08f), contentColor = Color.White, shape = RoundedCornerShape(16.dp)) {
                 Row(Modifier.fillMaxWidth().padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Outlined.PhotoCamera, contentDescription = null)
+                    Icon(Icons.Outlined.EventSeat, contentDescription = null)
                     Spacer(Modifier.width(12.dp))
-                    Text("Ocupación según cámaras", Modifier.weight(1f), style = MaterialTheme.typography.bodyLarge)
+                    Text("Asientos", Modifier.weight(1f), style = MaterialTheme.typography.bodyLarge)
                     Column(horizontalAlignment = Alignment.End) {
-                        Text("${s.aBordo} de ${s.capacidad}", style = MaterialTheme.typography.headlineMedium)
-                        Text("${s.reservados} reservados · ${s.libres} ${if (s.libres == 1) "libre" else "libres"}", style = MaterialTheme.typography.bodyMedium)
+                        Text("${s.libres} ${if (s.libres == 1) "libre" else "libres"} de ${s.capacidad}", style = MaterialTheme.typography.headlineMedium)
+                        Text("${s.aBordo} ocupados · ${s.reservados} reservados", style = MaterialTheme.typography.bodyMedium)
                     }
                 }
             }
         }
+        // Mapa de la línea asignada; sigue la ubicación del conductor mientras maneja.
+        val trazado by vm.trazado.collectAsState()
+        MapaRecorrido(
+            estado = trazado,
+            colectivos = emptyList(),
+            onColectivo = {},
+            onReintentar = vm::reintentarTrazado,
+            margenSuperior = 0.dp,
+            seguirUbicacion = true,
+            modifier = Modifier.fillMaxWidth().height(260.dp),
+        )
         CuerpoLista(Modifier.verticalScroll(rememberScrollState()).padding(16.dp)) {
             Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
                 s.ultimoPago?.let { pago ->
@@ -227,16 +258,11 @@ private fun PantallaServicio(vm: ConductorViewModel, s: EstadoServicio, modifier
                         }
                     }
                 }
+                PanelAsientos(s, onLibre = vm::ocuparAsiento, onOcupado = vm::liberarAsiento)
                 if (s.enEspera.isNotEmpty()) {
-                    Text("Pasajeros en espera", style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Medium))
+                    Text("Reservas", style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Medium))
                     s.enEspera.forEach { p ->
-                        if (p.enEsteParadero) PasajeroEnParadero(p) { vm.confirmarAbordaje(p.nombre) }
-                        else Tarjeta {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Text(p.nombre, Modifier.weight(1f), style = MaterialTheme.typography.titleMedium)
-                                Text("próximo paradero · ${p.minutosAlParadero} min", color = MaterialTheme.colorScheme.onSurfaceVariant)
-                            }
-                        }
+                        ReservaEnPanel(p, onAbordo = { vm.confirmarAbordaje(p.reservaId) }, onEliminar = { vm.eliminarReserva(p.reservaId) })
                     }
                 }
                 OutlinedButton(
@@ -254,11 +280,88 @@ private fun PantallaServicio(vm: ConductorViewModel, s: EstadoServicio, modifier
     }
 }
 
+/**
+ * Panel interactivo de asientos (no hay cámaras):
+ * toca un asiento libre cuando sube un pasajero sin reserva, y uno ocupado cuando baja.
+ * Los reservados se confirman o eliminan en la lista de reservas.
+ */
 @Composable
-private fun PasajeroEnParadero(p: PasajeroEnEspera, onConfirmar: () -> Unit) {
-    // Cuenta regresiva de los 3 minutos para abordar.
-    var segundos by rememberSaveable(p.nombre) { mutableIntStateOf(p.segundosParaAbordar) }
-    LaunchedEffect(p.nombre) {
+private fun PanelAsientos(s: EstadoServicio, onLibre: () -> Unit, onOcupado: () -> Unit) {
+    val reservados = s.enEspera.flatMap { p -> List(p.asientos) { p.nombre } }
+    Tarjeta {
+        Text("Tu vehículo", style = MaterialTheme.typography.titleMedium)
+        Text(
+            "Toca un asiento libre si sube alguien sin reserva, o uno ocupado si se baja.",
+            color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodyMedium,
+        )
+        Spacer(Modifier.height(12.dp))
+        val asientos = List(s.capacidad) { i ->
+            when {
+                i < s.aBordo -> EstadoAsiento.OCUPADO to null
+                i < s.aBordo + reservados.size -> EstadoAsiento.RESERVADO to reservados[i - s.aBordo]
+                else -> EstadoAsiento.LIBRE to null
+            }
+        }
+        asientos.chunked(2).forEachIndexed { fila, par ->
+            Row(horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.padding(bottom = 12.dp)) {
+                par.forEachIndexed { j, (estado, nombre) ->
+                    Asiento(fila * 2 + j + 1, estado, nombre, Modifier.weight(1f)) {
+                        when (estado) {
+                            EstadoAsiento.LIBRE -> onLibre()
+                            EstadoAsiento.OCUPADO -> onOcupado()
+                            EstadoAsiento.RESERVADO -> Unit
+                        }
+                    }
+                }
+                if (par.size == 1) Spacer(Modifier.weight(1f))
+            }
+        }
+        Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+            EstadoAsiento.entries.forEach { e ->
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Box(Modifier.size(12.dp).background(colorAsiento(e), RoundedCornerShape(3.dp)))
+                    Spacer(Modifier.width(6.dp))
+                    Text(e.texto, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            }
+        }
+    }
+}
+
+private enum class EstadoAsiento(val texto: String) { LIBRE("Libre"), RESERVADO("Reservado"), OCUPADO("Ocupado") }
+
+private fun colorAsiento(e: EstadoAsiento) = when (e) {
+    EstadoAsiento.LIBRE -> VerdeMarca
+    EstadoAsiento.RESERVADO -> Color(0xFFFFA000)
+    EstadoAsiento.OCUPADO -> Color(0xFF616161)
+}
+
+@Composable
+private fun Asiento(numero: Int, estado: EstadoAsiento, nombre: String?, modifier: Modifier, onClick: () -> Unit) {
+    Surface(
+        onClick = onClick,
+        enabled = estado != EstadoAsiento.RESERVADO,
+        modifier = modifier.height(84.dp),
+        shape = RoundedCornerShape(16.dp),
+        color = colorAsiento(estado),
+        contentColor = if (estado == EstadoAsiento.LIBRE) Color.Black else Color.White,
+    ) {
+        Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.Center) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(Icons.Outlined.EventSeat, contentDescription = null, Modifier.size(20.dp))
+                Spacer(Modifier.width(6.dp))
+                Text("Asiento $numero", style = MaterialTheme.typography.titleMedium)
+            }
+            Text(nombre ?: estado.texto, style = MaterialTheme.typography.bodyMedium, maxLines = 1)
+        }
+    }
+}
+
+/** Una reserva activa: vence a los 3 minutos; el conductor confirma que subió o la elimina. */
+@Composable
+private fun ReservaEnPanel(p: PasajeroEnEspera, onAbordo: () -> Unit, onEliminar: () -> Unit) {
+    var segundos by rememberSaveable(p.reservaId) { mutableIntStateOf(p.segundosParaAbordar) }
+    LaunchedEffect(p.reservaId) {
         while (segundos > 0) {
             delay(1_000)
             segundos--
@@ -273,29 +376,37 @@ private fun PasajeroEnParadero(p: PasajeroEnEspera, onConfirmar: () -> Unit) {
             Spacer(Modifier.width(16.dp))
             Column(Modifier.weight(1f)) {
                 Text(p.nombre, style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Medium))
-                Text("En este paradero · ${p.asientos} ${if (p.asientos == 1) "asiento" else "asientos"}", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text("${p.asientos} ${if (p.asientos == 1) "asiento reservado" else "asientos reservados"}", color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
             Column(horizontalAlignment = Alignment.End) {
                 Text("%02d:%02d".format(segundos / 60, segundos % 60), style = MaterialTheme.typography.headlineMedium)
-                Text("para abordar", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text("para que expire", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
         Spacer(Modifier.height(16.dp))
-        Button(onConfirmar, Modifier.fillMaxWidth().height(64.dp)) {
-            Icon(Icons.Filled.Check, contentDescription = null)
-            Spacer(Modifier.width(12.dp))
-            Text("Confirmar abordaje", style = MaterialTheme.typography.titleLarge)
+        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            OutlinedButton(
+                onClick = onEliminar,
+                modifier = Modifier.weight(1f).height(56.dp),
+                border = BorderStroke(2.dp, MaterialTheme.colorScheme.error),
+                colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error),
+            ) { Text("Eliminar", style = MaterialTheme.typography.titleMedium) }
+            Button(onAbordo, Modifier.weight(1f).height(56.dp)) {
+                Icon(Icons.Filled.Check, contentDescription = null)
+                Spacer(Modifier.width(8.dp))
+                Text("Subió", style = MaterialTheme.typography.titleMedium)
+            }
         }
     }
 }
 
 @Composable
-fun AvisosConductorScreen(vm: ConductorViewModel, onCorreccion: () -> Unit, modifier: Modifier = Modifier) {
+fun AvisosConductorScreen(vm: ConductorViewModel, modifier: Modifier = Modifier) {
     val s by vm.servicio.collectAsState()
+    ErrorComoAviso(vm)
     val contexto = LocalContext.current
     fun enviar(a: Aviso) = vm.enviarAviso(a) {
         Toast.makeText(contexto, "${a.codigo} enviado", Toast.LENGTH_SHORT).show()
-        if (a == Aviso.AC04) onCorreccion()
     }
 
     Column(modifier.fillMaxSize()) {
@@ -329,7 +440,7 @@ fun AvisosConductorScreen(vm: ConductorViewModel, onCorreccion: () -> Unit, modi
                     }
                 }
                 Text(
-                    "Un toque y listo, sin texto libre. Los avisos AC-01 a AC-05 se habilitan solo con el vehículo detenido; " +
+                    "Un toque y listo, sin texto libre. Los avisos AC-01, AC-02, AC-03 y AC-05 se habilitan solo con el vehículo detenido; " +
                         "la emergencia está siempre disponible.",
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -344,7 +455,6 @@ private fun BotonAviso(a: Aviso, habilitado: Boolean, modifier: Modifier, onClic
         Aviso.AC01 -> Icons.Outlined.Schedule
         Aviso.AC02 -> Icons.Outlined.TurnRight
         Aviso.AC03 -> Icons.Outlined.Build
-        Aviso.AC04 -> Icons.Outlined.NoPhotography
         Aviso.AC05 -> Icons.Outlined.QrCode2
         Aviso.AC06 -> Icons.Outlined.WarningAmber
     }
@@ -357,58 +467,10 @@ private fun BotonAviso(a: Aviso, habilitado: Boolean, modifier: Modifier, onClic
 }
 
 @Composable
-fun CorreccionOcupacionScreen(vm: ConductorViewModel, onAtras: () -> Unit) {
-    val s by vm.servicio.collectAsState()
-    // Solo se llega aquí después de enviar AC-04.
-    LaunchedEffect(s.correccionHabilitada) { if (!s.correccionHabilitada) onAtras() }
-    var aBordo by rememberSaveable { mutableIntStateOf(s.aBordo) }
-
-    Scaffold(
-        bottomBar = {
-            Column(Modifier.padding(MargenPantalla), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                Text("Esta pantalla solo aparece después de enviar el aviso AC-04.", color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodyMedium)
-                BotonPrincipal("Guardar", { vm.guardarCorreccion(aBordo, onAtras) })
-            }
-        },
-    ) { padding ->
-        Column(Modifier.padding(padding).fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally) {
-            BarraAtras("Corrección de ocupación", onAtras)
-            Surface(
-                Modifier.fillMaxWidth().padding(horizontal = MargenPantalla),
-                color = Extra.avisoFondo, contentColor = Extra.avisoTexto, shape = RoundedCornerShape(16.dp),
-            ) {
-                Row(Modifier.padding(16.dp)) {
-                    Icon(Icons.Outlined.NoPhotography, contentDescription = null)
-                    Spacer(Modifier.width(12.dp))
-                    Column {
-                        Text("AC-04 enviado · Falla de cámara", style = MaterialTheme.typography.titleMedium)
-                        Text("Indica cuántos pasajeros van realmente a bordo.")
-                    }
-                }
-            }
-            Spacer(Modifier.height(40.dp))
-            Text("Pasajeros a bordo", color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.titleMedium)
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(32.dp)) {
-                OutlinedIconButton(
-                    onClick = { if (aBordo > 0) aBordo-- },
-                    modifier = Modifier.size(84.dp),
-                    border = BorderStroke(2.dp, MaterialTheme.colorScheme.onSurface),
-                ) { Icon(Icons.Filled.Remove, contentDescription = "Restar", Modifier.size(36.dp)) }
-                Text("$aBordo", style = MaterialTheme.typography.displayLarge.copy(fontWeight = FontWeight.Bold))
-                FilledIconButton(
-                    onClick = { if (aBordo < s.capacidad) aBordo++ },
-                    modifier = Modifier.size(84.dp),
-                    colors = IconButtonDefaults.filledIconButtonColors(containerColor = MaterialTheme.colorScheme.primary),
-                ) { Icon(Icons.Filled.Add, contentDescription = "Sumar", Modifier.size(36.dp)) }
-            }
-            Text("de ${s.capacidad} asientos", color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.titleMedium)
-        }
-    }
-}
-
-@Composable
 fun RutasScreen(vm: ConductorViewModel, modifier: Modifier = Modifier) {
     val turnos = vm.turnos
+    LaunchedEffect(Unit) { vm.cargar() }
+    ErrorComoAviso(vm)
     Column(modifier.fillMaxSize()) {
         Encabezado("Mis rutas y horarios", vm.nombre)
         CuerpoLista {
@@ -442,9 +504,11 @@ fun RutasScreen(vm: ConductorViewModel, modifier: Modifier = Modifier) {
                                 Text(t.recorrido ?: "Libre", style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Medium))
                                 Text(t.patente?.let { "Vehículo $it" } ?: "Sin asignación", color = MaterialTheme.colorScheme.onSurfaceVariant)
                             }
-                            when (t.recorrido) {
-                                null -> Etiqueta("Libre", Extra.neutroFondo, MaterialTheme.colorScheme.onSurfaceVariant)
-                                "Recorrido 1" -> Etiqueta(t.horario.orEmpty(), MaterialTheme.colorScheme.primaryContainer, MaterialTheme.colorScheme.onPrimaryContainer)
+                            // Turno de mañana en verde; de tarde en azul.
+                            when {
+                                t.recorrido == null -> Etiqueta("Libre", Extra.neutroFondo, MaterialTheme.colorScheme.onSurfaceVariant)
+                                t.horario?.startsWith("06") == true ->
+                                    Etiqueta(t.horario.orEmpty(), MaterialTheme.colorScheme.primaryContainer, MaterialTheme.colorScheme.onPrimaryContainer)
                                 else -> Etiqueta(t.horario.orEmpty(), Extra.infoFondo, Extra.infoTexto)
                             }
                         }
@@ -462,6 +526,9 @@ fun AlertasConductorScreen(vm: ConductorViewModel, modifier: Modifier = Modifier
         Encabezado("Notificaciones", "Avisos del sistema para ti")
         CuerpoLista {
             LazyColumn(contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                if (lista.isEmpty()) {
+                    item { Text("Aún no tienes notificaciones.", color = MaterialTheme.colorScheme.onSurfaceVariant) }
+                }
                 items(lista) { FilaNotificacion(it) }
             }
         }

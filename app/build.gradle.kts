@@ -1,8 +1,20 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
 }
+
+// Dirección del servidor (backend en Render, con PostgreSQL + MongoDB).
+// Por defecto usa el servidor del proyecto. Para cambiarlo, en local.properties:
+//   API_URL=http://10.0.2.2:3000      (servidor en tu PC, desde el emulador)
+//   API_URL=                          (vacío: datos de ejemplo en memoria, sin internet)
+val localProperties = Properties().apply {
+    val archivo = rootProject.file("local.properties")
+    if (archivo.exists()) archivo.inputStream().use { load(it) }
+}
+val apiUrl: String = localProperties.getProperty("API_URL", "https://conatacoch-api.onrender.com").trim()
 
 android {
     namespace = "cl.conatacoch.app"
@@ -15,6 +27,8 @@ android {
         versionCode = 1
         versionName = "0.1.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        buildConfigField("String", "API_URL", "\"$apiUrl\"")
     }
 
     buildTypes {
@@ -28,6 +42,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }
 
@@ -53,6 +68,8 @@ dependencies {
     implementation(libs.compose.material3)
     implementation(libs.compose.icons.extended)
     implementation(libs.compose.ui.tooling.preview)
+    // Mapa de OpenStreetMap (gratis, sin clave).
+    implementation(libs.osmdroid)
     debugImplementation(libs.compose.ui.tooling)
 
     testImplementation(libs.junit)

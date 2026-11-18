@@ -10,6 +10,9 @@ Esta guía detalla los requisitos, configuración de entorno y pasos para poner 
 
 ---
 
+> **Base de datos real y servidor 24/7:** sigue `DESPLIEGUE.md` (Neon + MongoDB Atlas + Render, gratis).
+> Lo que sigue en esta sección es solo para correr el servidor en tu PC.
+
 ## 2. Configuración del Servidor Backend (Node.js + Express + Socket.IO)
 
 1. Ubícate en la carpeta del backend:
@@ -20,11 +23,8 @@ Esta guía detalla los requisitos, configuración de entorno y pasos para poner 
    ```bash
    npm install
    ```
-3. Configura las variables de entorno creando un archivo `.env`:
-   ```env
-   PORT=3000
-   JWT_SECRET=conatacoch_secret_key_2026
-   ```
+3. Copia `backend/.env.example` como `backend/.env` y completa `DATABASE_URL` (PostgreSQL) y `MONGODB_URI` (MongoDB).
+   Las tablas y los datos iniciales se crean solos al arrancar.
 4. Inicia el servidor en modo desarrollo:
    ```bash
    npm run dev
@@ -48,6 +48,28 @@ Los archivos con los 15 recorridos oficiales y 451 segmentos de calles de la Reg
 Puedes importarlos a la base de datos relacional ejecutando el script DDL ubicado en `backend/database/schema.sql`.
 
 ---
+
+## 3.1 Mapa real (OpenStreetMap, gratis y sin clave)
+
+El mapa del pasajero usa **OpenStreetMap** con la librería **osmdroid**. No necesita clave, cuenta ni tarjeta.
+Los 15 recorridos oficiales se dibujan sobre las calles reales así:
+
+1. La app toma las calles de `ruta_calles.csv` (copiadas en `data/local/CatalogoRecorridos.kt`).
+2. Con **Overpass API** busca esas calles en OpenStreetMap y el punto exacto donde se cruza cada par de calles seguidas.
+3. Con **OSRM** une esos cruces siguiendo las calles (ruta en auto).
+4. El resultado se guarda en el teléfono: la primera vez que eliges un recorrido tarda unos segundos;
+   después aparece al instante, incluso sin internet.
+
+Requisitos: que el teléfono o emulador tenga internet. No hay que configurar nada más.
+
+Notas:
+- Overpass y OSRM son servidores públicos gratuitos pensados para pruebas. Si alguno está lento o caído,
+  el mapa muestra "No se pudo cargar el recorrido" con un botón **Reintentar**.
+- Antes de presentar, abre cada recorrido una vez para que quede guardado en el teléfono.
+- Si un tramo se dibuja raro, casi siempre es porque el nombre de la calle en el CSV no coincide con el de
+  OpenStreetMap (puedes revisarlo en openstreetmap.org). Corrige el CSV y regenera el catálogo con
+  `python3 backend/database/seed/generar_catalogo.py`, y luego borra los datos de la app para recalcular.
+- Para una app en producción, el backend debería calcular los trazados una vez y guardarlos en la base de datos.
 
 ## 4. Configuración y Ejecución de la Aplicación Android
 

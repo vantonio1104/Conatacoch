@@ -20,12 +20,6 @@ class FakeAuthRepository : AuthRepository {
         pasajeros[correo.trim().lowercase()] = Cuenta(nombre, password, EstadoCuenta.APROBADA)
     }
 
-    override suspend fun reenviarCodigo(correo: String) = Unit
-
-    // Sin backend no hay correo real: se acepta cualquier código de 6 dígitos.
-    override suspend fun verificarCodigo(correo: String, codigo: String): Boolean =
-        codigo.length == 6 && codigo.all { it.isDigit() }
-
     override suspend fun loginPasajero(correo: String, password: String): String? =
         pasajeros[correo.trim().lowercase()]?.takeIf { it.password == password }?.nombre
 

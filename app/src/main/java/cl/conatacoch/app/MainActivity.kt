@@ -17,6 +17,7 @@ import cl.conatacoch.app.ui.theme.ConatacochTheme
 class MainActivity : FragmentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        AppContainer.directorioDatos = filesDir
         enableEdgeToEdge()
         setContent {
             val prefs by AppContainer.preferencias.preferencias.collectAsState()

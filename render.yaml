@@ -1,0 +1,19 @@
+# Despliegue del backend en Render (plan gratis). Ver DESPLIEGUE.md.
+services:
+  - type: web
+    name: conatacoch-api
+    runtime: node
+    plan: free
+    rootDir: backend
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /api/salud
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: MONGODB_URI
+        sync: false
+      - key: MONGODB_DB
+        value: conatacoch
+      - key: JWT_SECRET
+        generateValue: true

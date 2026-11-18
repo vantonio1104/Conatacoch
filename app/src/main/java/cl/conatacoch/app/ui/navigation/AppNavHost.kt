@@ -24,6 +24,10 @@ import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -44,14 +48,12 @@ import cl.conatacoch.app.ui.conductor.AlertasConductorScreen
 import cl.conatacoch.app.ui.conductor.AvisosConductorScreen
 import cl.conatacoch.app.ui.conductor.ConductorAuthViewModel
 import cl.conatacoch.app.ui.conductor.ConductorViewModel
-import cl.conatacoch.app.ui.conductor.CorreccionOcupacionScreen
 import cl.conatacoch.app.ui.conductor.LoginConductorScreen
 import cl.conatacoch.app.ui.conductor.PendienteValidacionScreen
 import cl.conatacoch.app.ui.conductor.RegistroConductorPaso1Screen
 import cl.conatacoch.app.ui.conductor.RegistroConductorPaso2Screen
 import cl.conatacoch.app.ui.conductor.RutasScreen
 import cl.conatacoch.app.ui.conductor.ServicioScreen
-import cl.conatacoch.app.ui.pasajero.CodigoVerificacionScreen
 import cl.conatacoch.app.ui.pasajero.DetalleColectivoScreen
 import cl.conatacoch.app.ui.pasajero.HistorialScreen
 import cl.conatacoch.app.ui.pasajero.LoginPasajeroScreen
@@ -65,6 +67,7 @@ import cl.conatacoch.app.ui.pasajero.PasajeroViewModel
 import cl.conatacoch.app.ui.pasajero.PreferenciasScreen
 import cl.conatacoch.app.ui.pasajero.RegistroPasajeroScreen
 import cl.conatacoch.app.ui.pasajero.ReservaActivaScreen
+import cl.conatacoch.app.ui.pasajero.SinCuentaScreen
 import cl.conatacoch.app.ui.theme.Extra
 import cl.conatacoch.app.ui.admin.*
 
@@ -73,7 +76,6 @@ object Rutas {
 
     const val P_LOGIN = "pasajero/login"
     const val P_REGISTRO = "pasajero/registro"
-    const val P_CODIGO = "pasajero/codigo"
     const val P_MAPA = "pasajero/mapa"
     const val P_PAGAR = "pasajero/pagar"
     const val P_HISTORIAL = "pasajero/historial"
@@ -92,7 +94,6 @@ object Rutas {
     const val C_AVISOS = "conductor/avisos"
     const val C_RUTAS = "conductor/rutas"
     const val C_ALERTAS = "conductor/alertas"
-    const val C_CORRECCION = "conductor/correccion"
 
     const val A_LOGIN = "admin/login"
     const val A_DASHBOARD = "admin/dashboard"
@@ -100,6 +101,7 @@ object Rutas {
     const val A_AUTOMOVILES = "admin/automoviles"
     const val A_MAPA = "admin/mapa"
     const val A_RUTAS = "admin/rutas"
+    const val A_TURNOS = "admin/turnos"
 
     fun detalle(patente: String) = "pasajero/detalle/$patente"
 }
@@ -126,11 +128,36 @@ fun AppNavHost() {
     val nav = rememberNavController()
     // Con alcance de la Activity: se comparten entre pantallas del mismo perfil.
     val pasajeroAuth = viewModel { PasajeroAuthViewModel(AppContainer.auth) }
-    val pasajero = viewModel { PasajeroViewModel(AppContainer.pasajero, AppContainer.preferencias) }
+    val pasajero = viewModel { PasajeroViewModel(AppContainer.pasajero, AppContainer.preferencias, AppContainer.mapa) }
     val conductorAuth = viewModel { ConductorAuthViewModel(AppContainer.auth) }
-    val conductor = viewModel { ConductorViewModel(AppContainer.conductor, AppContainer.preferencias) }
+    val conductor = viewModel {
+        ConductorViewModel(AppContainer.conductor, AppContainer.preferencias, AppContainer.mapa, AppContainer.pasajero.recorridos)
+    }
+    val admin = viewModel { AdminViewModel(AppContainer.admin, AppContainer.mapa) }
 
     fun irAInicio(ruta: String) = nav.navigate(ruta) { popUpTo(nav.graph.id) { inclusive = true } }
+
+    // Registro opcional: un invitado usa el mapa y, si quiere reservar o pagar, se le pide cuenta.
+    // Después de ingresar (o de seguir sin cuenta) vuelve a la pantalla desde donde lo pidió.
+    var destinoTrasIngresar by remember { mutableStateOf<String?>(null) }
+    fun pedirCuenta(registro: Boolean, desde: String) {
+        destinoTrasIngresar = desde
+        nav.navigate(if (registro) Rutas.P_REGISTRO else Rutas.P_LOGIN) { launchSingleTop = true }
+    }
+    fun volverALaApp() {
+        val destino = destinoTrasIngresar
+        destinoTrasIngresar = null
+        irAInicio(Rutas.P_MAPA)
+        if (destino != null && destino != Rutas.P_MAPA) nav.navigate(destino) { launchSingleTop = true }
+    }
+    fun continuarSinCuenta() {
+        pasajeroAuth.entrarComoInvitado()
+        volverALaApp()
+    }
+    fun cerrarSesionPasajero() {
+        pasajeroAuth.cerrarSesion()
+        irAInicio(Rutas.PERFIL)
+    }
     fun volverAlMapa() {
         pasajero.terminarPago()
         nav.navigate(Rutas.P_MAPA) { popUpTo(Rutas.P_MAPA) { inclusive = false }; launchSingleTop = true }
@@ -149,47 +176,41 @@ fun AppNavHost() {
             )
         }
         composable(Rutas.A_LOGIN) {
-            AdminLoginScreen(onLoginSuccess = { nav.navigate(Rutas.A_DASHBOARD) { popUpTo(Rutas.A_LOGIN) { inclusive = true } } })
+            AdminLoginScreen(admin, onLoginSuccess = { nav.navigate(Rutas.A_DASHBOARD) { popUpTo(Rutas.A_LOGIN) { inclusive = true } } })
         }
         composable(Rutas.A_DASHBOARD) {
             AdminDashboardScreen(
+                admin,
                 onNavigateToConductores = { nav.navigate(Rutas.A_CONDUCTORES) },
                 onNavigateToAutomoviles = { nav.navigate(Rutas.A_AUTOMOVILES) },
                 onNavigateToRutas = { nav.navigate(Rutas.A_RUTAS) },
                 onNavigateToMapa = { nav.navigate(Rutas.A_MAPA) },
-                onCerrarSesion = { irAInicio(Rutas.PERFIL) }
+                onNavigateToTurnos = { nav.navigate(Rutas.A_TURNOS) },
+                onCerrarSesion = { irAInicio(Rutas.PERFIL) },
             )
         }
-        composable(Rutas.A_CONDUCTORES) {
-            AdminConductoresScreen(onBack = { nav.popBackStack() })
-        }
-        composable(Rutas.A_AUTOMOVILES) {
-            AdminAutomovilesScreen(onBack = { nav.popBackStack() })
-        }
-        composable(Rutas.A_MAPA) {
-            AdminMapaGlobalScreen(onBack = { nav.popBackStack() })
-        }
-        composable(Rutas.A_RUTAS) {
-            AdminRutasScreen(onBack = { nav.popBackStack() })
-        }
+        composable(Rutas.A_CONDUCTORES) { AdminConductoresScreen(admin, onBack = { nav.popBackStack() }) }
+        composable(Rutas.A_AUTOMOVILES) { AdminAutomovilesScreen(admin, onBack = { nav.popBackStack() }) }
+        composable(Rutas.A_MAPA) { AdminMapaGlobalScreen(admin, onBack = { nav.popBackStack() }) }
+        composable(Rutas.A_RUTAS) { AdminRutasScreen(admin, onBack = { nav.popBackStack() }) }
+        composable(Rutas.A_TURNOS) { AdminTurnosScreen(admin, onBack = { nav.popBackStack() }) }
 
         // --- Pasajero ---
         composable(Rutas.P_LOGIN) {
             LoginPasajeroScreen(
                 pasajeroAuth,
-                onIngresado = { irAInicio(Rutas.P_MAPA) },
+                onIngresado = ::volverALaApp,
                 onIrARegistro = { nav.navigate(Rutas.P_REGISTRO) { launchSingleTop = true } },
+                onInvitado = ::continuarSinCuenta,
             )
         }
         composable(Rutas.P_REGISTRO) {
             RegistroPasajeroScreen(
                 pasajeroAuth,
-                onRegistrado = { nav.navigate(Rutas.P_CODIGO) },
+                onRegistrado = ::volverALaApp,
                 onIrALogin = { nav.navigate(Rutas.P_LOGIN) { popUpTo(Rutas.P_LOGIN) { inclusive = true } } },
+                onInvitado = ::continuarSinCuenta,
             )
-        }
-        composable(Rutas.P_CODIGO) {
-            CodigoVerificacionScreen(pasajeroAuth, onAtras = { nav.popBackStack() }, onVerificado = { irAInicio(Rutas.P_MAPA) })
         }
         composable(Rutas.P_MAPA) {
             ConBarra(nav, PestanasPasajero, Rutas.P_MAPA) {
@@ -197,25 +218,72 @@ fun AppNavHost() {
             }
         }
         composable(Rutas.P_PAGAR) {
-            ConBarra(nav, PestanasPasajero, Rutas.P_PAGAR) { PagarScreen(pasajero, ::resultadoPago, it) }
+            ConBarra(nav, PestanasPasajero, Rutas.P_PAGAR) {
+                if (pasajeroAuth.invitado) {
+                    SinCuentaScreen(
+                        "Pagar viaje", "Escanea el QR impreso en el colectivo",
+                        "Para pagar con Rutpay necesitas una cuenta: así quedan tu comprobante y tu historial de pagos.",
+                        onIniciarSesion = { pedirCuenta(false, Rutas.P_PAGAR) },
+                        onCrearCuenta = { pedirCuenta(true, Rutas.P_PAGAR) },
+                        modifier = it,
+                    )
+                } else {
+                    PagarScreen(pasajero, ::resultadoPago, it)
+                }
+            }
         }
         composable(Rutas.P_HISTORIAL) {
-            ConBarra(nav, PestanasPasajero, Rutas.P_HISTORIAL) { HistorialScreen(pasajero, { nav.navigate(Rutas.P_RESERVA) }, it) }
+            ConBarra(nav, PestanasPasajero, Rutas.P_HISTORIAL) {
+                if (pasajeroAuth.invitado) {
+                    SinCuentaScreen(
+                        "Historial", "Tus pagos y reservas",
+                        "Cuando tengas una cuenta, aquí verás tus pagos y tus reservas.",
+                        onIniciarSesion = { pedirCuenta(false, Rutas.P_HISTORIAL) },
+                        onCrearCuenta = { pedirCuenta(true, Rutas.P_HISTORIAL) },
+                        modifier = it,
+                    )
+                } else {
+                    HistorialScreen(pasajero, { nav.navigate(Rutas.P_RESERVA) }, it)
+                }
+            }
         }
         composable(Rutas.P_AVISOS) {
-            ConBarra(nav, PestanasPasajero, Rutas.P_AVISOS) { NotificacionesPasajeroScreen(pasajero, it) }
+            ConBarra(nav, PestanasPasajero, Rutas.P_AVISOS) {
+                if (pasajeroAuth.invitado) {
+                    SinCuentaScreen(
+                        "Notificaciones", "Avisos sobre tus viajes y reservas",
+                        "Los avisos de llegada, retrasos y desvíos son para tus reservas, por eso necesitas una cuenta.",
+                        onIniciarSesion = { pedirCuenta(false, Rutas.P_AVISOS) },
+                        onCrearCuenta = { pedirCuenta(true, Rutas.P_AVISOS) },
+                        modifier = it,
+                    )
+                } else {
+                    NotificacionesPasajeroScreen(pasajero, it)
+                }
+            }
         }
         composable(Rutas.P_PERFIL) {
             ConBarra(nav, PestanasPasajero, Rutas.P_PERFIL) {
-                PreferenciasScreen(pasajero, pasajeroAuth.nombre, onCerrarSesion = { irAInicio(Rutas.PERFIL) }, it)
+                PreferenciasScreen(
+                    pasajero,
+                    nombre = pasajeroAuth.nombre,
+                    invitado = pasajeroAuth.invitado,
+                    onCerrarSesion = ::cerrarSesionPasajero,
+                    onIniciarSesion = { pedirCuenta(false, Rutas.P_PERFIL) },
+                    onCrearCuenta = { pedirCuenta(true, Rutas.P_PERFIL) },
+                    modifier = it,
+                )
             }
         }
         composable(Rutas.P_DETALLE) { entrada ->
+            val patente = entrada.arguments?.getString("patente").orEmpty()
             DetalleColectivoScreen(
                 pasajero,
-                patente = entrada.arguments?.getString("patente").orEmpty(),
+                patente = patente,
+                invitado = pasajeroAuth.invitado,
                 onAtras = { nav.popBackStack() },
                 onVerReserva = { nav.navigate(Rutas.P_RESERVA) { popUpTo(Rutas.P_MAPA) } },
+                onPedirCuenta = { pedirCuenta(false, Rutas.detalle(patente)) },
             )
         }
         composable(Rutas.P_RESERVA) {
@@ -247,14 +315,17 @@ fun AppNavHost() {
             )
         }
         composable(Rutas.C_PENDIENTE) {
-            PendienteValidacionScreen(onCerrarSesion = { nav.navigate(Rutas.C_LOGIN) { popUpTo(Rutas.C_LOGIN) { inclusive = true } } })
+            PendienteValidacionScreen(onCerrarSesion = {
+                conductorAuth.cerrarSesion()
+                nav.navigate(Rutas.C_LOGIN) { popUpTo(Rutas.C_LOGIN) { inclusive = true } }
+            })
         }
         composable(Rutas.C_SERVICIO) {
             ConBarra(nav, PestanasConductor, Rutas.C_SERVICIO) { ServicioScreen(conductor, it) }
         }
         composable(Rutas.C_AVISOS) {
             ConBarra(nav, PestanasConductor, Rutas.C_AVISOS) {
-                AvisosConductorScreen(conductor, onCorreccion = { nav.navigate(Rutas.C_CORRECCION) }, it)
+                AvisosConductorScreen(conductor, it)
             }
         }
         composable(Rutas.C_RUTAS) {
@@ -262,10 +333,6 @@ fun AppNavHost() {
         }
         composable(Rutas.C_ALERTAS) {
             ConBarra(nav, PestanasConductor, Rutas.C_ALERTAS) { AlertasConductorScreen(conductor, it) }
-        }
-        composable(Rutas.C_CORRECCION) {
-            // popBackStack con ruta: no hace nada si la pantalla ya salió de la pila.
-            CorreccionOcupacionScreen(conductor, onAtras = { nav.popBackStack(Rutas.C_CORRECCION, inclusive = true) })
         }
     }
 }

@@ -1,632 +1,908 @@
 package cl.conatacoch.app.ui.admin
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material.icons.automirrored.outlined.ArrowBack
+import androidx.compose.material.icons.automirrored.outlined.Logout
+import androidx.compose.material.icons.outlined.Add
+import androidx.compose.material.icons.outlined.AdminPanelSettings
+import androidx.compose.material.icons.outlined.CalendarMonth
+import androidx.compose.material.icons.outlined.Delete
+import androidx.compose.material.icons.outlined.DirectionsCar
+import androidx.compose.material.icons.outlined.Edit
+import androidx.compose.material.icons.outlined.Map
+import androidx.compose.material.icons.outlined.Person
+import androidx.compose.material.icons.outlined.Refresh
+import androidx.compose.material.icons.outlined.Schedule
+import androidx.compose.material.icons.outlined.Search
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBar
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
+import cl.conatacoch.app.domain.model.AutoAdmin
+import cl.conatacoch.app.domain.model.ConductorAdmin
+import cl.conatacoch.app.domain.model.ConteoSemaforo
+import cl.conatacoch.app.domain.model.DatosAutoAdmin
+import cl.conatacoch.app.domain.model.DatosConductorAdmin
+import cl.conatacoch.app.domain.model.EstadoConductor
+import cl.conatacoch.app.domain.model.RecorridoAdmin
+import cl.conatacoch.app.domain.model.Semaforo
+import cl.conatacoch.app.domain.model.TipoTurno
+import cl.conatacoch.app.domain.model.TurnosConductor
 import cl.conatacoch.app.ui.components.BotonPrincipal
-import cl.conatacoch.app.ui.components.BotonSecundario
+import cl.conatacoch.app.ui.pasajero.ErrorGenerico
+import cl.conatacoch.app.ui.pasajero.MapaFlota
+import kotlinx.coroutines.delay
+import java.time.Duration
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 
-@OptIn(ExperimentalMaterial3Api::class)
+// Panel de administración. Todo lo que se ve y se guarda aquí viene de la base de datos (AdminViewModel).
+
+private val VerdeSemaforo = Color(0xFF48B749)
+private val AmbarSemaforo = Color(0xFFFFA000)
+private val RojoSemaforo = Color(0xFFD32F2F)
+private val GrisSemaforo = Color(0xFF9E9E9E)
+
+private fun colorSemaforo(s: Semaforo) = when (s) {
+    Semaforo.VIGENTE -> VerdeSemaforo
+    Semaforo.POR_VENCER -> AmbarSemaforo
+    Semaforo.VENCIDO -> RojoSemaforo
+    Semaforo.SIN_DATOS -> GrisSemaforo
+}
+
+private fun textoSemaforo(s: Semaforo, documentos: Boolean) = when (s) {
+    Semaforo.VIGENTE -> if (documentos) "Al día" else "Vigente"
+    Semaforo.POR_VENCER -> "Por vencer (<30 días)"
+    Semaforo.VENCIDO -> "Vencido"
+    Semaforo.SIN_DATOS -> "Sin documentos"
+}
+
+/** aaaa-mm-dd → dd-mm-aaaa. */
+private fun fechaCl(iso: String?): String =
+    iso?.split("-")?.takeIf { it.size == 3 }?.let { (a, m, d) -> "$d-$m-$a" } ?: "—"
+
+private val FormatoAviso = DateTimeFormatter.ofPattern("dd-MM HH:mm")
+
+/** Errores y mensajes del servidor, arriba de cada pantalla. */
 @Composable
-fun AdminLoginScreen(
-    onLoginSuccess: () -> Unit
-) {
-    var email by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
-    var error by remember { mutableStateOf<String?>(null) }
-
-    Scaffold(
-        topBar = {
-            TopAppBar(title = { Text("Acceso Administrador - CONATACOCH") })
-        }
-    ) { padding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-                .padding(20.dp),
-            verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Icon(Icons.Outlined.AdminPanelSettings, contentDescription = null, modifier = Modifier.size(72.dp), tint = MaterialTheme.colorScheme.primary)
-            Spacer(modifier = Modifier.height(16.dp))
-            Text("Panel de Administración", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
-            Text("Ingrese sus credenciales de administrador", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            Spacer(modifier = Modifier.height(24.dp))
-            OutlinedTextField(
-                value = email,
-                onValueChange = { email = it },
-                label = { Text("Correo electrónico (ej. admin@conatacoch.cl)") },
-                modifier = Modifier.fillMaxWidth()
-            )
-            Spacer(modifier = Modifier.height(12.dp))
-            OutlinedTextField(
-                value = password,
-                onValueChange = { password = it },
-                label = { Text("Contraseña") },
-                modifier = Modifier.fillMaxWidth()
-            )
-            if (error != null) {
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(error!!, color = MaterialTheme.colorScheme.error)
+private fun Mensajes(vm: AdminViewModel) {
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        if (vm.cargando) LinearProgressIndicator(Modifier.fillMaxWidth())
+        vm.error?.let { ErrorGenerico(it) }
+        vm.mensaje?.let {
+            Surface(color = MaterialTheme.colorScheme.primaryContainer, shape = MaterialTheme.shapes.medium) {
+                Text(it, Modifier.fillMaxWidth().padding(12.dp), color = MaterialTheme.colorScheme.onPrimaryContainer)
             }
-            Spacer(modifier = Modifier.height(24.dp))
-            BotonPrincipal(
-                texto = "Ingresar como Administrador",
-                onClick = {
-                    if (email == "admin@conatacoch.cl" && password == "colectivo-demo-2026") {
-                        onLoginSuccess()
-                    } else {
-                        error = "Credenciales inválidas (use admin@conatacoch.cl / colectivo-demo-2026)"
-                    }
-                },
-                modifier = Modifier.fillMaxWidth()
-            )
         }
+    }
+}
+
+@Composable
+private fun PuntoSemaforo(color: Color, texto: String) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Box(Modifier.size(12.dp).background(color, CircleShape))
+        Spacer(Modifier.width(6.dp))
+        Text(texto, style = MaterialTheme.typography.bodySmall)
     }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
+private fun BarraAdmin(titulo: String, onBack: () -> Unit, onActualizar: (() -> Unit)? = null) {
+    TopAppBar(
+        title = { Text(titulo) },
+        navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Outlined.ArrowBack, contentDescription = "Volver") } },
+        actions = {
+            if (onActualizar != null) {
+                IconButton(onClick = onActualizar) { Icon(Icons.Outlined.Refresh, contentDescription = "Actualizar") }
+            }
+        },
+    )
+}
+
+// ---------------------------------------------------------------- Login
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun AdminLoginScreen(vm: AdminViewModel, onLoginSuccess: () -> Unit) {
+    var email by remember { mutableStateOf("") }
+    var password by remember { mutableStateOf("") }
+    LaunchedEffect(Unit) { vm.limpiarMensajes() }
+
+    Scaffold(topBar = { TopAppBar(title = { Text("Acceso Administrador - CONATACOCH") }) }) { padding ->
+        Column(
+            Modifier.fillMaxSize().padding(padding).padding(20.dp).verticalScroll(rememberScrollState()),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            Icon(Icons.Outlined.AdminPanelSettings, contentDescription = null, Modifier.size(72.dp), tint = MaterialTheme.colorScheme.primary)
+            Spacer(Modifier.height(16.dp))
+            Text("Panel de Administración", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+            Text("Ingrese sus credenciales de administrador", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Spacer(Modifier.height(24.dp))
+            Mensajes(vm)
+            Spacer(Modifier.height(8.dp))
+            OutlinedTextField(
+                value = email, onValueChange = { email = it }, label = { Text("Correo electrónico") },
+                singleLine = true, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
+                modifier = Modifier.fillMaxWidth(),
+            )
+            Spacer(Modifier.height(12.dp))
+            OutlinedTextField(
+                value = password, onValueChange = { password = it }, label = { Text("Contraseña") },
+                singleLine = true, visualTransformation = PasswordVisualTransformation(),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                modifier = Modifier.fillMaxWidth(),
+            )
+            Spacer(Modifier.height(24.dp))
+            BotonPrincipal("Ingresar como Administrador", { vm.ingresar(email, password, onLoginSuccess) }, enabled = !vm.cargando)
+        }
+    }
+}
+
+// ---------------------------------------------------------------- Dashboard
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
 fun AdminDashboardScreen(
+    vm: AdminViewModel,
     onNavigateToConductores: () -> Unit,
     onNavigateToAutomoviles: () -> Unit,
     onNavigateToRutas: () -> Unit,
     onNavigateToMapa: () -> Unit,
-    onCerrarSesion: () -> Unit
+    onNavigateToTurnos: () -> Unit,
+    onCerrarSesion: () -> Unit,
 ) {
+    LaunchedEffect(Unit) { vm.cargarResumen() }
+    val r = vm.resumen
+
     Scaffold(
         topBar = {
             TopAppBar(
                 title = { Text("Dashboard Administrador") },
                 actions = {
-                    IconButton(onClick = onCerrarSesion) {
-                        Icon(Icons.Outlined.Logout, contentDescription = "Cerrar sesión")
-                    }
-                }
+                    IconButton(onClick = vm::cargarResumen) { Icon(Icons.Outlined.Refresh, contentDescription = "Actualizar") }
+                    IconButton(onClick = {
+                        vm.cerrarSesion()
+                        onCerrarSesion()
+                    }) { Icon(Icons.AutoMirrored.Outlined.Logout, contentDescription = "Cerrar sesión") }
+                },
             )
-        }
+        },
     ) { padding ->
         LazyColumn(
-            modifier = Modifier.fillMaxSize().padding(padding).padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+            Modifier.fillMaxSize().padding(padding).padding(horizontal = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             item {
+                Spacer(Modifier.height(4.dp))
                 Text("Resumen General y Semáforo de Vigencias", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-                Text("Control centralizado de flotas, documentos y recorridos de la RM", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text("Datos en vivo desde la base de datos", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Spacer(Modifier.height(8.dp))
+                Mensajes(vm)
             }
-
-            // Semáforo y Totales
-            item {
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Card(modifier = Modifier.weight(1.0f)) {
-                        Column(modifier = Modifier.padding(16.dp)) {
-                            Text("Conductores", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                            Text("12 Registrados", style = MaterialTheme.typography.bodyLarge)
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Box(modifier = Modifier.size(12.dp).background(Color(0xFF48B749)))
-                                Spacer(modifier = Modifier.width(4.dp))
-                                Text("10 Vigentes", style = MaterialTheme.typography.bodySmall)
-                            }
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Box(modifier = Modifier.size(12.dp).background(Color(0xFFFFA000)))
-                                Spacer(modifier = Modifier.width(4.dp))
-                                Text("2 Por vencer (<30d)", style = MaterialTheme.typography.bodySmall)
-                            }
+            if (r != null) {
+                item {
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        TarjetaConteo("Conductores", "${r.conductores.total} registrados", r.conductores, Modifier.weight(1f)) {
+                            if (r.conductores.otros > 0) PuntoSemaforo(MaterialTheme.colorScheme.primary, "${r.conductores.otros} por validar")
                         }
-                    }
-                    Card(modifier = Modifier.weight(1.0f)) {
-                        Column(modifier = Modifier.padding(16.dp)) {
-                            Text("Vehículos", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                            Text("15 Asignados", style = MaterialTheme.typography.bodyLarge)
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Box(modifier = Modifier.size(12.dp).background(Color(0xFF48B749)))
-                                Spacer(modifier = Modifier.width(4.dp))
-                                Text("13 Al día", style = MaterialTheme.typography.bodySmall)
-                            }
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Box(modifier = Modifier.size(12.dp).background(Color(0xFFD32F2F)))
-                                Spacer(modifier = Modifier.width(4.dp))
-                                Text("2 Vencidos", style = MaterialTheme.typography.bodySmall)
-                            }
+                        TarjetaConteo("Vehículos", "${r.vehiculosAsignados} asignados", r.vehiculos, Modifier.weight(1f)) {
+                            if (r.vehiculos.otros > 0) PuntoSemaforo(GrisSemaforo, "${r.vehiculos.otros} sin documentos")
                         }
                     }
                 }
-            }
-
-            item {
-                Card(modifier = Modifier.fillMaxWidth()) {
-                    Column(modifier = Modifier.padding(16.dp)) {
-                        Text("Líneas de Colectivos (RM)", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                        Text("15 Recorridos activos (La Cisterna, San Ramón, La Granja, La Florida)", style = MaterialTheme.typography.bodyMedium)
+                item {
+                    Card(Modifier.fillMaxWidth()) {
+                        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                            Text("Operación", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                            Text("${r.rutas} recorridos · ${r.enServicio} vehículos en servicio ahora")
+                            Text("${r.reservasActivas} reservas activas · ${r.pasajeros} pasajeros registrados")
+                        }
+                    }
+                }
+                if (r.avisosRecientes.isNotEmpty()) {
+                    item {
+                        Card(Modifier.fillMaxWidth()) {
+                            Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                                Text("Avisos recientes de conductores", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                                r.avisosRecientes.take(5).forEach { a ->
+                                    val critico = a.codigo == "AC-06" || a.codigo == "AC-03"
+                                    Text(
+                                        "${a.fecha.format(FormatoAviso)} · ${a.codigo} ${a.titulo} · ${a.patente ?: "—"}" +
+                                            (a.linea?.let { " · Línea $it" } ?: ""),
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = if (critico) RojoSemaforo else MaterialTheme.colorScheme.onSurface,
+                                    )
+                                }
+                            }
+                        }
                     }
                 }
             }
+            item { Text("Módulos de Gestión", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold) }
+            item { BotonModulo(Icons.Outlined.Person, "Conductores (crear, modificar, validar)", onNavigateToConductores) }
+            item { BotonModulo(Icons.Outlined.Schedule, "Turnos y asignación de conductores", onNavigateToTurnos) }
+            item { BotonModulo(Icons.Outlined.DirectionsCar, "Automóviles, documentos y asignación", onNavigateToAutomoviles) }
+            item { BotonModulo(Icons.Outlined.CalendarMonth, "Recorridos y trazados", onNavigateToRutas) }
+            item { BotonModulo(Icons.Outlined.Map, "Mapa global en vivo", onNavigateToMapa) }
+            item { Spacer(Modifier.height(16.dp)) }
+        }
+    }
+}
 
-            // Accesos rápidos a CRUDs
-            item {
-                Text("Módulos de Gestión", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+@Composable
+private fun TarjetaConteo(titulo: String, subtitulo: String, c: ConteoSemaforo, modifier: Modifier, extra: @Composable () -> Unit) {
+    Card(modifier) {
+        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Text(titulo, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            Text(subtitulo, style = MaterialTheme.typography.bodyLarge)
+            Spacer(Modifier.height(4.dp))
+            PuntoSemaforo(VerdeSemaforo, "${c.vigentes} al día")
+            PuntoSemaforo(AmbarSemaforo, "${c.porVencer} por vencer (<30d)")
+            PuntoSemaforo(RojoSemaforo, "${c.vencidos} vencidos")
+            extra()
+        }
+    }
+}
+
+@Composable
+private fun BotonModulo(icono: androidx.compose.ui.graphics.vector.ImageVector, texto: String, onClick: () -> Unit) {
+    Button(onClick = onClick, modifier = Modifier.fillMaxWidth()) {
+        Icon(icono, contentDescription = null)
+        Spacer(Modifier.width(8.dp))
+        Text(texto)
+    }
+}
+
+// ---------------------------------------------------------------- Conductores
+
+@Composable
+fun AdminConductoresScreen(vm: AdminViewModel, onBack: () -> Unit) {
+    var filtro by remember { mutableStateOf("") }
+    /** null = cerrado; id null dentro = crear. */
+    var formulario by remember { mutableStateOf<Pair<Int?, DatosConductorAdmin>?>(null) }
+    var porEliminar by remember { mutableStateOf<ConductorAdmin?>(null) }
+    LaunchedEffect(Unit) {
+        vm.limpiarMensajes()
+        vm.cargarConductores()
+    }
+    val filtrados = vm.conductores.filter {
+        it.rut.contains(filtro, ignoreCase = true) || it.nombre.contains(filtro, ignoreCase = true)
+    }
+
+    Scaffold(
+        topBar = { BarraAdmin("Conductores", onBack, vm::cargarConductores) },
+        floatingActionButton = {
+            FloatingActionButton(onClick = { formulario = null to DatosConductorAdmin() }) {
+                Icon(Icons.Outlined.Add, contentDescription = "Agregar conductor")
             }
-
-            item {
-                Button(onClick = onNavigateToConductores, modifier = Modifier.fillMaxWidth()) {
-                    Icon(Icons.Outlined.Person, contentDescription = null)
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text("CRUD de Conductores")
+        },
+    ) { padding ->
+        Column(Modifier.fillMaxSize().padding(padding).padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Mensajes(vm)
+            OutlinedTextField(
+                value = filtro, onValueChange = { filtro = it }, label = { Text("Filtrar por RUT o nombre") },
+                singleLine = true, modifier = Modifier.fillMaxWidth(),
+                leadingIcon = { Icon(Icons.Outlined.Search, contentDescription = null) },
+            )
+            LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                items(filtrados, key = { it.id }) { c ->
+                    TarjetaConductor(
+                        c,
+                        onEditar = { formulario = c.id to datosDe(c) },
+                        onEliminar = { porEliminar = c },
+                        onEstado = { estado -> vm.cambiarEstadoConductor(c.id, estado) },
+                    )
                 }
+                item { Spacer(Modifier.height(72.dp)) }
             }
+        }
+    }
 
-            item {
-                Button(onClick = onNavigateToAutomoviles, modifier = Modifier.fillMaxWidth()) {
-                    Icon(Icons.Outlined.DirectionsCar, contentDescription = null)
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text("CRUD de Automóviles y Documentos")
+    formulario?.let { (id, datos) ->
+        FormularioConductor(
+            id = id, inicial = datos, vm = vm,
+            onCerrar = { formulario = null },
+            onGuardar = { nuevos -> vm.guardarConductor(id, nuevos) { formulario = null } },
+        )
+    }
+    porEliminar?.let { c ->
+        AlertDialog(
+            onDismissRequest = { porEliminar = null },
+            title = { Text("Eliminar conductor") },
+            text = { Text("Se eliminará a ${c.nombre} (${c.rut})" + (c.email?.let { " y su cuenta $it" } ?: "") + ". Esta acción no se puede deshacer.") },
+            confirmButton = {
+                TextButton(onClick = {
+                    vm.eliminarConductor(c.id)
+                    porEliminar = null
+                }) { Text("Eliminar", color = MaterialTheme.colorScheme.error) }
+            },
+            dismissButton = { TextButton(onClick = { porEliminar = null }) { Text("Cancelar") } },
+        )
+    }
+}
+
+private fun datosDe(c: ConductorAdmin) = DatosConductorAdmin(
+    nombre = c.nombre, rut = c.rut, direccion = c.direccion, comuna = c.comuna, celular = c.celular,
+    licencia = c.licencia, municipio = c.municipio, obtencion = fechaCl(c.obtencion), vencimiento = fechaCl(c.vencimiento),
+)
+
+@Composable
+private fun TarjetaConductor(c: ConductorAdmin, onEditar: () -> Unit, onEliminar: () -> Unit, onEstado: (EstadoConductor) -> Unit) {
+    Card(Modifier.fillMaxWidth()) {
+        Column(Modifier.padding(16.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(Icons.Outlined.Person, contentDescription = null)
+                Spacer(Modifier.width(12.dp))
+                Column(Modifier.weight(1f)) {
+                    Text(c.nombre, fontWeight = FontWeight.Bold)
+                    Text("RUT ${c.rut} · Licencia ${c.licencia} · vence ${fechaCl(c.vencimiento)}", style = MaterialTheme.typography.bodySmall)
+                    Text(
+                        listOfNotNull(c.patente?.let { "Vehículo $it" }, c.email ?: "Sin cuenta en la app").joinToString(" · "),
+                        style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    PuntoSemaforo(colorSemaforo(c.semaforo), "Licencia: ${textoSemaforo(c.semaforo, false)}")
                 }
+                IconButton(onClick = onEditar) { Icon(Icons.Outlined.Edit, contentDescription = "Modificar", tint = MaterialTheme.colorScheme.primary) }
+                IconButton(onClick = onEliminar) { Icon(Icons.Outlined.Delete, contentDescription = "Eliminar", tint = MaterialTheme.colorScheme.error) }
             }
-
-            item {
-                Button(onClick = onNavigateToRutas, modifier = Modifier.fillMaxWidth()) {
-                    Icon(Icons.Outlined.CalendarMonth, contentDescription = null)
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text("Gestión de Recorridos y Trazados (CSV)")
+            when (c.estado) {
+                EstadoConductor.PENDIENTE -> {
+                    Spacer(Modifier.height(8.dp))
+                    Text("Pendiente de validación", color = AmbarSemaforo, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.bodyMedium)
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Button(onClick = { onEstado(EstadoConductor.APROBADA) }, Modifier.weight(1f)) { Text("Aprobar") }
+                        OutlinedButton(onClick = { onEstado(EstadoConductor.RECHAZADA) }, Modifier.weight(1f)) { Text("Rechazar") }
+                    }
                 }
-            }
-
-            item {
-                Button(onClick = onNavigateToMapa, modifier = Modifier.fillMaxWidth()) {
-                    Icon(Icons.Outlined.Map, contentDescription = null)
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text("Mapa Global en Vivo (Todas las Líneas)")
+                EstadoConductor.RECHAZADA -> {
+                    Spacer(Modifier.height(8.dp))
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text("Rechazado", color = RojoSemaforo, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
+                        TextButton(onClick = { onEstado(EstadoConductor.APROBADA) }) { Text("Aprobar") }
+                    }
                 }
+                EstadoConductor.APROBADA -> Unit
             }
         }
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AdminConductoresScreen(onBack: () -> Unit) {
-    var filtroRut by remember { mutableStateOf("") }
-    var mostrarDialogo by remember { mutableStateOf(false) }
-    var conductorSeleccionadoParaEditar by remember { mutableStateOf<MutableMap<String, String>?>(null) }
-
-    var nombre by remember { mutableStateOf("") }
-    var rut by remember { mutableStateOf("") }
-    var direccion by remember { mutableStateOf("") }
-    var fonoCelular by remember { mutableStateOf("") }
-    var tipoLicencia by remember { mutableStateOf("A2") }
-
-    val listaConductores = remember {
-        mutableStateListOf(
-            mutableMapOf("nombre" to "Pedro Soto", "rut" to "12345678-9", "licencia" to "A2", "estado" to "Vigente"),
-            mutableMapOf("nombre" to "Juan Pérez", "rut" to "9876543-K", "licencia" to "A3", "estado" to "Vigente"),
-            mutableMapOf("nombre" to "María González", "rut" to "15432111-2", "licencia" to "A2", "estado" to "Por vencer")
-        )
-    }
-
-    val filtrados = listaConductores.filter { it["rut"]!!.contains(filtroRut, ignoreCase = true) || it["nombre"]!!.contains(filtroRut, ignoreCase = true) }
-
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("CRUD de Conductores") },
-                navigationIcon = {
-                    IconButton(onClick = onBack) { Icon(Icons.Outlined.ArrowBack, contentDescription = "Volver") }
+private fun FormularioConductor(
+    id: Int?,
+    inicial: DatosConductorAdmin,
+    vm: AdminViewModel,
+    onCerrar: () -> Unit,
+    onGuardar: (DatosConductorAdmin) -> Unit,
+) {
+    var d by remember(inicial) { mutableStateOf(inicial) }
+    AlertDialog(
+        onDismissRequest = onCerrar,
+        title = { Text(if (id == null) "Registrar conductor" else "Modificar conductor") },
+        text = {
+            Column(Modifier.heightIn(max = 480.dp).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                vm.error?.let { ErrorGenerico(it) }
+                Campo("Nombre completo", d.nombre) { d = d.copy(nombre = it) }
+                Campo("RUT (ej. 12345678-5)", d.rut) { d = d.copy(rut = it) }
+                Campo("Dirección", d.direccion) { d = d.copy(direccion = it) }
+                Campo("Comuna", d.comuna) { d = d.copy(comuna = it) }
+                Campo("Celular (+569...)", d.celular, KeyboardType.Phone) { d = d.copy(celular = it) }
+                Text("Clase de licencia", style = MaterialTheme.typography.labelLarge)
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    listOf("A2", "A3").forEach { clase ->
+                        FilterChip(selected = d.licencia == clase, onClick = { d = d.copy(licencia = clase) }, label = { Text(clase) })
+                    }
                 }
-            )
+                Campo("Municipalidad que otorgó la licencia", d.municipio) { d = d.copy(municipio = it) }
+                Campo("Obtención (dd-mm-aaaa)", d.obtencion, KeyboardType.Number) { d = d.copy(obtencion = it) }
+                Campo("Vencimiento (dd-mm-aaaa)", d.vencimiento, KeyboardType.Number) { d = d.copy(vencimiento = it) }
+                if (id == null) {
+                    HorizontalDivider()
+                    Text("Cuenta para la app (opcional)", style = MaterialTheme.typography.labelLarge)
+                    Campo("Correo", d.email, KeyboardType.Email) { d = d.copy(email = it) }
+                    OutlinedTextField(
+                        value = d.password, onValueChange = { d = d.copy(password = it) },
+                        label = { Text("Contraseña (8 a 64 caracteres)") }, singleLine = true,
+                        visualTransformation = PasswordVisualTransformation(), modifier = Modifier.fillMaxWidth(),
+                    )
+                }
+            }
         },
-        floatingActionButton = {
-            FloatingActionButton(onClick = {
-                conductorSeleccionadoParaEditar = null
-                nombre = ""
-                rut = ""
-                direccion = ""
-                fonoCelular = ""
-                tipoLicencia = "A2"
-                mostrarDialogo = true
-            }) {
-                Icon(Icons.Outlined.Add, contentDescription = "Agregar Conductor")
-            }
-        }
-    ) { padding ->
-        Column(modifier = Modifier.fillMaxSize().padding(padding).padding(16.dp)) {
-            OutlinedTextField(
-                value = filtroRut,
-                onValueChange = { filtroRut = it },
-                label = { Text("Filtrar por RUT o Nombre") },
-                modifier = Modifier.fillMaxWidth(),
-                leadingIcon = { Icon(Icons.Outlined.Search, contentDescription = null) }
-            )
-            Spacer(modifier = Modifier.height(12.dp))
-            LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                items(filtrados) { cond ->
-                    Card(modifier = Modifier.fillMaxWidth()) {
-                        Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
-                            Icon(Icons.Outlined.Person, contentDescription = null)
-                            Spacer(modifier = Modifier.width(12.dp))
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text(cond["nombre"]!!, fontWeight = FontWeight.Bold)
-                                Text("RUT: ${cond["rut"]} | Licencia: ${cond["licencia"]}", style = MaterialTheme.typography.bodySmall)
-                                Text("Estado: ${cond["estado"]}", style = MaterialTheme.typography.bodySmall, color = if (cond["estado"] == "Vigente") Color(0xFF48B749) else Color(0xFFFFA000))
-                            }
-                            IconButton(onClick = {
-                                conductorSeleccionadoParaEditar = cond
-                                nombre = cond["nombre"] ?: ""
-                                rut = cond["rut"] ?: ""
-                                direccion = cond["direccion"] ?: "Av. Principal 123"
-                                fonoCelular = cond["fono"] ?: "+56912345678"
-                                tipoLicencia = cond["licencia"] ?: "A2"
-                                mostrarDialogo = true
-                            }) {
-                                Icon(Icons.Outlined.Edit, contentDescription = "Modificar", tint = MaterialTheme.colorScheme.primary)
-                            }
-                            IconButton(onClick = { listaConductores.remove(cond) }) {
-                                Icon(Icons.Outlined.Delete, contentDescription = "Eliminar", tint = MaterialTheme.colorScheme.error)
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        if (mostrarDialogo) {
-            AlertDialog(
-                onDismissRequest = { mostrarDialogo = false },
-                title = { Text(if (conductorSeleccionadoParaEditar == null) "Registrar Conductor" else "Modificar Conductor") },
-                text = {
-                    Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        OutlinedTextField(value = nombre, onValueChange = { nombre = it }, label = { Text("Nombre completo") }, modifier = Modifier.fillMaxWidth())
-                        OutlinedTextField(value = rut, onValueChange = { rut = it }, label = { Text("RUT (ej. 12345678-9)") }, modifier = Modifier.fillMaxWidth())
-                        OutlinedTextField(value = direccion, onValueChange = { direccion = it }, label = { Text("Dirección") }, modifier = Modifier.fillMaxWidth())
-                        OutlinedTextField(value = fonoCelular, onValueChange = { fonoCelular = it }, label = { Text("Fono celular (+569...)") }, modifier = Modifier.fillMaxWidth())
-                        OutlinedTextField(value = tipoLicencia, onValueChange = { tipoLicencia = it }, label = { Text("Tipo licencia (A2 / A3)") }, modifier = Modifier.fillMaxWidth())
-                    }
-                },
-                confirmButton = {
-                    TextButton(onClick = {
-                        if (nombre.isNotBlank() && rut.isNotBlank()) {
-                            if (conductorSeleccionadoParaEditar != null) {
-                                conductorSeleccionadoParaEditar!!["nombre"] = nombre
-                                conductorSeleccionadoParaEditar!!["rut"] = rut
-                                conductorSeleccionadoParaEditar!!["licencia"] = tipoLicencia
-                            } else {
-                                listaConductores.add(mutableMapOf("nombre" to nombre, "rut" to rut, "licencia" to tipoLicencia, "estado" to "Vigente"))
-                            }
-                            mostrarDialogo = false
-                        }
-                    }) { Text("Guardar") }
-                },
-                dismissButton = {
-                    TextButton(onClick = { mostrarDialogo = false }) { Text("Cancelar") }
-                }
-            )
-        }
-    }
+        confirmButton = { TextButton(onClick = { onGuardar(d) }, enabled = !vm.cargando) { Text("Guardar") } },
+        dismissButton = { TextButton(onClick = onCerrar) { Text("Cancelar") } },
+    )
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AdminAutomovilesScreen(onBack: () -> Unit) {
-    var filtroPatente by remember { mutableStateOf("") }
-    var mostrarDialogo by remember { mutableStateOf(false) }
-    var autoSeleccionadoParaEditar by remember { mutableStateOf<MutableMap<String, String>?>(null) }
+private fun Campo(etiqueta: String, valor: String, teclado: KeyboardType = KeyboardType.Text, onCambio: (String) -> Unit) {
+    OutlinedTextField(
+        value = valor, onValueChange = onCambio, label = { Text(etiqueta) }, singleLine = true,
+        keyboardOptions = KeyboardOptions(keyboardType = teclado), modifier = Modifier.fillMaxWidth(),
+    )
+}
 
-    var patente by remember { mutableStateOf("") }
-    var marca by remember { mutableStateOf("") }
-    var modelo by remember { mutableStateOf("") }
-    var ano by remember { mutableStateOf("2022") }
+// ---------------------------------------------------------------- Automóviles
 
-    val listaAutos = remember {
-        mutableStateListOf(
-            mutableMapOf("patente" to "ABCD-12", "modelo" to "Nissan Versa 2022", "ruta" to "235003", "estado" to "Al día"),
-            mutableMapOf("patente" to "WXYZ-34", "modelo" to "Toyota Yaris 2023", "ruta" to "235005", "estado" to "Vencido")
-        )
+@Composable
+fun AdminAutomovilesScreen(vm: AdminViewModel, onBack: () -> Unit) {
+    var filtro by remember { mutableStateOf("") }
+    var formulario by remember { mutableStateOf<Pair<Int?, DatosAutoAdmin>?>(null) }
+    var porDarDeBaja by remember { mutableStateOf<AutoAdmin?>(null) }
+    LaunchedEffect(Unit) {
+        vm.limpiarMensajes()
+        vm.cargarAutomoviles()
+    }
+    val filtrados = vm.automoviles.filter {
+        it.patente.contains(filtro, ignoreCase = true) || (it.linea ?: "").contains(filtro) ||
+            (it.conductor ?: "").contains(filtro, ignoreCase = true)
     }
 
-    val filtrados = listaAutos.filter { it["patente"]!!.contains(filtroPatente, ignoreCase = true) || it["ruta"]!!.contains(filtroPatente, ignoreCase = true) }
-
     Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("CRUD de Automóviles") },
-                navigationIcon = {
-                    IconButton(onClick = onBack) { Icon(Icons.Outlined.ArrowBack, contentDescription = "Volver") }
-                }
-            )
-        },
+        topBar = { BarraAdmin("Automóviles y documentos", onBack, vm::cargarAutomoviles) },
         floatingActionButton = {
-            FloatingActionButton(onClick = {
-                autoSeleccionadoParaEditar = null
-                patente = ""
-                marca = "Nissan"
-                modelo = "Versa"
-                ano = "2022"
-                mostrarDialogo = true
-            }) {
-                Icon(Icons.Outlined.Add, contentDescription = "Agregar Vehículo")
+            FloatingActionButton(onClick = { formulario = null to DatosAutoAdmin() }) {
+                Icon(Icons.Outlined.Add, contentDescription = "Agregar vehículo")
             }
-        }
+        },
     ) { padding ->
-        Column(modifier = Modifier.fillMaxSize().padding(padding).padding(16.dp)) {
+        Column(Modifier.fillMaxSize().padding(padding).padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Mensajes(vm)
             OutlinedTextField(
-                value = filtroPatente,
-                onValueChange = { filtroPatente = it },
-                label = { Text("Filtrar por Patente o Ruta") },
-                modifier = Modifier.fillMaxWidth(),
-                leadingIcon = { Icon(Icons.Outlined.Search, contentDescription = null) }
+                value = filtro, onValueChange = { filtro = it }, label = { Text("Filtrar por patente, línea o conductor") },
+                singleLine = true, modifier = Modifier.fillMaxWidth(),
+                leadingIcon = { Icon(Icons.Outlined.Search, contentDescription = null) },
             )
-            Spacer(modifier = Modifier.height(12.dp))
             LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                items(filtrados) { auto ->
-                    Card(modifier = Modifier.fillMaxWidth()) {
-                        Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+                items(filtrados, key = { it.id }) { a ->
+                    Card(Modifier.fillMaxWidth()) {
+                        Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
                             Icon(Icons.Outlined.DirectionsCar, contentDescription = null)
-                            Spacer(modifier = Modifier.width(12.dp))
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text("Patente: ${auto["patente"]}", fontWeight = FontWeight.Bold)
-                                Text("Modelo: ${auto["modelo"]} | Ruta: ${auto["ruta"]}", style = MaterialTheme.typography.bodySmall)
-                                Text("Estado Doc.: ${auto["estado"]}", style = MaterialTheme.typography.bodySmall, color = if (auto["estado"] == "Al día") Color(0xFF48B749) else Color(0xFFD32F2F))
+                            Spacer(Modifier.width(12.dp))
+                            Column(Modifier.weight(1f)) {
+                                Text(a.patente + if (a.enServicio) " · en servicio" else "", fontWeight = FontWeight.Bold)
+                                Text("${a.marca} ${a.modelo} ${a.ano} · ${a.capacidad} asientos", style = MaterialTheme.typography.bodySmall)
+                                Text(
+                                    (a.linea?.let { "Línea $it" } ?: "Sin recorrido") + " · " + (a.conductor ?: "Sin conductor"),
+                                    style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                                Text(
+                                    "Permiso ${fechaCl(a.vencimientoPermiso)} · Revisión ${fechaCl(a.vencimientoRevision)} · Seguro ${fechaCl(a.vencimientoSeguro)}",
+                                    style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                                PuntoSemaforo(colorSemaforo(a.semaforo), "Documentos: ${textoSemaforo(a.semaforo, true)}")
                             }
-                            IconButton(onClick = {
-                                autoSeleccionadoParaEditar = auto
-                                patente = auto["patente"] ?: ""
-                                modelo = auto["modelo"] ?: ""
-                                ano = "2022"
-                                mostrarDialogo = true
-                            }) {
+                            IconButton(onClick = { formulario = a.id to datosDe(a) }) {
                                 Icon(Icons.Outlined.Edit, contentDescription = "Modificar", tint = MaterialTheme.colorScheme.primary)
                             }
-                            IconButton(onClick = { listaAutos.remove(auto) }) {
-                                Icon(Icons.Outlined.Delete, contentDescription = "Eliminar", tint = MaterialTheme.colorScheme.error)
+                            IconButton(onClick = { porDarDeBaja = a }) {
+                                Icon(Icons.Outlined.Delete, contentDescription = "Dar de baja", tint = MaterialTheme.colorScheme.error)
                             }
                         }
                     }
                 }
+                item { Spacer(Modifier.height(72.dp)) }
             }
         }
+    }
 
-        if (mostrarDialogo) {
-            AlertDialog(
-                onDismissRequest = { mostrarDialogo = false },
-                title = { Text(if (autoSeleccionadoParaEditar == null) "Registrar Automóvil" else "Modificar Automóvil") },
-                text = {
-                    Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        OutlinedTextField(value = patente, onValueChange = { patente = it }, label = { Text("Patente (ej. ABCD-12)") }, modifier = Modifier.fillMaxWidth())
-                        OutlinedTextField(value = marca, onValueChange = { marca = it }, label = { Text("Marca") }, modifier = Modifier.fillMaxWidth())
-                        OutlinedTextField(value = modelo, onValueChange = { modelo = it }, label = { Text("Modelo") }, modifier = Modifier.fillMaxWidth())
-                        OutlinedTextField(value = ano, onValueChange = { ano = it }, label = { Text("Año") }, modifier = Modifier.fillMaxWidth())
-                    }
-                },
-                confirmButton = {
-                    TextButton(onClick = {
-                        if (patente.isNotBlank() && marca.isNotBlank()) {
-                            if (autoSeleccionadoParaEditar != null) {
-                                autoSeleccionadoParaEditar!!["patente"] = patente
-                                autoSeleccionadoParaEditar!!["modelo"] = "$marca $modelo $ano"
-                            } else {
-                                listaAutos.add(mutableMapOf("patente" to patente, "modelo" to "$marca $modelo $ano", "ruta" to "235003", "estado" to "Al día"))
-                            }
-                            mostrarDialogo = false
-                        }
-                    }) { Text("Guardar") }
-                },
-                dismissButton = {
-                    TextButton(onClick = { mostrarDialogo = false }) { Text("Cancelar") }
-                }
-            )
-        }
+    formulario?.let { (id, datos) ->
+        FormularioAuto(
+            id = id, inicial = datos, vm = vm,
+            onCerrar = { formulario = null },
+            onGuardar = { nuevos -> vm.guardarAuto(id, nuevos) { formulario = null } },
+        )
+    }
+    porDarDeBaja?.let { a ->
+        AlertDialog(
+            onDismissRequest = { porDarDeBaja = null },
+            title = { Text("Dar de baja ${a.patente}") },
+            text = { Text("El vehículo deja de operar y se cancelan sus reservas activas. Su historial se conserva en la base de datos.") },
+            confirmButton = {
+                TextButton(onClick = {
+                    vm.darDeBajaAuto(a.id)
+                    porDarDeBaja = null
+                }) { Text("Dar de baja", color = MaterialTheme.colorScheme.error) }
+            },
+            dismissButton = { TextButton(onClick = { porDarDeBaja = null }) { Text("Cancelar") } },
+        )
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+private fun datosDe(a: AutoAdmin) = DatosAutoAdmin(
+    patente = a.patente, marca = a.marca, modelo = a.modelo, ano = a.ano.toString(), combustible = a.combustible,
+    capacidad = a.capacidad.toString(), rutaFolio = a.rutaFolio.orEmpty(), conductorRut = a.conductorRut.orEmpty(),
+    vencimientoPermiso = a.vencimientoPermiso?.let { fechaCl(it) }.orEmpty(),
+    vencimientoRevision = a.vencimientoRevision?.let { fechaCl(it) }.orEmpty(),
+    vencimientoSeguro = a.vencimientoSeguro?.let { fechaCl(it) }.orEmpty(),
+)
+
 @Composable
-fun AdminMapaGlobalScreen(onBack: () -> Unit) {
-    var filtroLinea by remember { mutableStateOf("") }
-    val colectivosEnServicio = remember {
-        mutableStateListOf(
-            mapOf("patente" to "ABCD-12", "linea" to "5003", "sentido" to "IDA", "velocidad" to "45 km/h", "estado" to "En servicio", "actualizado" to "hace 2s"),
-            mapOf("patente" to "WXYZ-34", "linea" to "5011", "sentido" to "REGRESO", "velocidad" to "38 km/h", "estado" to "En servicio", "actualizado" to "hace 4s"),
-            mapOf("patente" to "JKLM-56", "linea" to "3003", "sentido" to "IDA", "velocidad" to "0 km/h", "estado" to "Sin señal reciente", "actualizado" to "hace 35s"),
-            mapOf("patente" to "RT-7890", "linea" to "5065", "sentido" to "REGRESO", "velocidad" to "52 km/h", "estado" to "En servicio", "actualizado" to "hace 1s"),
-            mapOf("patente" to "GHJK-90", "linea" to "5034", "sentido" to "IDA", "velocidad" to "28 km/h", "estado" to "En servicio", "actualizado" to "hace 3s")
-        )
-    }
+private fun FormularioAuto(
+    id: Int?,
+    inicial: DatosAutoAdmin,
+    vm: AdminViewModel,
+    onCerrar: () -> Unit,
+    onGuardar: (DatosAutoAdmin) -> Unit,
+) {
+    var d by remember(inicial) { mutableStateOf(inicial) }
+    val opcionesRuta = listOf("" to "Sin recorrido") + vm.recorridos.map { it.recorrido.folio to "${it.recorrido.nombre} · ${it.recorrido.tramo}" }
+    val opcionesConductor = listOf("" to "Sin conductor") +
+        vm.conductores.filter { it.estado == EstadoConductor.APROBADA }.map { it.rut to "${it.nombre} (${it.rut})" }
+    val combustibles = listOf("bencina", "diésel", "eléctrico", "híbrido", "gas").map { it to it.replaceFirstChar { c -> c.uppercase() } }
 
-    val filtrados = colectivosEnServicio.filter { it["linea"]!!.contains(filtroLinea) || it["patente"]!!.contains(filtroLinea, ignoreCase = true) }
-
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Mapa Global en Vivo (RM)") },
-                navigationIcon = {
-                    IconButton(onClick = onBack) { Icon(Icons.Outlined.ArrowBack, contentDescription = "Volver") }
+    AlertDialog(
+        onDismissRequest = onCerrar,
+        title = { Text(if (id == null) "Registrar automóvil" else "Modificar automóvil") },
+        text = {
+            Column(Modifier.heightIn(max = 480.dp).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                vm.error?.let { ErrorGenerico(it) }
+                Campo("Patente (ej. ABCD-12)", d.patente) { d = d.copy(patente = it) }
+                Campo("Marca", d.marca) { d = d.copy(marca = it) }
+                Campo("Modelo", d.modelo) { d = d.copy(modelo = it) }
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Box(Modifier.weight(1f)) { Campo("Año", d.ano, KeyboardType.Number) { d = d.copy(ano = it) } }
+                    Box(Modifier.weight(1f)) { Campo("Asientos", d.capacidad, KeyboardType.Number) { d = d.copy(capacidad = it) } }
                 }
-            )
-        }
-    ) { padding ->
-        Column(modifier = Modifier.fillMaxSize().padding(padding).padding(16.dp)) {
-            Card(
-                modifier = Modifier.fillMaxWidth().height(180.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
-            ) {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Icon(Icons.Outlined.Map, contentDescription = null, modifier = Modifier.size(48.dp), tint = MaterialTheme.colorScheme.primary)
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text("Región Metropolitana (OpenStreetMap / osmdroid)", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
-                        Text("5 vehículos transmitiendo posición GPS en tiempo real", style = MaterialTheme.typography.bodySmall)
-                    }
-                }
+                Selector("Combustible", d.combustible, combustibles) { d = d.copy(combustible = it) }
+                HorizontalDivider()
+                Text("Asignación", style = MaterialTheme.typography.labelLarge)
+                Selector("Recorrido", d.rutaFolio, opcionesRuta) { d = d.copy(rutaFolio = it) }
+                Selector("Conductor", d.conductorRut, opcionesConductor) { d = d.copy(conductorRut = it) }
+                HorizontalDivider()
+                Text("Vencimiento de documentos (dd-mm-aaaa)", style = MaterialTheme.typography.labelLarge)
+                Campo("Permiso de circulación", d.vencimientoPermiso, KeyboardType.Number) { d = d.copy(vencimientoPermiso = it) }
+                Campo("Revisión técnica", d.vencimientoRevision, KeyboardType.Number) { d = d.copy(vencimientoRevision = it) }
+                Campo("Seguro obligatorio (SOAP)", d.vencimientoSeguro, KeyboardType.Number) { d = d.copy(vencimientoSeguro = it) }
             }
+        },
+        confirmButton = { TextButton(onClick = { onGuardar(d) }, enabled = !vm.cargando) { Text("Guardar") } },
+        dismissButton = { TextButton(onClick = onCerrar) { Text("Cancelar") } },
+    )
+}
 
-            Spacer(modifier = Modifier.height(16.dp))
-            OutlinedTextField(
-                value = filtroLinea,
-                onValueChange = { filtroLinea = it },
-                label = { Text("Filtrar por Línea (ej. 5003) o Patente") },
-                modifier = Modifier.fillMaxWidth(),
-                leadingIcon = { Icon(Icons.Outlined.Search, contentDescription = null) }
-            )
-            Spacer(modifier = Modifier.height(12.dp))
-            Text("Colectivos Activos en Servicio", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-            Spacer(modifier = Modifier.height(8.dp))
-
-            LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.weight(1f)) {
-                items(filtrados) { veh ->
-                    Card(modifier = Modifier.fillMaxWidth()) {
-                        Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
-                            Icon(Icons.Outlined.DirectionsCar, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
-                            Spacer(modifier = Modifier.width(12.dp))
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text("Línea ${veh["linea"]} • Patente: ${veh["patente"]}", fontWeight = FontWeight.Bold)
-                                Text("Sentido: ${veh["sentido"]} | Velocidad: ${veh["velocidad"]}", style = MaterialTheme.typography.bodySmall)
-                                Text("Actualizado: ${veh["actualizado"]}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                            }
-                            Box(
-                                modifier = Modifier
-                                    .background(if (veh["estado"] == "En servicio") Color(0xFF48B749) else Color(0xFF9E9E9E), shape = MaterialTheme.shapes.small)
-                                    .padding(horizontal = 8.dp, vertical = 4.dp)
-                            ) {
-                                Text(veh["estado"]!!, color = Color.White, style = MaterialTheme.typography.labelSmall)
-                            }
-                        }
-                    }
+/** Lista desplegable simple: opciones (valor, texto). */
+@Composable
+private fun Selector(etiqueta: String, valor: String, opciones: List<Pair<String, String>>, onElegir: (String) -> Unit) {
+    var abierto by remember { mutableStateOf(false) }
+    Column {
+        Text(etiqueta, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Box {
+            OutlinedButton(onClick = { abierto = true }, modifier = Modifier.fillMaxWidth()) {
+                Text(opciones.find { it.first == valor }?.second ?: valor.ifBlank { "Elegir" }, Modifier.weight(1f), maxLines = 1)
+            }
+            DropdownMenu(abierto, onDismissRequest = { abierto = false }, modifier = Modifier.heightIn(max = 320.dp)) {
+                opciones.forEach { (v, t) ->
+                    DropdownMenuItem(text = { Text(t) }, onClick = {
+                        onElegir(v)
+                        abierto = false
+                    })
                 }
             }
         }
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun AdminRutasScreen(onBack: () -> Unit) {
-    var filtroFolio by remember { mutableStateOf("") }
-    var mensajeDialogo by remember { mutableStateOf<String?>(null) }
-    var rutaSeleccionadaParaCalles by remember { mutableStateOf<Map<String, String>?>(null) }
+// ---------------------------------------------------------------- Recorridos
 
-    val rutasList = remember {
-        mutableStateListOf(
-            mapOf("folio" to "235003", "linea" to "5003", "origen" to "La Cisterna", "destino" to "La Granja", "flota" to "30"),
-            mapOf("folio" to "235005", "linea" to "5005", "origen" to "El Bosque", "destino" to "La Cisterna", "flota" to "17"),
-            mapOf("folio" to "235007", "linea" to "5007", "origen" to "La Cisterna", "destino" to "La Cisterna", "flota" to "17"),
-            mapOf("folio" to "235011", "linea" to "5011", "origen" to "San Ramón", "destino" to "La Florida", "flota" to "59"),
-            mapOf("folio" to "235030", "linea" to "5030", "origen" to "La Cisterna", "destino" to "La Cisterna", "flota" to "16"),
-            mapOf("folio" to "235034", "linea" to "5034", "origen" to "La Cisterna", "destino" to "El Bosque", "flota" to "33"),
-            mapOf("folio" to "235035", "linea" to "5035", "origen" to "La Cisterna", "destino" to "El Bosque", "flota" to "21"),
-            mapOf("folio" to "235036", "linea" to "5036", "origen" to "La Cisterna", "destino" to "San Ramón", "flota" to "17"),
-            mapOf("folio" to "235065", "linea" to "5065", "origen" to "La Cisterna", "destino" to "La Pintana", "flota" to "58"),
-            mapOf("folio" to "235067", "linea" to "5067", "origen" to "La Cisterna", "destino" to "San Bernardo", "flota" to "17"),
-            mapOf("folio" to "235068", "linea" to "5068", "origen" to "La Cisterna", "destino" to "San Bernardo", "flota" to "9"),
-            mapOf("folio" to "235070", "linea" to "5070", "origen" to "La Cisterna", "destino" to "San Ramón", "flota" to "5"),
-            mapOf("folio" to "233003", "linea" to "3003", "origen" to "La Granja", "destino" to "La Florida", "flota" to "38"),
-            mapOf("folio" to "233005", "linea" to "3005", "origen" to "La Granja", "destino" to "La Cisterna", "flota" to "17"),
-            mapOf("folio" to "235054", "linea" to "5054", "origen" to "La Cisterna", "destino" to "La Florida", "flota" to "25")
-        )
+@Composable
+fun AdminRutasScreen(vm: AdminViewModel, onBack: () -> Unit) {
+    var filtro by remember { mutableStateOf("") }
+    var verCalles by remember { mutableStateOf<RecorridoAdmin?>(null) }
+    LaunchedEffect(Unit) {
+        vm.limpiarMensajes()
+        vm.cargarRecorridos()
+    }
+    val filtradas = vm.recorridos.filter {
+        val r = it.recorrido
+        r.folio.contains(filtro) || r.linea.contains(filtro) || r.origen.contains(filtro, ignoreCase = true) ||
+            r.destino.contains(filtro, ignoreCase = true)
     }
 
-    val filtradas = rutasList.filter { it["folio"]!!.contains(filtroFolio) || it["linea"]!!.contains(filtroFolio) || it["origen"]!!.contains(filtroFolio, ignoreCase = true) }
-
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Gestión de Recorridos (15 Rutas RM)") },
-                navigationIcon = {
-                    IconButton(onClick = onBack) { Icon(Icons.Outlined.ArrowBack, contentDescription = "Volver") }
-                }
-            )
-        }
-    ) { padding ->
-        Column(modifier = Modifier.fillMaxSize().padding(padding).padding(16.dp)) {
+    Scaffold(topBar = { BarraAdmin("Recorridos y trazados", onBack, vm::cargarRecorridos) }) { padding ->
+        Column(Modifier.fillMaxSize().padding(padding).padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Mensajes(vm)
             OutlinedTextField(
-                value = filtroFolio,
-                onValueChange = { filtroFolio = it },
-                label = { Text("Filtrar por Folio, Línea o Comuna") },
-                modifier = Modifier.fillMaxWidth(),
-                leadingIcon = { Icon(Icons.Outlined.Search, contentDescription = null) }
+                value = filtro, onValueChange = { filtro = it }, label = { Text("Filtrar por folio, línea o comuna") },
+                singleLine = true, modifier = Modifier.fillMaxWidth(),
+                leadingIcon = { Icon(Icons.Outlined.Search, contentDescription = null) },
             )
-            Spacer(modifier = Modifier.height(12.dp))
             LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.weight(1f)) {
-                items(filtradas) { ruta ->
-                    Card(modifier = Modifier.fillMaxWidth()) {
-                        Column(modifier = Modifier.padding(16.dp)) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Icon(Icons.Outlined.CalendarMonth, contentDescription = null)
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text("Línea ${ruta["linea"]} (Folio: ${ruta["folio"]})", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
-                            }
-                            Spacer(modifier = Modifier.height(4.dp))
-                            Text("Origen: ${ruta["origen"]} → Destino: ${ruta["destino"]}", style = MaterialTheme.typography.bodyMedium)
-                            Text("Flota Vigente: ${ruta["flota"]} vehículos", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary)
-                            Spacer(modifier = Modifier.height(8.dp))
+                items(filtradas, key = { it.recorrido.folio }) { ra ->
+                    val r = ra.recorrido
+                    Card(Modifier.fillMaxWidth()) {
+                        Column(Modifier.padding(16.dp)) {
+                            Text("${r.nombre} (Folio ${r.folio})", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
+                            Text("${r.origen} → ${r.destino} · ${r.operador}", style = MaterialTheme.typography.bodyMedium)
+                            Text(
+                                "Flota vigente ${ra.flotaVigente} · ${ra.vehiculosAsignados} vehículos en la app · tarifa $${ra.tarifa}",
+                                style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary,
+                            )
+                            Text(
+                                ra.versionTrazado?.let { "Trazado guardado: versión $it" } ?: "Trazado aún no guardado en la base de datos",
+                                style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                            Spacer(Modifier.height(8.dp))
                             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                OutlinedButton(
-                                    onClick = {
-                                        mensajeDialogo = "Trazado recalculado exitosamente (OSRM / Nominatim) para la línea ${ruta["linea"]} (Folio ${ruta["folio"]}). Versión actualizada en ruta_trazados."
-                                    },
-                                    modifier = Modifier.weight(1f)
-                                ) {
+                                OutlinedButton(onClick = { vm.recalcularTrazado(ra) }, enabled = vm.recalculando == null, modifier = Modifier.weight(1f)) {
+                                    if (vm.recalculando == r.folio) {
+                                        CircularProgressIndicator(Modifier.size(16.dp), strokeWidth = 2.dp)
+                                        Spacer(Modifier.width(8.dp))
+                                    }
                                     Text("Recalcular trazado")
                                 }
-                                Button(
-                                    onClick = {
-                                        rutaSeleccionadaParaCalles = ruta
-                                    },
-                                    modifier = Modifier.weight(1f)
-                                ) {
-                                    Text("Ver Calles (CSV)")
-                                }
+                                Button(onClick = { verCalles = ra }, modifier = Modifier.weight(1f)) { Text("Ver calles") }
                             }
                         }
                     }
                 }
             }
         }
+    }
 
-        if (mensajeDialogo != null) {
-            AlertDialog(
-                onDismissRequest = { mensajeDialogo = null },
-                title = { Text("Recálculo de Trazado") },
-                text = { Text(mensajeDialogo!!) },
-                confirmButton = {
-                    TextButton(onClick = { mensajeDialogo = null }) { Text("Aceptar") }
+    verCalles?.let { ra ->
+        val r = ra.recorrido
+        AlertDialog(
+            onDismissRequest = { verCalles = null },
+            title = { Text("Calles de la ${r.nombre}") },
+            text = {
+                Column(Modifier.heightIn(max = 420.dp).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                    Text("Ida", fontWeight = FontWeight.Bold)
+                    r.ida.forEachIndexed { i, c -> Text("${i + 1}. ${c.nombre} (${c.comuna})", style = MaterialTheme.typography.bodySmall) }
+                    Spacer(Modifier.height(8.dp))
+                    Text("Regreso", fontWeight = FontWeight.Bold)
+                    r.regreso.forEachIndexed { i, c -> Text("${i + 1}. ${c.nombre} (${c.comuna})", style = MaterialTheme.typography.bodySmall) }
                 }
-            )
-        }
+            },
+            confirmButton = { TextButton(onClick = { verCalles = null }) { Text("Cerrar") } },
+        )
+    }
+}
 
-        if (rutaSeleccionadaParaCalles != null) {
-            val r = rutaSeleccionadaParaCalles!!
-            AlertDialog(
-                onDismissRequest = { rutaSeleccionadaParaCalles = null },
-                title = { Text("Calles de la Ruta ${r["linea"]} (Folio ${r["folio"]})") },
-                text = {
-                    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                        Text("Origen: ${r["origen"]} | Destino: ${r["destino"]}", fontWeight = FontWeight.Bold)
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text("• [IDA] 1. José Ureta (${r["origen"]})", style = MaterialTheme.typography.bodySmall)
-                        Text("• [IDA] 2. Iquique (${r["origen"]})", style = MaterialTheme.typography.bodySmall)
-                        Text("• [IDA] 3. Blas Vial (${r["origen"]})", style = MaterialTheme.typography.bodySmall)
-                        Text("• [REGRESO] 4. Santa Rosa (${r["destino"]})", style = MaterialTheme.typography.bodySmall)
-                        Text("• [REGRESO] 5. Gran Avenida (${r["destino"]})", style = MaterialTheme.typography.bodySmall)
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text("(Datos cargados desde ruta_calles.csv)", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.secondary)
+// ---------------------------------------------------------------- Mapa global
+
+@Composable
+fun AdminMapaGlobalScreen(vm: AdminViewModel, onBack: () -> Unit) {
+    var filtro by remember { mutableStateOf("") }
+    // Se actualiza cada 10 segundos mientras la pantalla está abierta.
+    LaunchedEffect(Unit) {
+        vm.limpiarMensajes()
+        while (true) {
+            vm.actualizarFlota()
+            delay(10_000)
+        }
+    }
+    val filtrados = vm.flota.filter { it.linea.contains(filtro) || it.patente.contains(filtro, ignoreCase = true) }
+    val conGps = vm.flota.count { it.posicion != null && it.enServicio }
+
+    Scaffold(topBar = { BarraAdmin("Mapa global en vivo (RM)", onBack, vm::actualizarFlota) }) { padding ->
+        Column(Modifier.fillMaxSize().padding(padding).padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            vm.error?.let { ErrorGenerico(it) }
+            Card(Modifier.fillMaxWidth().height(240.dp)) {
+                MapaFlota(vm.flota.filter { it.posicion != null }, Modifier.fillMaxSize())
+            }
+            Text(
+                "${vm.flota.count { it.enServicio }} en servicio · $conGps enviando GPS · ${vm.flota.size} vehículos asignados",
+                style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            OutlinedTextField(
+                value = filtro, onValueChange = { filtro = it }, label = { Text("Filtrar por línea o patente") },
+                singleLine = true, modifier = Modifier.fillMaxWidth(),
+                leadingIcon = { Icon(Icons.Outlined.Search, contentDescription = null) },
+            )
+            LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.weight(1f)) {
+                items(filtrados, key = { it.patente }) { v ->
+                    val senal = v.actualizado?.let { Duration.between(it, LocalDateTime.now()).seconds }
+                    val estado = when {
+                        !v.enServicio -> "Fuera de servicio"
+                        senal == null || senal > 120 -> "Sin señal reciente"
+                        else -> "En servicio"
                     }
-                },
-                confirmButton = {
-                    TextButton(onClick = { rutaSeleccionadaParaCalles = null }) { Text("Cerrar") }
+                    Card(Modifier.fillMaxWidth()) {
+                        Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+                            Icon(Icons.Outlined.DirectionsCar, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                            Spacer(Modifier.width(12.dp))
+                            Column(Modifier.weight(1f)) {
+                                Text("Línea ${v.linea} · ${v.patente}", fontWeight = FontWeight.Bold)
+                                Text(
+                                    (v.conductor ?: "Sin conductor") +
+                                        (v.velocidad?.let { " · ${(it * 3.6).toInt()} km/h" } ?: ""),
+                                    style = MaterialTheme.typography.bodySmall,
+                                )
+                                Text(
+                                    "GPS: " + (senal?.let { textoHace(it) } ?: "sin datos"),
+                                    style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                            }
+                            Box(
+                                Modifier.background(
+                                    if (estado == "En servicio") VerdeSemaforo else GrisSemaforo, MaterialTheme.shapes.small,
+                                ).padding(horizontal = 8.dp, vertical = 4.dp),
+                            ) { Text(estado, color = Color.White, style = MaterialTheme.typography.labelSmall) }
+                        }
+                    }
                 }
-            )
+            }
         }
+    }
+}
+
+private fun textoHace(segundos: Long): String = when {
+    segundos < 60 -> "hace ${segundos.coerceAtLeast(0)} s"
+    segundos < 3600 -> "hace ${segundos / 60} min"
+    segundos < 86_400 -> "hace ${segundos / 3600} h"
+    else -> "hace ${segundos / 86_400} días"
+}
+
+// ---------------------------------------------------------------- Turnos y asignación
+
+private val DiaCorto = DateTimeFormatter.ofPattern("EEE d", java.util.Locale.forLanguageTag("es-CL"))
+private val AzulTurno = Color(0xFF1E88E5)
+
+private fun colorTurno(t: TipoTurno) = when (t) {
+    TipoTurno.MANANA -> VerdeSemaforo
+    TipoTurno.TARDE -> AzulTurno
+    TipoTurno.LIBRE -> GrisSemaforo
+}
+
+/** Mañana → Tarde → Libre → Mañana… */
+private fun siguiente(t: TipoTurno) = when (t) {
+    TipoTurno.MANANA -> TipoTurno.TARDE
+    TipoTurno.TARDE -> TipoTurno.LIBRE
+    TipoTurno.LIBRE -> TipoTurno.MANANA
+}
+
+/**
+ * Panel de turnos: para cada conductor aprobado, el vehículo (y la línea) que maneja
+ * y sus turnos de los próximos 14 días. Tocar un día lo cambia: Mañana → Tarde → Libre.
+ */
+@Composable
+fun AdminTurnosScreen(vm: AdminViewModel, onBack: () -> Unit) {
+    var filtro by remember { mutableStateOf("") }
+    var cambiarVehiculoDe by remember { mutableStateOf<TurnosConductor?>(null) }
+    LaunchedEffect(Unit) {
+        vm.limpiarMensajes()
+        vm.cargarTurnos()
+    }
+    val filtrados = vm.turnos.filter { it.nombre.contains(filtro, ignoreCase = true) || it.rut.contains(filtro, ignoreCase = true) }
+
+    Scaffold(topBar = { BarraAdmin("Turnos y asignación", onBack, vm::cargarTurnos) }) { padding ->
+        Column(Modifier.fillMaxSize().padding(padding).padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Mensajes(vm)
+            Text(
+                "Toca un día para cambiar el turno: Mañana (06–14) → Tarde (14–22) → Libre. El conductor lo ve en Rutas y recibe un aviso.",
+                style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                TipoTurno.entries.forEach { PuntoSemaforo(colorTurno(it), it.texto) }
+            }
+            OutlinedTextField(
+                value = filtro, onValueChange = { filtro = it }, label = { Text("Filtrar por nombre o RUT") },
+                singleLine = true, modifier = Modifier.fillMaxWidth(),
+                leadingIcon = { Icon(Icons.Outlined.Search, contentDescription = null) },
+            )
+            LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.weight(1f)) {
+                items(filtrados, key = { it.conductorId }) { t ->
+                    Card(Modifier.fillMaxWidth()) {
+                        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(Icons.Outlined.Person, contentDescription = null)
+                                Spacer(Modifier.width(12.dp))
+                                Column(Modifier.weight(1f)) {
+                                    Text(t.nombre, fontWeight = FontWeight.Bold)
+                                    Text(
+                                        t.asignacion ?: "Sin vehículo asignado",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = if (t.asignacion == null) AmbarSemaforo else MaterialTheme.colorScheme.onSurfaceVariant,
+                                    )
+                                }
+                                TextButton(onClick = { cambiarVehiculoDe = t }) { Text("Vehículo") }
+                            }
+                            // Dos semanas: una fila por semana.
+                            t.dias.chunked(7).forEach { semana ->
+                                Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                                    semana.forEach { d ->
+                                        Surface(
+                                            onClick = { vm.cambiarTurno(t.conductorId, d.fecha, siguiente(d.tipo)) },
+                                            enabled = !vm.cargando && (t.automovilId != null || d.tipo != TipoTurno.LIBRE),
+                                            color = colorTurno(d.tipo),
+                                            contentColor = Color.White,
+                                            shape = MaterialTheme.shapes.small,
+                                            modifier = Modifier.weight(1f),
+                                        ) {
+                                            Column(Modifier.padding(vertical = 6.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                                                Text(d.fecha.format(DiaCorto), style = MaterialTheme.typography.labelSmall, maxLines = 1)
+                                                Text(d.tipo.texto.take(1), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                                            }
+                                        }
+                                    }
+                                    repeat(7 - semana.size) { Spacer(Modifier.weight(1f)) }
+                                }
+                            }
+                        }
+                    }
+                }
+                if (filtrados.isEmpty() && !vm.cargando) {
+                    item { Text("No hay conductores aprobados.", color = MaterialTheme.colorScheme.onSurfaceVariant) }
+                }
+            }
+        }
+    }
+
+    cambiarVehiculoDe?.let { t ->
+        var elegido by remember(t) { mutableStateOf(t.automovilId?.toString().orEmpty()) }
+        val opciones = listOf("" to "Sin vehículo") + vm.automoviles.filter { it.rutaFolio != null }.map { a ->
+            a.id.toString() to "${a.patente} · Línea ${a.linea}" + (a.conductor?.takeIf { a.conductorRut != t.rut }?.let { " (hoy: $it)" } ?: "")
+        }
+        AlertDialog(
+            onDismissRequest = { cambiarVehiculoDe = null },
+            title = { Text("Vehículo de ${t.nombre}") },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(
+                        "El conductor maneja este vehículo en la línea del vehículo. Si ya lo tenía otro conductor, ese conductor queda sin vehículo.",
+                        style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    Selector("Vehículo", elegido, opciones) { elegido = it }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    vm.asignarVehiculo(t.conductorId, elegido.toIntOrNull())
+                    cambiarVehiculoDe = null
+                }) { Text("Guardar") }
+            },
+            dismissButton = { TextButton(onClick = { cambiarVehiculoDe = null }) { Text("Cancelar") } },
+        )
     }
 }

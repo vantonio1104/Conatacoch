@@ -21,12 +21,14 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DirectionsCar
 import androidx.compose.material.icons.outlined.DarkMode
+import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.PrimaryTabRow
 import androidx.compose.material3.Tab
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
@@ -145,6 +147,9 @@ fun NotificacionesPasajeroScreen(vm: PasajeroViewModel, modifier: Modifier = Mod
         Encabezado("Notificaciones", "Avisos sobre tus viajes y reservas")
         CuerpoLista {
             LazyColumn(contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                if (lista.isEmpty()) {
+                    item { Text("Aún no tienes notificaciones.", color = MaterialTheme.colorScheme.onSurfaceVariant) }
+                }
                 items(lista) { FilaNotificacion(it) }
                 item {
                     Text(
@@ -159,7 +164,15 @@ fun NotificacionesPasajeroScreen(vm: PasajeroViewModel, modifier: Modifier = Mod
 }
 
 @Composable
-fun PreferenciasScreen(vm: PasajeroViewModel, nombre: String, onCerrarSesion: () -> Unit, modifier: Modifier = Modifier) {
+fun PreferenciasScreen(
+    vm: PasajeroViewModel,
+    nombre: String,
+    invitado: Boolean,
+    onCerrarSesion: () -> Unit,
+    onIniciarSesion: () -> Unit,
+    onCrearCuenta: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
     val p by vm.preferencias.collectAsState()
     val oscuro = p.modoOscuro ?: isSystemInDarkTheme()
     val cambiar = vm::actualizarPreferencias
@@ -169,15 +182,28 @@ fun PreferenciasScreen(vm: PasajeroViewModel, nombre: String, onCerrarSesion: ()
             Box(
                 Modifier.size(56.dp).clip(CircleShape).background(Extra.cabecera),
                 contentAlignment = Alignment.Center,
-            ) { Text(iniciales(nombre), color = Color.White, style = MaterialTheme.typography.titleLarge) }
+            ) {
+                if (invitado) {
+                    Icon(Icons.Outlined.Person, contentDescription = null, tint = Color.White)
+                } else {
+                    Text(iniciales(nombre), color = Color.White, style = MaterialTheme.typography.titleLarge)
+                }
+            }
             Spacer(Modifier.width(16.dp))
             Column {
                 Text("Preferencias", style = MaterialTheme.typography.headlineMedium.copy(fontWeight = androidx.compose.ui.text.font.FontWeight.Medium))
-                Text(nombre, color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodyLarge)
+                Text(if (invitado) "Invitado" else nombre, color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodyLarge)
             }
         }
         HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
         CuerpoLista(Modifier.verticalScroll(rememberScrollState()).padding(16.dp)) {
+            if (invitado) {
+                TituloSeccion("Cuenta")
+                InvitaACrearCuenta(
+                    "Con una cuenta puedes reservar asientos, pagar con Rutpay y revisar tu historial.",
+                    onIniciarSesion, onCrearCuenta,
+                )
+            }
             TituloSeccion("Apariencia")
             FilaModoOscuro(oscuro) { activo -> cambiar { it.copy(modoOscuro = activo) } }
             TituloSeccion("Notificaciones")
@@ -215,7 +241,7 @@ fun PreferenciasScreen(vm: PasajeroViewModel, nombre: String, onCerrarSesion: ()
             }
             Spacer(Modifier.height(24.dp))
             BotonSecundario(
-                "Cerrar sesión", onCerrarSesion,
+                if (invitado) "Salir" else "Cerrar sesión", onCerrarSesion,
                 color = MaterialTheme.colorScheme.error, borde = MaterialTheme.colorScheme.error,
             )
         }

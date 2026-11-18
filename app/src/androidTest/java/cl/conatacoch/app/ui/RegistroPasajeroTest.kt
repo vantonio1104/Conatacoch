@@ -31,14 +31,12 @@ class RegistroPasajeroTest {
         // Campos en orden: Nombre, Correo electrónico, Contraseña.
         val campos = rule.onAllNodes(hasSetTextAction())
         campos[0].performTextInput("Ana Pérez")
-        campos[1].performTextInput("ana.perez@correo.cl")
+        // Correo distinto en cada ejecución: la cuenta queda guardada en la base de datos.
+        campos[1].performTextInput("ana.perez+${System.currentTimeMillis()}@correo.cl")
         campos[2].performTextInput("una-clave-de-prueba-2026")
         rule.onAllNodesWithText("Crear cuenta").filterToOne(hasClickAction()).performScrollTo().performClick()
 
-        rule.onNodeWithText("Revisa tu correo").assertIsDisplayed()
-        rule.onNode(hasSetTextAction()).performTextInput("123456")
-        rule.onNodeWithText("Verificar").performClick()
-
+        // Sin código de verificación: entra directo al mapa con la sesión iniciada.
         rule.onNodeWithText("Cerca de tu paradero").assertIsDisplayed()
     }
 }

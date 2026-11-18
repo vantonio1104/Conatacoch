@@ -36,7 +36,7 @@ class PagoTest {
         rule.onNodeWithText("Escanear QR").performClick()
 
         rule.onNodeWithText("ABCD-12").assertIsDisplayed()
-        rule.onNodeWithText("Tarifa del Recorrido 1").assertIsDisplayed()
+        rule.onNodeWithText("Tarifa de la Línea 5003").assertIsDisplayed()
         rule.onNodeWithText("\$800").assertIsDisplayed()
         // El monto no se puede editar: no hay ningún campo de texto en la pantalla.
         rule.onAllNodes(hasSetTextAction()).assertCountEquals(0)

@@ -6,7 +6,7 @@ import org.junit.Test
 
 /**
  * PU-11: con velocidad > 0, AC-01 a AC-05 deshabilitados y AC-06 habilitado.
- * La app aún no lee la velocidad del GPS: el estado es "detenido" (velocidad 0) o no.
+ * (AC-04, falla de cámara, ya no existe: los vehículos no tienen cámaras.)
  */
 class AvisoTest {
 
@@ -14,7 +14,7 @@ class AvisoTest {
 
     @Test fun pu11_enMovimiento_soloAC06Habilitado() {
         val d = detenido(velocidadKmh = 25.0)
-        listOf(Aviso.AC01, Aviso.AC02, Aviso.AC03, Aviso.AC04, Aviso.AC05).forEach {
+        listOf(Aviso.AC01, Aviso.AC02, Aviso.AC03, Aviso.AC05).forEach {
             assertFalse("${it.codigo} debería estar deshabilitado", it.habilitado(d))
         }
         assertTrue(Aviso.AC06.habilitado(d))

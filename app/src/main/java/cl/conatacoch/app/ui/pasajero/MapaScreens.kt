@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -21,7 +22,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.DirectionsCar
 import androidx.compose.material.icons.filled.KeyboardArrowDown
-import androidx.compose.material.icons.outlined.Map
 import androidx.compose.material.icons.outlined.Schedule
 import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material3.DropdownMenu
@@ -46,11 +46,12 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import cl.conatacoch.app.domain.model.Colectivo
 import cl.conatacoch.app.domain.model.EstadoOcupacion
+import cl.conatacoch.app.domain.model.Recorrido
 import cl.conatacoch.app.domain.model.Reserva
 import cl.conatacoch.app.domain.model.textoAsientos
 import cl.conatacoch.app.ui.components.BotonPrincipal
@@ -65,6 +66,9 @@ import cl.conatacoch.app.ui.theme.GrisSinDato
 import cl.conatacoch.app.ui.theme.Negro
 import cl.conatacoch.app.ui.theme.RojoLleno
 import cl.conatacoch.app.ui.theme.VerdeMarca
+import kotlinx.coroutines.delay
+import java.time.LocalDateTime
+import java.time.Duration
 
 fun colorEstado(estado: EstadoOcupacion): Color = when (estado) {
     EstadoOcupacion.CON_ASIENTOS -> VerdeMarca
@@ -77,16 +81,21 @@ fun MapaScreen(vm: PasajeroViewModel, onColectivo: (String) -> Unit, onVerReserv
     val colectivos by vm.colectivos.collectAsState()
     val recorrido by vm.recorrido.collectAsState()
     val reserva by vm.reserva.collectAsState()
+    val trazado by vm.trazado.collectAsState()
+    val recorridos by vm.recorridos.collectAsState()
 
     Column(modifier.fillMaxSize()) {
         Box(Modifier.weight(1f).fillMaxWidth().background(Extra.neutroFondo)) {
-            // Placeholder: aquí irá Google Maps.
-            Column(Modifier.align(Alignment.Center), horizontalAlignment = Alignment.CenterHorizontally) {
-                Icon(Icons.Outlined.Map, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(48.dp))
-                Text("Mapa disponible próximamente", color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center)
-            }
+            MapaRecorrido(
+                estado = trazado,
+                colectivos = colectivos,
+                onColectivo = onColectivo,
+                onReintentar = vm::reintentarTrazado,
+                margenSuperior = 136.dp,
+                modifier = Modifier.fillMaxSize(),
+            )
             Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                SelectorRecorrido(recorrido, vm.recorridos) { vm.recorrido.value = it }
+                SelectorRecorrido(recorrido, recorridos) { vm.recorrido.value = it }
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     EstadoOcupacion.entries.forEach { ChipLeyenda(it) }
                 }
@@ -108,6 +117,9 @@ fun MapaScreen(vm: PasajeroViewModel, onColectivo: (String) -> Unit, onVerReserv
                 Text("Cerca de tu paradero", style = MaterialTheme.typography.titleLarge)
                 reserva?.let { TarjetaReservaActiva(it, onVerReserva) }
                 colectivos.forEach { c -> TarjetaColectivo(c) { onColectivo(c.patente) } }
+                if (colectivos.isEmpty()) {
+                    Text("No hay colectivos en servicio en este recorrido.", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
             }
         }
     }
@@ -132,7 +144,7 @@ fun TarjetaReservaActiva(r: Reserva, onVer: () -> Unit) {
 }
 
 @Composable
-private fun SelectorRecorrido(actual: String, opciones: List<String>, onElegir: (String) -> Unit) {
+private fun SelectorRecorrido(actual: Recorrido, opciones: List<Recorrido>, onElegir: (Recorrido) -> Unit) {
     var abierto by remember { mutableStateOf(false) }
     Box {
         Surface(
@@ -145,13 +157,34 @@ private fun SelectorRecorrido(actual: String, opciones: List<String>, onElegir: 
             Row(Modifier.padding(horizontal = 20.dp, vertical = 16.dp), verticalAlignment = Alignment.CenterVertically) {
                 Icon(Icons.Outlined.Search, contentDescription = null)
                 Spacer(Modifier.width(16.dp))
-                Text(actual, Modifier.weight(1f), style = MaterialTheme.typography.titleLarge)
+                Text(actual.nombre, style = MaterialTheme.typography.titleLarge)
+                Spacer(Modifier.width(8.dp))
+                Text(
+                    actual.tramo, Modifier.weight(1f),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
                 Icon(Icons.Filled.KeyboardArrowDown, contentDescription = "Elegir recorrido")
             }
         }
-        DropdownMenu(abierto, onDismissRequest = { abierto = false }) {
+        DropdownMenu(abierto, onDismissRequest = { abierto = false }, modifier = Modifier.heightIn(max = 420.dp)) {
             opciones.forEach { r ->
-                DropdownMenuItem(text = { Text(r) }, onClick = { onElegir(r); abierto = false })
+                DropdownMenuItem(
+                    text = {
+                        Column {
+                            Text(r.nombre, style = MaterialTheme.typography.titleMedium)
+                            Text(r.tramo, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                    },
+                    trailingIcon = {
+                        if (r.folio == actual.folio) {
+                            Icon(Icons.Filled.Check, contentDescription = "Seleccionado", tint = Extra.verdeTexto)
+                        }
+                    },
+                    onClick = { onElegir(r); abierto = false },
+                )
             }
         }
     }
@@ -197,18 +230,35 @@ private fun TarjetaColectivo(c: Colectivo, onClick: () -> Unit) {
 }
 
 @Composable
-fun DetalleColectivoScreen(vm: PasajeroViewModel, patente: String, onAtras: () -> Unit, onVerReserva: () -> Unit) {
+fun DetalleColectivoScreen(
+    vm: PasajeroViewModel,
+    patente: String,
+    invitado: Boolean,
+    onAtras: () -> Unit,
+    onVerReserva: () -> Unit,
+    onPedirCuenta: () -> Unit,
+) {
     val c = vm.colectivo(patente)
     val reserva by vm.reserva.collectAsState()
     LaunchedEffect(c) { if (c == null) onAtras() }
+    LaunchedEffect(patente) { vm.limpiarErrorReserva() }
     if (c == null) return
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.surfaceContainer,
         bottomBar = {
-            Box(Modifier.background(MaterialTheme.colorScheme.background).padding(16.dp)) {
+            Column(
+                Modifier.background(MaterialTheme.colorScheme.background).padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                vm.errorReserva?.let { ErrorGenerico(it) }
                 val actual = reserva
                 when {
+                    // Sin cuenta se puede ver el colectivo, pero para reservar hay que ingresar.
+                    invitado -> BotonPrincipal(
+                        "Inicia sesión para reservar", onPedirCuenta,
+                        enabled = c.estado == EstadoOcupacion.CON_ASIENTOS,
+                    )
                     // Solo una reserva activa a la vez.
                     actual == null -> BotonPrincipal(
                         "Reservar asiento", { vm.reservar(c.patente, onVerReserva) },
@@ -237,7 +287,7 @@ fun DetalleColectivoScreen(vm: PasajeroViewModel, patente: String, onAtras: () -
                     Text("${c.minutosLlegada} min", style = MaterialTheme.typography.displayMedium.copy(fontWeight = FontWeight.Bold))
                 }
                 Tarjeta(relleno = PaddingValues(20.dp)) {
-                    Text("Asientos disponibles (cámaras a bordo)", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text("Asientos disponibles (según el conductor y las reservas)", color = MaterialTheme.colorScheme.onSurfaceVariant)
                     Spacer(Modifier.height(12.dp))
                     Row(
                         Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(colorEstado(c.estado))
@@ -283,12 +333,25 @@ fun DetalleColectivoScreen(vm: PasajeroViewModel, patente: String, onAtras: () -
 @Composable
 fun ReservaActivaScreen(vm: PasajeroViewModel, onVerMapa: () -> Unit, onCancelada: () -> Unit) {
     val reserva by vm.reserva.collectAsState()
+    // Si expira o el conductor la elimina, se vuelve al mapa (el aviso llega en Notificaciones).
+    LaunchedEffect(reserva == null) { if (reserva == null) onCancelada() }
     val r = reserva ?: return
     val cs = MaterialTheme.colorScheme
+    // Cuenta regresiva de los 3 minutos de la reserva.
+    var segundos by remember(r.fecha) {
+        mutableStateOf((Reserva.MINUTOS_PARA_ABORDAR * 60L - Duration.between(r.fecha, LocalDateTime.now()).seconds).coerceAtLeast(0))
+    }
+    LaunchedEffect(r.fecha) {
+        while (segundos > 0) {
+            delay(1_000)
+            segundos--
+        }
+    }
 
     Scaffold(
         bottomBar = {
             Column(Modifier.padding(MargenPantalla), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                vm.errorReserva?.let { ErrorGenerico(it) }
                 BotonPrincipal("Ver colectivo en el mapa", onVerMapa)
                 BotonSecundario("Cancelar reserva", { vm.cancelarReserva(onCancelada) }, color = cs.error, borde = cs.error)
             }
@@ -311,6 +374,11 @@ fun ReservaActivaScreen(vm: PasajeroViewModel, onVerMapa: () -> Unit, onCancelad
                     Column(Modifier.weight(1f)) {
                         Text("${r.colectivo.patente} · ${r.colectivo.recorrido}", color = Color.White.copy(alpha = 0.85f))
                         Text("Viene en camino", color = Color.White, style = MaterialTheme.typography.titleMedium)
+                        Text(
+                            "Tu reserva vence en %d:%02d".format(segundos / 60, segundos % 60),
+                            color = if (segundos <= 30) Color(0xFFFFB4AB) else Color.White.copy(alpha = 0.85f),
+                            style = MaterialTheme.typography.bodyMedium,
+                        )
                     }
                     Column(horizontalAlignment = Alignment.End) {
                         Text(
@@ -329,9 +397,9 @@ fun ReservaActivaScreen(vm: PasajeroViewModel, onVerMapa: () -> Unit, onCancelad
                         buildAnnotatedString {
                             append("Tu reserva ")
                             withStyle(SpanStyle(fontWeight = FontWeight.Bold)) {
-                                append("vence ${Reserva.MINUTOS_PARA_ABORDAR} minutos después")
+                                append("vence ${Reserva.MINUTOS_PARA_ABORDAR} minutos después de hacerla")
                             }
-                            append(" de que el colectivo llegue a tu paradero. Si el conductor no confirma tu abordaje en ese tiempo, pasa a Expirada.")
+                            append(". Si el conductor no confirma que subiste en ese tiempo, pasa a Expirada.")
                         },
                         style = MaterialTheme.typography.bodyLarge,
                     )
@@ -339,7 +407,7 @@ fun ReservaActivaScreen(vm: PasajeroViewModel, onVerMapa: () -> Unit, onCancelad
             }
             Surface(color = MaterialTheme.colorScheme.background, shape = RoundedCornerShape(16.dp)) {
                 Text(
-                    "También se cancela si la anulas tú o si el colectivo sale de servicio.",
+                    "También se cancela si la anulas tú, si el conductor la elimina o si el colectivo sale de servicio.",
                     Modifier.fillMaxWidth().padding(16.dp),
                     color = cs.onSurfaceVariant,
                     style = MaterialTheme.typography.bodyLarge,

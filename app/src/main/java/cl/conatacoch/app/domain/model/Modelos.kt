@@ -5,12 +5,63 @@ import java.time.LocalDateTime
 
 enum class EstadoOcupacion { CON_ASIENTOS, LLENO, SIN_DATO }
 
+/** Coordenada geográfica (sin depender de clases de Google Maps). */
+data class Punto(val lat: Double, val lng: Double)
+
+data class Calle(val nombre: String, val comuna: String)
+
+/** Recorrido oficial de CONATACOCH: calles en orden para la ida y el regreso. */
+data class Recorrido(
+    val folio: String,
+    val linea: String,
+    val operador: String,
+    val origen: String,
+    val destino: String,
+    val ida: List<Calle>,
+    val regreso: List<Calle>,
+) {
+    val nombre: String get() = "Línea $linea"
+    val tramo: String get() = if (origen == destino) origen else "$origen → $destino"
+}
+
+/** Recorrido convertido a líneas sobre el mapa (calles reales). */
+data class Trazado(val ida: List<Punto>, val regreso: List<Punto>)
+
+/**
+ * Punto que está a [fraccion] (0..1) del largo total de [ruta].
+ * Distancias aproximadas (sirve para tramos urbanos). null si la ruta está vacía.
+ */
+fun puntoEn(ruta: List<Punto>, fraccion: Double): Punto? {
+    if (ruta.isEmpty()) return null
+    if (ruta.size == 1) return ruta.first()
+    fun dist(a: Punto, b: Punto): Double {
+        val dx = (b.lng - a.lng) * kotlin.math.cos(Math.toRadians((a.lat + b.lat) / 2))
+        val dy = b.lat - a.lat
+        return kotlin.math.sqrt(dx * dx + dy * dy)
+    }
+    val tramos = ruta.zipWithNext()
+    val total = tramos.sumOf { (a, b) -> dist(a, b) }
+    if (total == 0.0) return ruta.first()
+    var restante = fraccion.coerceIn(0.0, 1.0) * total
+    for ((a, b) in tramos) {
+        val d = dist(a, b)
+        if (restante <= d && d > 0) {
+            val t = restante / d
+            return Punto(a.lat + (b.lat - a.lat) * t, a.lng + (b.lng - a.lng) * t)
+        }
+        restante -= d
+    }
+    return ruta.last()
+}
+
 data class Colectivo(
     val patente: String,
     val recorrido: String,
-    /** null = las cámaras no informan. */
+    /** null = sin dato (fuera de servicio). */
     val asientosDisponibles: Int?,
     val minutosLlegada: Int,
+    /** Última posición GPS; null = sin ubicación. */
+    val posicion: Punto? = null,
 ) {
     val estado: EstadoOcupacion
         get() = when {
@@ -30,7 +81,7 @@ fun textoAsientos(c: Colectivo): String = when (c.estado) {
     EstadoOcupacion.SIN_DATO -> "Sin dato de asientos"
 }
 
-/** La reserva vence 3 minutos después de que el colectivo llega al paradero. */
+/** La reserva vence 3 minutos después de hacerla si el conductor no confirma el abordaje (o la elimina antes). */
 data class Reserva(
     val colectivo: Colectivo,
     val fecha: LocalDateTime,
@@ -114,13 +165,15 @@ data class PasajeroEnEspera(
     val minutosAlParadero: Int,
     /** Segundos que quedan de los 3 minutos para abordar. */
     val segundosParaAbordar: Int,
+    /** Reserva en la base de datos (0 en los datos de ejemplo). */
+    val reservaId: Int = 0,
 )
 
 enum class Aviso(val codigo: String, val titulo: String) {
     AC01("AC-01", "Voy con retraso"),
     AC02("AC-02", "Desvío"),
     AC03("AC-03", "Desperfecto"),
-    AC04("AC-04", "Falla de cámara"),
+    // AC-04 (falla de cámara) ya no existe: los vehículos no tienen cámaras.
     AC05("AC-05", "QR dañado"),
     AC06("AC-06", "Emergencia");
 
@@ -133,14 +186,14 @@ data class EstadoServicio(
     val detenido: Boolean = true,
     val patente: String = "",
     val recorrido: String = "",
+    /** Folio del recorrido asignado (para dibujarlo en el mapa del conductor). */
+    val folio: String = "",
     val capacidad: Int = 4,
-    /** Pasajeros a bordo según cámaras (o según la corrección manual). */
+    /** Asientos ocupados: los marca el conductor en su panel (no hay cámaras). */
     val aBordo: Int = 0,
     val reservados: Int = 0,
     val enEspera: List<PasajeroEnEspera> = emptyList(),
     val ultimoPago: Pago? = null,
-    /** Solo true después de enviar AC-04. */
-    val correccionHabilitada: Boolean = false,
 ) {
     val libres: Int get() = (capacidad - aBordo - reservados).coerceAtLeast(0)
 }
