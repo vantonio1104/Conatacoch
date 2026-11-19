@@ -103,7 +103,7 @@ El build necesita acceso a `dl.google.com` / `maven.google.com` (Android SDK, AG
   y al ingresar vuelve a la pantalla donde estaba (`PasajeroAuthViewModel.invitado`, `AppNavHost.pedirCuenta`).
 - Conductor aprobado: `p.soto@correo.cl` / `colectivo-demo-2026`
 - Un conductor recién registrado queda **pendiente de validación**.
-- Registro de pasajero: nombre, correo y contraseña (8 a 64 caracteres); entra directo, sin código por correo.
+- Registro de pasajero: nombre, correo y contraseña (15 a 128 caracteres); entra directo, sin código por correo.
 - Pago: el primer intento se rechaza y el siguiente se aprueba (para ver ambas pantallas).
 - Escanear QR simula leer el vehículo `ABCD-12`.
 - Recorridos: se elige la línea (5003, 5011, …) en el buscador del mapa. Los colectivos de ejemplo se mueven

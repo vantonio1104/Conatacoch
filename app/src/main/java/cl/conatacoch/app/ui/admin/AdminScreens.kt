@@ -487,7 +487,7 @@ private fun FormularioConductor(
                     Campo("Correo", d.email, KeyboardType.Email) { d = d.copy(email = it) }
                     OutlinedTextField(
                         value = d.password, onValueChange = { d = d.copy(password = it) },
-                        label = { Text("Contraseña (8 a 64 caracteres)") }, singleLine = true,
+                        label = { Text("Contraseña (15 a 128 caracteres)") }, singleLine = true,
                         visualTransformation = PasswordVisualTransformation(), modifier = Modifier.fillMaxWidth(),
                     )
                 }
