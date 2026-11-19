@@ -19,6 +19,7 @@ import cl.conatacoch.app.domain.model.RecorridoAdmin
 import cl.conatacoch.app.domain.model.RegistroConductor
 import cl.conatacoch.app.domain.model.Reserva
 import cl.conatacoch.app.domain.model.ResumenAdmin
+import cl.conatacoch.app.domain.model.TipoReporte
 import cl.conatacoch.app.domain.model.Trazado
 import cl.conatacoch.app.domain.model.TipoTurno
 import cl.conatacoch.app.domain.model.Turno
@@ -97,6 +98,8 @@ interface AdminRepository {
     suspend fun guardarTurno(conductorId: Int, fecha: LocalDate, tipo: TipoTurno)
     /** automovilId null = dejar al conductor sin vehículo. */
     suspend fun asignarVehiculo(conductorId: Int, automovilId: Int?)
+    /** Contenido del PDF del reporte, generado por el servidor (solo administración). */
+    suspend fun reportePdf(tipo: TipoReporte): ByteArray
 }
 
 interface PreferenciasRepository {

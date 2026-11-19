@@ -148,3 +148,15 @@ data class TurnosConductor(
     val asignacion: String?,
     val dias: List<DiaTurno>,
 )
+
+/** Los 2 reportes PDF que genera la administración (protocolo de entrega final). */
+enum class TipoReporte(val ruta: String, val archivo: String, val titulo: String) {
+    LICENCIAS_POR_VENCER(
+        "/api/admin/reportes/licencias?dias=30", "licencias-por-vencer-30-dias.pdf",
+        "Conductores con licencia que vence en 30 días",
+    ),
+    VEHICULOS_VENCIDOS(
+        "/api/admin/reportes/vehiculos-vencidos", "vehiculos-documentos-vencidos.pdf",
+        "Vehículos con documentación vencida",
+    ),
+}

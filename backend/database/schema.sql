@@ -210,3 +210,13 @@ ALTER TABLE turnos ALTER COLUMN automovil_id DROP NOT NULL;
 ALTER TABLE turnos ALTER COLUMN hora_inicio DROP NOT NULL;
 ALTER TABLE turnos ALTER COLUMN hora_fin DROP NOT NULL;
 ALTER TABLE turnos ADD COLUMN IF NOT EXISTS libre BOOLEAN NOT NULL DEFAULT FALSE;
+
+-- Corrección única de los datos de ejemplo (defecto D-08): los RUT de prueba tenían un dígito verificador
+-- inválido y la licencia del conductor de prueba estaba vencida desde 2020. No toca otros registros.
+UPDATE conductores SET rut = '12345678-5'
+ WHERE rut = '12345678-9' AND NOT EXISTS (SELECT 1 FROM conductores WHERE rut = '12345678-5');
+UPDATE conductores SET rut = '9876543-3'
+ WHERE rut = '9876543-K' AND NOT EXISTS (SELECT 1 FROM conductores WHERE rut = '9876543-3');
+UPDATE conductores SET fecha_obtencion_licencia = '2025-03-15', duracion_licencia_anos = 4,
+       fecha_vencimiento_licencia = '2029-03-15'
+ WHERE rut = '12345678-5' AND fecha_vencimiento_licencia = '2020-03-15';

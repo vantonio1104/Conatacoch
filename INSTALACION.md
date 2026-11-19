@@ -85,9 +85,10 @@ Notas:
 
 ## 5. Demostración de las Tres Vistas (Administrador, Conductor, Pasajero)
 - **Cuentas de Acceso:**
-  - **Administrador:** `admin@conatacoch.cl` / `colectivo-demo-2026`
-  - **Conductor:** `p.soto@correo.cl` / `colectivo-demo-2026` (Vehículo patente `ABCD-12`, Ruta `235003`)
-  - **Pasajero:** `camila.reyes@correo.cl` / `colectivo-demo-2026` (o modo invitado)
+  - **Administrador:** `admin@conatacoch.cl`
+  - **Conductor:** `p.soto@correo.cl` (Vehículo patente `ABCD-12`, Ruta `235003`)
+  - **Pasajero:** `camila.reyes@correo.cl` (o modo invitado)
+  - Contraseña: la contraseña de prueba la entrega el equipo (no se publica en el repositorio).
 - Para probar el tiempo real (GPS del conductor reflejado en el pasajero y administrador):
   1. Inicia sesión como **Conductor**, cambia el estado a **"En servicio"**.
   2. Inicia sesión como **Pasajero** o **Administrador** en otro emulador/dispositivo y selecciona la línea correspondiente para ver el movimiento en el mapa interactivo con osmdroid y cálculo de ETA.

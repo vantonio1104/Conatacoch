@@ -12,12 +12,16 @@ import cl.conatacoch.app.domain.model.DatosConductorAdmin
 import cl.conatacoch.app.domain.model.EstadoConductor
 import cl.conatacoch.app.domain.model.RecorridoAdmin
 import cl.conatacoch.app.domain.model.ResumenAdmin
+import cl.conatacoch.app.domain.model.TipoReporte
 import cl.conatacoch.app.domain.model.TipoTurno
 import cl.conatacoch.app.domain.model.TurnosConductor
 import cl.conatacoch.app.domain.model.VehiculoEnVivo
 import cl.conatacoch.app.domain.repository.AdminRepository
 import cl.conatacoch.app.domain.repository.MapaRepository
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import java.io.File
 import java.time.LocalDate
 
 /** Estado del panel de administración. Todo se lee y se guarda en la base de datos a través de [repo]. */
@@ -87,6 +91,27 @@ class AdminViewModel(
     }
 
     fun cargarResumen() = conServidor { resumen = repo.resumen() }
+
+    // --- Reportes PDF ---
+
+    /** Reporte que se está generando (para mostrar el avance en su botón). */
+    var generandoReporte by mutableStateOf<TipoReporte?>(null)
+        private set
+
+    /** Descarga el PDF del servidor, lo guarda en [carpeta] y lo entrega a [onListo] para abrirlo. */
+    fun generarReporte(tipo: TipoReporte, carpeta: File, onListo: (File) -> Unit) = conServidor {
+        generandoReporte = tipo
+        try {
+            val bytes = repo.reportePdf(tipo)
+            val archivo = withContext(Dispatchers.IO) {
+                carpeta.mkdirs()
+                File(carpeta, tipo.archivo).apply { writeBytes(bytes) }
+            }
+            onListo(archivo)
+        } finally {
+            generandoReporte = null
+        }
+    }
 
     // --- Conductores ---
 

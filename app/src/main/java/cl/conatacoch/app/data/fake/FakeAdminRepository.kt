@@ -11,6 +11,7 @@ import cl.conatacoch.app.domain.model.EstadoConductor
 import cl.conatacoch.app.domain.model.RecorridoAdmin
 import cl.conatacoch.app.domain.model.ResumenAdmin
 import cl.conatacoch.app.domain.model.Semaforo
+import cl.conatacoch.app.domain.model.TipoReporte
 import cl.conatacoch.app.domain.model.TipoTurno
 import cl.conatacoch.app.domain.model.Trazado
 import cl.conatacoch.app.domain.model.TurnosConductor
@@ -21,6 +22,9 @@ import java.time.format.DateTimeFormatter
 
 /** Panel de administración sin servidor: datos en memoria (se pierden al cerrar la app). */
 class FakeAdminRepository : AdminRepository {
+
+    override suspend fun reportePdf(tipo: TipoReporte): ByteArray =
+        throw IllegalStateException("Los reportes PDF los genera el servidor: configura API_URL para usarlos.")
 
     private val conductores = mutableListOf(
         ConductorAdmin(1, "Pedro Soto", "12345678-5", "Av. La Marina 123", "San Ramón", "+56912345678", "A2", "San Ramón",

@@ -26,6 +26,17 @@ async function usuarioConductorDe(automovilId) {
   return r.rows[0]?.usuario_id ?? null;
 }
 
+/** Ejecuta las tareas de un mismo vehículo una tras otra (una sola instancia del servidor). */
+const filas = new Map();
+function enFila(clave, tarea) {
+  const previa = filas.get(clave) || Promise.resolve();
+  const actual = previa.catch(() => {}).then(tarea);
+  const marca = actual.catch(() => {});
+  filas.set(clave, marca);
+  marca.then(() => { if (filas.get(clave) === marca) filas.delete(clave); });
+  return actual;
+}
+
 router.get('/api/reservas', autenticar, requiereRol('PASAJERO'), ruta(async (req, res) => {
   await expirarVencidas();
   const r = await query(
@@ -46,23 +57,24 @@ router.post('/api/reservas', autenticar, requiereRol('PASAJERO'), ruta(async (re
   if (vehiculo.rowCount === 0) throw new ErrorHttp(404, 'Ese colectivo no está en servicio');
   const { id: automovilId, ruta_folio: folio } = vehiculo.rows[0];
 
-  // colectivosDe también expira las reservas vencidas.
-  const disponible = (await colectivosDe(folio)).find((c) => c.patente === patente);
-  if (!disponible || !disponible.en_servicio) throw new ErrorHttp(409, 'Ese colectivo no está en servicio ahora');
-  if (disponible.asientos_disponibles === 0) throw new ErrorHttp(409, 'El colectivo ya no tiene asientos');
-
-  let id;
-  try {
-    const r = await query(
-      'INSERT INTO reservas (pasajero_id, automovil_id, ruta_folio) VALUES ($1, $2, $3) RETURNING id',
-      [req.usuario.id, automovilId, folio],
-    );
-    id = r.rows[0].id;
-  } catch (err) {
-    // Índice único: solo una reserva activa por pasajero.
-    if (err.code === '23505') throw new ErrorHttp(409, 'Ya tienes una reserva activa');
-    throw err;
-  }
+  // Las reservas de un mismo vehículo se procesan de a una: así dos pasajeros no toman el mismo último asiento.
+  const id = await enFila(automovilId, async () => {
+    // colectivosDe también expira las reservas vencidas.
+    const disponible = (await colectivosDe(folio)).find((c) => c.patente === patente);
+    if (!disponible || !disponible.en_servicio) throw new ErrorHttp(409, 'Ese colectivo no está en servicio ahora');
+    if (disponible.asientos_disponibles === 0) throw new ErrorHttp(409, 'El colectivo ya no tiene asientos');
+    try {
+      const r = await query(
+        'INSERT INTO reservas (pasajero_id, automovil_id, ruta_folio) VALUES ($1, $2, $3) RETURNING id',
+        [req.usuario.id, automovilId, folio],
+      );
+      return r.rows[0].id;
+    } catch (err) {
+      // Índice único: solo una reserva activa por pasajero.
+      if (err.code === '23505') throw new ErrorHttp(409, 'Ya tienes una reserva activa');
+      throw err;
+    }
+  });
   const reserva = (await query(`${SQL_RESERVA} WHERE re.id = $1`, [id])).rows[0];
   await mongo.auditar(req.usuario, 'RESERVA_CREADA', { patente, folio });
   await mongo.notificar([req.usuario.id], 'RESERVA_CONFIRMADA', 'Reserva confirmada',

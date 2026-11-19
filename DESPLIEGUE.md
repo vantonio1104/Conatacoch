@@ -133,7 +133,7 @@ Mientras un vehículo no envíe GPS, la app del pasajero simula su movimiento so
   **Automóviles**, editando el vehículo). El conductor maneja la línea del vehículo. Sin vehículo no puede iniciar servicio.
 - **Turnos:** administrador → **Turnos y asignación**: toca cada día para cambiarlo (Mañana → Tarde → Libre).
   Los días que no defines se completan solos con un ciclo de 6 días (2 de mañana, 2 libres, 2 de tarde).
-- **Cuentas de prueba** (las crea el servidor la primera vez), contraseña `colectivo-demo-2026`:
+- **Cuentas de prueba** (las crea el servidor la primera vez; la contraseña de prueba la entrega el equipo (no se publica en el repositorio); la del administrador se cambia con `ADMIN_PASSWORD`):
   `camila.reyes@correo.cl` (pasajero), `p.soto@correo.cl` (conductor), `admin@conatacoch.cl` (administración).
 
 ## 8. Probar el servidor en tu PC (opcional)

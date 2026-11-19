@@ -30,6 +30,7 @@ import androidx.compose.material.icons.outlined.DirectionsCar
 import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.Map
 import androidx.compose.material.icons.outlined.Person
+import androidx.compose.material.icons.outlined.PictureAsPdf
 import androidx.compose.material.icons.outlined.Refresh
 import androidx.compose.material.icons.outlined.Schedule
 import androidx.compose.material.icons.outlined.Search
@@ -63,6 +64,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -75,12 +77,18 @@ import cl.conatacoch.app.domain.model.DatosConductorAdmin
 import cl.conatacoch.app.domain.model.EstadoConductor
 import cl.conatacoch.app.domain.model.RecorridoAdmin
 import cl.conatacoch.app.domain.model.Semaforo
+import cl.conatacoch.app.domain.model.TipoReporte
 import cl.conatacoch.app.domain.model.TipoTurno
 import cl.conatacoch.app.domain.model.TurnosConductor
 import cl.conatacoch.app.ui.components.BotonPrincipal
 import cl.conatacoch.app.ui.pasajero.ErrorGenerico
 import cl.conatacoch.app.ui.pasajero.MapaFlota
 import kotlinx.coroutines.delay
+import android.content.ActivityNotFoundException
+import android.content.Context
+import android.content.Intent
+import androidx.core.content.FileProvider
+import java.io.File
 import java.time.Duration
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
@@ -204,6 +212,7 @@ fun AdminDashboardScreen(
 ) {
     LaunchedEffect(Unit) { vm.cargarResumen() }
     val r = vm.resumen
+    val contexto = LocalContext.current
 
     Scaffold(
         topBar = {
@@ -275,8 +284,33 @@ fun AdminDashboardScreen(
             item { BotonModulo(Icons.Outlined.DirectionsCar, "Automóviles, documentos y asignación", onNavigateToAutomoviles) }
             item { BotonModulo(Icons.Outlined.CalendarMonth, "Recorridos y trazados", onNavigateToRutas) }
             item { BotonModulo(Icons.Outlined.Map, "Mapa global en vivo", onNavigateToMapa) }
+            item { Text("Reportes PDF", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold) }
+            TipoReporte.entries.forEach { tipo ->
+                item {
+                    val texto = if (vm.generandoReporte == tipo) "Generando…" else tipo.titulo
+                    BotonModulo(Icons.Outlined.PictureAsPdf, texto) {
+                        if (vm.generandoReporte == null) {
+                            vm.generarReporte(tipo, File(contexto.cacheDir, "reportes")) { abrirPdf(contexto, it) }
+                        }
+                    }
+                }
+            }
             item { Spacer(Modifier.height(16.dp)) }
         }
+    }
+}
+
+/** Abre el PDF con el visor del teléfono; si no hay visor, ofrece compartirlo. */
+private fun abrirPdf(contexto: Context, archivo: File) {
+    val uri = FileProvider.getUriForFile(contexto, "${contexto.packageName}.archivos", archivo)
+    val ver = Intent(Intent.ACTION_VIEW).setDataAndType(uri, "application/pdf")
+        .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+    try {
+        contexto.startActivity(ver)
+    } catch (e: ActivityNotFoundException) {
+        val compartir = Intent(Intent.ACTION_SEND).setType("application/pdf")
+            .putExtra(Intent.EXTRA_STREAM, uri).addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        contexto.startActivity(Intent.createChooser(compartir, "Compartir reporte"))
     }
 }
 

@@ -21,9 +21,11 @@ Aplicación Android (Kotlin + Jetpack Compose + Material 3) y arquitectura de so
 - **Mapa en vivo y Vistas por Rol:** Visualización en tiempo real de la flota para Administrador, Conductor y Pasajero, con restricciones de seguridad basadas en roles (RBAC).
 
 ## Cuentas de prueba (Prototipo / Demo)
-- Pasajero: `camila.reyes@correo.cl` / `colectivo-demo-2026`
-- Conductor aprobado: `p.soto@correo.cl` / `colectivo-demo-2026`
-- Administración: 'admin@conatacoch.cl' / 'colectivo-demo-2026'
+- Pasajero: `camila.reyes@correo.cl`
+- Conductor aprobado: `p.soto@correo.cl`
+- Administración: `admin@conatacoch.cl`
+
+Por seguridad, la contraseña de prueba la entrega el equipo (no se publica en el repositorio). En producción, la del administrador se cambia con la variable `ADMIN_PASSWORD` de Render.
 
 ## Compilar y probar
 ```bash

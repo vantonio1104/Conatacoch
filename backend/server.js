@@ -15,10 +15,14 @@ const { JWT_SECRET, ErrorHttp, fechaIso } = require('./util');
 
 const app = express();
 const server = http.createServer(app);
-const io = new Server(server, { cors: { origin: '*' } });
+// CORS: la app Android no lo necesita; solo se abre a los orígenes web que se configuren (CORS_ORIGIN).
+const origenes = (process.env.CORS_ORIGIN || '').split(',').map((o) => o.trim()).filter(Boolean);
+const opcionesCors = { origin: origenes.length ? origenes : false };
+const io = new Server(server, { cors: opcionesCors });
 app.locals.io = io;
 
-app.use(cors());
+app.set('trust proxy', 1); // Render pone un proxy delante: así req.ip es la IP real del cliente
+app.use(cors(opcionesCors));
 // Los trazados de los recorridos pueden pesar algunos cientos de KB.
 app.use(express.json({ limit: '2mb' }));
 
@@ -27,6 +31,7 @@ app.use(require('./rutas/auth'));
 app.use(require('./rutas/pasajero').router);
 app.use(require('./rutas/conductor').router);
 app.use(require('./rutas/admin').router);
+app.use(require('./rutas/reportes').router);
 
 // --- Errores ---
 

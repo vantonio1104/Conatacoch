@@ -4,7 +4,8 @@ const bcrypt = require('bcryptjs');
 const { query, transaccion } = require('../db/postgres');
 const mongo = require('../db/mongo');
 const {
-  ruta, ErrorHttp, normalizarEmail, emailValido, passwordValida, fechaIso, firmarToken,
+  ruta, ErrorHttp, normalizarEmail, emailValido, passwordValida, fechaIso, firmarToken, autenticar, MENSAJE_PASSWORD,
+  rutNormalizado, bloqueado, registrarFallo, limpiarIntentos,
 } = require('../util');
 
 const router = express.Router();
@@ -15,7 +16,7 @@ router.post('/api/auth/registro', ruta(async (req, res) => {
   const { password } = req.body;
   if (!nombre) throw new ErrorHttp(400, 'Ingresa tu nombre');
   if (!emailValido(email)) throw new ErrorHttp(400, 'Ingresa un correo válido');
-  if (!passwordValida(password)) throw new ErrorHttp(400, 'La contraseña debe tener entre 8 y 64 caracteres');
+  if (!passwordValida(password)) throw new ErrorHttp(400, MENSAJE_PASSWORD);
 
   const hash = await bcrypt.hash(password, 10);
   // Registro sin código por correo: la cuenta queda lista para usar y se entrega la sesión.
@@ -31,15 +32,15 @@ router.post('/api/auth/registro', ruta(async (req, res) => {
   res.status(201).json({ email, nombre, rol: 'PASAJERO', token: firmarToken(usuario) });
 }));
 
-// Ya no se usa desde la app (el registro no pide código). Se deja por compatibilidad.
-router.post('/api/auth/verificar', ruta(async (req, res) => {
-  const email = normalizarEmail(req.body.email);
+// Ya no se usa desde la app (el registro no pide código). Se deja por compatibilidad, pero solo con la
+// sesión de la propia cuenta: antes entregaba una sesión para cualquier correo con cualquier código (defecto D-02).
+router.post('/api/auth/verificar', autenticar, ruta(async (req, res) => {
   const codigo = String(req.body.codigo || '');
   if (!/^\d{6}$/.test(codigo)) throw new ErrorHttp(400, 'Código incorrecto');
   const r = await query(
     `UPDATE usuarios u SET verificado = TRUE FROM roles r
-     WHERE u.rol_id = r.id AND u.email = $1 RETURNING u.id, u.email, u.nombre, r.nombre AS rol`,
-    [email],
+     WHERE u.rol_id = r.id AND u.id = $1 RETURNING u.id, u.email, u.nombre, r.nombre AS rol`,
+    [req.usuario.id],
   );
   if (r.rowCount === 0) throw new ErrorHttp(404, 'No encontramos esa cuenta');
   const u = r.rows[0];
@@ -51,6 +52,7 @@ router.post('/api/auth/reenviar-codigo', (req, res) => res.status(204).end());
 router.post('/api/auth/login', ruta(async (req, res) => {
   const email = normalizarEmail(req.body.email);
   const { password, rol } = req.body;
+  if (bloqueado(req, email)) throw new ErrorHttp(429, 'Demasiados intentos fallidos. Espera 15 minutos e inténtalo de nuevo.');
   const r = await query(
     `SELECT u.id, u.email, u.nombre, u.password_hash, r.nombre AS rol, c.estado AS estado_conductor
      FROM usuarios u JOIN roles r ON r.id = u.rol_id
@@ -61,8 +63,11 @@ router.post('/api/auth/login', ruta(async (req, res) => {
   const u = r.rows[0];
   // Mensaje genérico: no se revela si falló el correo o la contraseña.
   if (!u || !(await bcrypt.compare(String(password || ''), u.password_hash)) || (rol && rol !== u.rol)) {
+    registrarFallo(req, email);
+    await mongo.auditar({ email, rol: null }, 'INICIO_SESION_FALLIDO');
     throw new ErrorHttp(401, 'Correo o contraseña incorrectos');
   }
+  limpiarIntentos(req, email);
   await mongo.auditar(u, 'INICIO_SESION');
   res.json({ token: firmarToken(u), rol: u.rol, nombre: u.nombre, email: u.email, estado: u.estado_conductor ?? null });
 }));
@@ -74,7 +79,8 @@ router.post('/api/auth/registro-conductor', ruta(async (req, res) => {
   const falta = obligatorios.find((k) => !String(b[k] || '').trim());
   if (falta) throw new ErrorHttp(400, `Falta el campo ${falta}`);
   if (!emailValido(email)) throw new ErrorHttp(400, 'Ingresa un correo válido');
-  if (!passwordValida(b.password)) throw new ErrorHttp(400, 'La contraseña debe tener entre 8 y 64 caracteres');
+  if (!passwordValida(b.password)) throw new ErrorHttp(400, MENSAJE_PASSWORD);
+  const rut = rutNormalizado(b.rut);
   if (!['A2', 'A3'].includes(b.licencia)) throw new ErrorHttp(400, 'La licencia debe ser A2 o A3');
   const emision = fechaIso(b.emisionLicencia);
   const vencimiento = fechaIso(b.vencimientoLicencia);
@@ -96,13 +102,13 @@ router.post('/api/auth/registro-conductor', ruta(async (req, res) => {
                                 fecha_vencimiento_licencia)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
        ON CONFLICT (rut) DO NOTHING RETURNING id`,
-      [u.rows[0].id, b.nombre.trim(), b.rut.trim().toUpperCase(), b.direccion.trim(), b.comuna.trim(), b.celular.trim(),
+      [u.rows[0].id, b.nombre.trim(), rut, b.direccion.trim(), b.comuna.trim(), b.celular.trim(),
         String(b.telefonoFijo || '').trim() || null, b.telefonoEmergencia.trim(), b.licencia, b.comunaEmision.trim(),
         emision, vencimiento],
     );
     if (cond.rowCount === 0) throw new ErrorHttp(409, 'Ese RUT ya está registrado');
   });
-  await mongo.auditar({ email, rol: 'CONDUCTOR' }, 'REGISTRO_CONDUCTOR', { rut: b.rut });
+  await mongo.auditar({ email, rol: 'CONDUCTOR' }, 'REGISTRO_CONDUCTOR', { rut });
   res.status(201).json({ email, estado: 'PENDIENTE' });
 }));
 

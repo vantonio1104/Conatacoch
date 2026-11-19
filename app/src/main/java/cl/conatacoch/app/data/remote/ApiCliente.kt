@@ -39,6 +39,32 @@ class ApiCliente(baseUrl: String) {
     suspend fun delete(ruta: String): String = pedir("DELETE", ruta, null)
 
     suspend fun getArray(ruta: String) = JSONArray(get(ruta))
+
+    /** Descarga un archivo (por ejemplo, un reporte PDF) con la sesión iniciada. */
+    suspend fun descargar(ruta: String): ByteArray = withContext(Dispatchers.IO) {
+        val conexion = try {
+            (URL("$base$ruta").openConnection() as HttpURLConnection).apply {
+                connectTimeout = 30_000
+                readTimeout = 70_000
+                _token.value?.let { setRequestProperty("Authorization", "Bearer $it") }
+            }
+        } catch (e: IOException) {
+            throw ErrorApi(SIN_CONEXION)
+        }
+        try {
+            val codigo = conexion.responseCode
+            if (codigo !in 200..299) {
+                val texto = conexion.errorStream?.bufferedReader()?.use { it.readText() }.orEmpty()
+                val mensaje = runCatching { JSONObject(texto).getString("error") }.getOrNull()
+                throw ErrorApi(mensaje ?: "El servidor respondió con un error ($codigo)", codigo)
+            }
+            conexion.inputStream.use { it.readBytes() }
+        } catch (e: IOException) {
+            throw ErrorApi(SIN_CONEXION)
+        } finally {
+            conexion.disconnect()
+        }
+    }
     suspend fun postObjeto(ruta: String, cuerpo: JSONObject) = JSONObject(post(ruta, cuerpo))
 
     private suspend fun pedir(metodo: String, ruta: String, cuerpo: JSONObject?): String = withContext(Dispatchers.IO) {

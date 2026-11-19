@@ -6,6 +6,7 @@ const { query, transaccion } = require('../db/postgres');
 const mongo = require('../db/mongo');
 const {
   ruta, ErrorHttp, autenticar, requiereRol, texto, fechaOpcional, normalizarEmail, emailValido, passwordValida,
+  MENSAJE_PASSWORD, rutNormalizado, patenteNormalizada,
 } = require('../util');
 
 const { HORARIOS, generarTurnos, reasignarTurnos, definirTurno } = require('../turnos');
@@ -17,35 +18,6 @@ const soloAdmin = [autenticar, requiereRol('ADMIN')];
 const semaforo = (columna) => `CASE WHEN ${columna} IS NULL THEN 'SIN_DATOS'
   WHEN ${columna} < (NOW() AT TIME ZONE 'America/Santiago')::date THEN 'VENCIDO'
   WHEN ${columna} < (NOW() AT TIME ZONE 'America/Santiago')::date + 30 THEN 'POR_VENCER' ELSE 'VIGENTE' END`;
-
-// --- RUT y patente ---
-
-/** Valida el dígito verificador (módulo 11) y devuelve el RUT como 12345678-9. */
-function rutNormalizado(valor) {
-  const limpio = texto(valor).replace(/[.\s]/g, '').toUpperCase();
-  const m = limpio.match(/^(\d{7,8})-?([\dK])$/);
-  if (!m) throw new ErrorHttp(400, 'El RUT debe tener el formato 12345678-9');
-  let suma = 0;
-  let factor = 2;
-  for (let i = m[1].length - 1; i >= 0; i--) {
-    suma += Number(m[1][i]) * factor;
-    factor = factor === 7 ? 2 : factor + 1;
-  }
-  const resto = 11 - (suma % 11);
-  const dv = resto === 11 ? '0' : resto === 10 ? 'K' : String(resto);
-  if (dv !== m[2]) throw new ErrorHttp(400, 'El RUT no es válido (revisa el dígito verificador)');
-  return `${m[1]}-${m[2]}`;
-}
-
-/** Patentes chilenas: ABCD-12 (nueva) o AB-1234 (antigua). */
-function patenteNormalizada(valor) {
-  const p = texto(valor).toUpperCase().replace(/[\s·.]/g, '');
-  let m = p.match(/^([A-Z]{4})-?(\d{2})$/);
-  if (m) return `${m[1]}-${m[2]}`;
-  m = p.match(/^([A-Z]{2})-?(\d{4})$/);
-  if (m) return `${m[1]}-${m[2]}`;
-  throw new ErrorHttp(400, 'La patente debe tener el formato ABCD-12 o AB-1234');
-}
 
 // --- Resumen (dashboard) ---
 
@@ -144,7 +116,7 @@ router.post('/api/conductores', soloAdmin, ruta(async (req, res) => {
   const email = normalizarEmail(req.body.email);
   const { password } = req.body;
   if (email && !emailValido(email)) throw new ErrorHttp(400, 'Ingresa un correo válido');
-  if (email && !passwordValida(password)) throw new ErrorHttp(400, 'La contraseña debe tener entre 8 y 64 caracteres');
+  if (email && !passwordValida(password)) throw new ErrorHttp(400, MENSAJE_PASSWORD);
   const hash = email ? await bcrypt.hash(password, 10) : null;
 
   const id = await transaccion(async (c) => {
@@ -516,4 +488,4 @@ router.get('/api/admin/avisos', soloAdmin, ruta(async (req, res) => {
   res.json(r.rows);
 }));
 
-module.exports = { router, rutNormalizado, patenteNormalizada };
+module.exports = { router, rutNormalizado, patenteNormalizada, semaforo };

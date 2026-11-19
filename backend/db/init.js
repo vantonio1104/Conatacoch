@@ -7,7 +7,7 @@ const fs = require('fs');
 const path = require('path');
 const bcrypt = require('bcryptjs');
 const { parse } = require('csv-parse/sync');
-const { transaccion } = require('./postgres');
+const { transaccion, query } = require('./postgres');
 
 const CARPETA_DB = path.join(__dirname, '..', 'database');
 const leerCsv = (archivo) => parse(fs.readFileSync(path.join(CARPETA_DB, 'seed', archivo), 'utf8'), {
@@ -20,11 +20,11 @@ const TARIFAS = { 5011: 900 };
 
 /** Vehículos de la demo; coinciden con los datos de ejemplo que usaba la app. */
 const VEHICULOS_FIJOS = [
-  { patente: 'ABCD-12', folio: '235003', marca: 'Nissan', modelo: 'Versa', ano: 2022, combustible: 'bencina', rut: '12345678-9' },
+  { patente: 'ABCD-12', folio: '235003', marca: 'Nissan', modelo: 'Versa', ano: 2022, combustible: 'bencina', rut: '12345678-5' },
   { patente: 'GHJK-34', folio: '235003', marca: 'Hyundai', modelo: 'Accent', ano: 2021, combustible: 'bencina' },
   { patente: 'BCDF-21', folio: '235011', marca: 'Toyota', modelo: 'Corolla', ano: 2020, combustible: 'híbrido' },
   { patente: 'LMNP-56', folio: '235011', marca: 'Kia', modelo: 'Rio', ano: 2019, combustible: 'bencina' },
-  { patente: 'WXYZ-34', folio: '235005', marca: 'Toyota', modelo: 'Yaris', ano: 2023, combustible: 'híbrido', rut: '9876543-K' },
+  { patente: 'WXYZ-34', folio: '235005', marca: 'Toyota', modelo: 'Yaris', ano: 2023, combustible: 'híbrido', rut: '9876543-3' },
 ];
 const MODELOS = [['Nissan', 'Versa'], ['Toyota', 'Yaris'], ['Hyundai', 'Accent'], ['Kia', 'Rio'], ['Chevrolet', 'Sail']];
 
@@ -101,7 +101,7 @@ async function inicializarBaseDeDatos() {
                                   duracion_licencia_anos, fecha_vencimiento_licencia, estado)
          VALUES ((SELECT id FROM usuarios WHERE email = $1), $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, 'APROBADA')
          ON CONFLICT (rut) DO NOTHING`,
-        [d.rut === '12345678-9' ? 'p.soto@correo.cl' : null, d.nombre_completo, d.rut, d.direccion, d.fono_celular,
+        [d.rut === '12345678-5' ? 'p.soto@correo.cl' : null, d.nombre_completo, d.rut, d.direccion, d.fono_celular,
           d.fono_domicilio, d.fecha_incorporacion, d.tipo_licencia, d.municipio_licencia, d.fecha_obtencion_licencia,
           Number(d.duracion_licencia_anos), vence.toISOString().slice(0, 10)],
       );
@@ -152,6 +152,14 @@ async function inicializarBaseDeDatos() {
 
     return (await c.query('SELECT COUNT(*)::int AS n FROM automoviles')).rows[0].n;
   });
+
+  // Contraseña real del administrador: con ADMIN_PASSWORD (variable de entorno en Render) se reemplaza la de prueba.
+  const claveAdmin = process.env.ADMIN_PASSWORD;
+  if (claveAdmin) {
+    if ([...claveAdmin].length < 15) throw new Error('ADMIN_PASSWORD debe tener al menos 15 caracteres');
+    await query("UPDATE usuarios SET password_hash = $1 WHERE email = 'admin@conatacoch.cl'", [await bcrypt.hash(claveAdmin, 10)]);
+    console.log('[postgres] contraseña del administrador tomada de ADMIN_PASSWORD');
+  }
 
   console.log(`[postgres] base de datos lista: ${rutas.length} recorridos, ${total} vehículos`);
 }

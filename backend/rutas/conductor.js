@@ -9,6 +9,8 @@ const { generarTurnos } = require('../turnos');
 
 const router = express.Router();
 
+const VELOCIDAD_MAXIMA_KMH = 150;
+
 const AVISOS = {
   'AC-01': 'Voy con retraso',
   'AC-02': 'Desvío',
@@ -104,6 +106,12 @@ router.post('/api/conductor/servicio/iniciar', conductorAprobado, ruta(async (re
   if (!(await servicioAbierto(req.conductor.id))) {
     const asig = await asignacionDe(req.conductor.id);
     if (!asig) throw new ErrorHttp(409, 'No tienes un vehículo asignado. Pide a la administración que te asigne uno.');
+    // Solo con licencia vigente (Ley 18.290: licencia profesional A2/A3 al día).
+    const lic = await query(
+      `SELECT fecha_vencimiento_licencia < (NOW() AT TIME ZONE 'America/Santiago')::date AS vencida
+       FROM conductores WHERE id = $1`, [req.conductor.id],
+    );
+    if (lic.rows[0]?.vencida) throw new ErrorHttp(403, 'Tu licencia de conducir está vencida. Actualízala con la administración.');
     try {
       await query('INSERT INTO servicios (conductor_id, automovil_id, ruta_folio) VALUES ($1, $2, $3)',
         [req.conductor.id, asig.automovil_id, asig.folio]);
@@ -219,6 +227,10 @@ router.post('/api/conductor/posicion', conductorAprobado, ruta(async (req, res) 
   const { lat, lng, velocidad, rumbo } = req.body;
   if (typeof lat !== 'number' || typeof lng !== 'number' || Math.abs(lat) > 90 || Math.abs(lng) > 180) {
     throw new ErrorHttp(400, 'Posición inválida');
+  }
+  // Plausibilidad: un colectivo no supera los 150 km/h; se descarta una posición con velocidad imposible.
+  if (typeof velocidad === 'number' && (velocidad < 0 || velocidad > VELOCIDAD_MAXIMA_KMH)) {
+    throw new ErrorHttp(422, 'Posición descartada: velocidad no plausible');
   }
   const sv = await servicioAbierto(req.conductor.id);
   if (!sv) throw new ErrorHttp(409, 'Primero inicia tu servicio');

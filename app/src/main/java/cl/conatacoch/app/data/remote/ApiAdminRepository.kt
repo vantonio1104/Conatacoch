@@ -14,6 +14,7 @@ import cl.conatacoch.app.domain.model.Recorrido
 import cl.conatacoch.app.domain.model.RecorridoAdmin
 import cl.conatacoch.app.domain.model.ResumenAdmin
 import cl.conatacoch.app.domain.model.Semaforo
+import cl.conatacoch.app.domain.model.TipoReporte
 import cl.conatacoch.app.domain.model.TipoTurno
 import cl.conatacoch.app.domain.model.Trazado
 import cl.conatacoch.app.domain.model.TurnosConductor
@@ -35,6 +36,8 @@ class ApiAdminRepository(private val api: ApiCliente) : AdminRepository {
     }
 
     override fun cerrarSesion() = api.cerrarSesion()
+
+    override suspend fun reportePdf(tipo: TipoReporte): ByteArray = api.descargar(tipo.ruta)
 
     override suspend fun resumen(): ResumenAdmin {
         val o = JSONObject(api.get("/api/admin/resumen"))
