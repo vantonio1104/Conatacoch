@@ -133,6 +133,19 @@ router.post('/api/auth/logout', autenticar, ruta(async (req, res) => {
   res.status(204).end();
 }));
 
+const MAX_FOTO = 1024 * 1024;
+
+/** Foto en base64 (con o sin prefijo data:): solo JPEG o PNG de hasta 1 MB, revisando sus primeros bytes. */
+function fotoLicencia(valor, cual) {
+  if (!valor) return null;
+  const datos = Buffer.from(String(valor).replace(/^data:[^,]*,/, ''), 'base64');
+  const error = `La foto ${cual} de la licencia debe ser JPEG o PNG de hasta 1 MB`;
+  if (datos.length > MAX_FOTO) throw new ErrorHttp(400, error);
+  if (datos.subarray(0, 3).equals(Buffer.from([0xff, 0xd8, 0xff]))) return { tipo: 'image/jpeg', datos };
+  if (datos.subarray(0, 4).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47]))) return { tipo: 'image/png', datos };
+  throw new ErrorHttp(400, error);
+}
+
 router.post('/api/auth/registro-conductor', ruta(async (req, res) => {
   const b = req.body;
   const email = normalizarEmail(b.correo);
@@ -147,6 +160,8 @@ router.post('/api/auth/registro-conductor', ruta(async (req, res) => {
   const vencimiento = fechaIso(b.vencimientoLicencia);
   if (!emision || !vencimiento) throw new ErrorHttp(400, 'Las fechas de la licencia deben tener el formato dd-mm-aaaa');
   if (vencimiento <= emision) throw new ErrorHttp(400, 'El vencimiento de la licencia debe ser posterior a la emisión');
+
+  const fotos = { FRENTE: fotoLicencia(b.fotoFrente, 'del frente'), REVERSO: fotoLicencia(b.fotoReverso, 'del reverso') };
 
   const hash = await bcrypt.hash(b.password, 10);
   await transaccion(async (c) => {
@@ -168,6 +183,11 @@ router.post('/api/auth/registro-conductor', ruta(async (req, res) => {
         emision, vencimiento],
     );
     if (cond.rowCount === 0) throw new ErrorHttp(409, 'Ese RUT ya está registrado');
+    for (const [lado, foto] of Object.entries(fotos)) {
+      if (!foto) continue;
+      await c.query('INSERT INTO licencia_fotos (conductor_id, lado, tipo, datos) VALUES ($1, $2, $3, $4)',
+        [cond.rows[0].id, lado, foto.tipo, foto.datos]);
+    }
   });
   await mongo.auditar({ email, rol: 'CONDUCTOR' }, 'REGISTRO_CONDUCTOR', { rut });
   res.status(201).json({ email, estado: 'PENDIENTE' });

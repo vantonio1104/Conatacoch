@@ -238,3 +238,13 @@ ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS totp_secreto VARCHAR(64);
 ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS totp_activo BOOLEAN NOT NULL DEFAULT FALSE;
 -- Último paso de 30 s aceptado: impide usar dos veces el mismo código.
 ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS totp_ultimo_paso BIGINT;
+
+-- ===================== v1.7: fotos de la licencia (las sube el conductor al registrarse) =====================
+CREATE TABLE IF NOT EXISTS licencia_fotos (
+    conductor_id INT REFERENCES conductores(id) ON DELETE CASCADE NOT NULL,
+    lado VARCHAR(10) CHECK (lado IN ('FRENTE', 'REVERSO')) NOT NULL,
+    tipo VARCHAR(20) CHECK (tipo IN ('image/jpeg', 'image/png')) NOT NULL,
+    datos BYTEA NOT NULL,
+    subida TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+    PRIMARY KEY (conductor_id, lado)
+);

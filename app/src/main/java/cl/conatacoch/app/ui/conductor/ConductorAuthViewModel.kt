@@ -14,6 +14,7 @@ import cl.conatacoch.app.domain.repository.AuthRepository
 import cl.conatacoch.app.domain.validation.PasswordValidator
 import cl.conatacoch.app.domain.validation.RutValidator
 import kotlinx.coroutines.launch
+import java.io.ByteArrayOutputStream
 
 data class FormConductor(
     val rut: String = "",
@@ -92,6 +93,7 @@ class ConductorAuthViewModel(private val auth: AuthRepository) : ViewModel() {
                     telefonoEmergencia = f.telefonoEmergencia.trim(), correo = f.correo.trim(),
                     password = f.password, licencia = f.licencia, emisionLicencia = f.emision.trim(),
                     vencimientoLicencia = f.vencimiento.trim(), comunaEmision = f.comunaEmision.trim(),
+                    fotoFrente = fotoFrente?.comoJpeg(), fotoReverso = fotoReverso?.comoJpeg(),
                 )
             )
             form = FormConductor()
@@ -117,3 +119,7 @@ class ConductorAuthViewModel(private val auth: AuthRepository) : ViewModel() {
         }
     }
 }
+
+/** Foto para enviar al servidor (JPEG, calidad 85). */
+private fun Bitmap.comoJpeg(): ByteArray =
+    ByteArrayOutputStream().also { compress(Bitmap.CompressFormat.JPEG, 85, it) }.toByteArray()

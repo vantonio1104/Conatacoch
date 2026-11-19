@@ -29,7 +29,7 @@ Plan: `tasks/plan.md`. Cada tarea termina con sus pruebas en verde (`npm test` c
     y vincula recorrido y vehículo en un solo paso; avisa si la licencia no es A2 o A3.
   - Verificar: prueba de integración del vínculo; revisión contra Figma en claro y oscuro.
   - Archivos: `rutas/admin.js`, `public/admin/pantallas/validar.js`, `test/api.test.js`.
-- [ ] **T5. Fotos de licencia**
+- [x] **T5. Fotos de licencia** (servidor y panel probados; Android **pendiente de compilar**)
   - Aceptación: el registro de conductor acepta foto frente y reverso (JPEG o PNG, máx. 1 MB); solo ADMIN las ve; el
     panel las muestra en Admin 2; la app permite elegirlas en el registro.
   - Verificar: pruebas de tipo, tamaño y rol; tú compilas la app y registras un conductor con fotos.

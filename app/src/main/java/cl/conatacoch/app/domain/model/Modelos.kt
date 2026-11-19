@@ -147,6 +147,9 @@ data class RegistroConductor(
     val emisionLicencia: String,
     val vencimientoLicencia: String,
     val comunaEmision: String,
+    /** Fotos de la licencia en JPEG; el servidor acepta hasta 1 MB cada una. */
+    val fotoFrente: ByteArray? = null,
+    val fotoReverso: ByteArray? = null,
 )
 
 /** Un día del calendario. recorrido == null es un día libre. */

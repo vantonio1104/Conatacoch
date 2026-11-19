@@ -88,6 +88,7 @@ test('HU-04 validar conductores: aprobar y vincular a un pendiente', async ({ pa
       rut: '15.234.567-4', nombre: 'Rodrigo Morales Vega', direccion: 'Av. Santa Rosa 1234', comuna: 'La Granja',
       celular: '+56987654321', telefonoEmergencia: '+56912345678', licencia: 'A2', comunaEmision: 'La Granja',
       correo: 'r.morales@correo.cl', password: 'una-clave-de-prueba-segura', emisionLicencia: '18-03-2023', vencimientoLicencia: '18-03-2029',
+      fotoFrente: 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==',
     }),
   });
   expect(r.status).toBe(201);
@@ -95,6 +96,8 @@ test('HU-04 validar conductores: aprobar y vincular a un pendiente', async ({ pa
   await page.getByRole('link', { name: 'Validar conductores' }).click();
   await expect(page.getByRole('heading', { name: 'Rodrigo Morales Vega' })).toBeVisible();
   await expect(page.getByText('15234567-4')).toBeVisible();
+  await expect(page.getByRole('img', { name: 'Foto frente de la licencia de Rodrigo Morales Vega' })).toBeVisible();
+  await expect(page.getByText('Foto reverso · sin adjuntar')).toBeVisible();
 
   await page.getByRole('button', { name: 'Aprobar y vincular' }).click();
   await expect(page.getByRole('alert')).toContainText('Elige el recorrido y el vehículo');

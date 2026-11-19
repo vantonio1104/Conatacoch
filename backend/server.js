@@ -24,6 +24,8 @@ app.locals.io = io;
 
 app.set('trust proxy', 1); // Render pone un proxy delante: así req.ip es la IP real del cliente
 app.use(cors(opcionesCors));
+// El registro de conductor trae las 2 fotos de la licencia (hasta 1 MB cada una, en base64).
+app.use('/api/auth/registro-conductor', express.json({ limit: '3mb' }));
 // Los trazados de los recorridos pueden pesar algunos cientos de KB.
 app.use(express.json({ limit: '2mb' }));
 

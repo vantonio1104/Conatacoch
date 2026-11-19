@@ -89,8 +89,7 @@ export async function mostrar(raiz, { api }) {
         el('div', { class: 'datos datos-2' }, dato('Clase', CLASES[c.tipo_licencia] ?? c.tipo_licencia),
           dato('Fecha de emisión', fechaCl(c.fecha_obtencion_licencia)), dato('Comuna de emisión', c.municipio_licencia),
           dato('Fecha de vencimiento', fechaCl(c.fecha_vencimiento_licencia))),
-        el('div', { class: 'foto', id: 'foto-frente' }, 'Foto frente'),
-        el('div', { class: 'foto', id: 'foto-reverso' }, 'Foto reverso')),
+        foto(c, 'FRENTE', 'Foto frente'), foto(c, 'REVERSO', 'Foto reverso')),
       el('h3', {}, 'Vinculación'),
       el('div', { class: 'datos datos-2' },
         el('div', {}, el('label', { for: 'vinculo-recorrido' }, 'Servicio'), selRecorrido),
@@ -102,6 +101,21 @@ export async function mostrar(raiz, { api }) {
           el('button', { type: 'button', class: 'boton boton-peligro', onclick: (e) => decidir(e.currentTarget, false) }, 'Rechazar'),
           el('button', { type: 'button', class: 'boton boton-principal', onclick: (e) => decidir(e.currentTarget, true) }, 'Aprobar y vincular'))));
   }
+
+  /** Recuadro de la foto: se descarga con la sesión (la ruta exige el rol ADMIN) y se muestra como blob. */
+  function foto(c, lado, titulo) {
+    const caja = el('div', { class: 'foto' }, c.fotos?.includes(lado) ? `${titulo} · cargando…` : `${titulo} · sin adjuntar`);
+    if (c.fotos?.includes(lado)) {
+      api.archivo(`/api/conductores/${c.id}/fotos/${lado.toLowerCase()}`).then((blob) => {
+        const url = URL.createObjectURL(blob);
+        urls.push(url);
+        caja.replaceChildren(el('img', { src: url, alt: `${titulo} de la licencia de ${c.nombre_completo}` }));
+      }).catch(() => caja.replaceChildren(`${titulo} · no se pudo cargar`));
+    }
+    return caja;
+  }
+  const urls = [];
+  addEventListener('hashchange', () => urls.splice(0).forEach((u) => URL.revokeObjectURL(u)), { once: true });
 
   render();
 }

@@ -4,6 +4,7 @@ import cl.conatacoch.app.domain.model.EstadoCuenta
 import cl.conatacoch.app.domain.model.RegistroConductor
 import cl.conatacoch.app.domain.repository.AuthRepository
 import org.json.JSONObject
+import java.util.Base64
 
 /** Cuentas guardadas en PostgreSQL a través del backend. */
 class ApiAuthRepository(private val api: ApiCliente) : AuthRepository {
@@ -26,7 +27,9 @@ class ApiAuthRepository(private val api: ApiCliente) : AuthRepository {
                 .put("telefonoEmergencia", datos.telefonoEmergencia).put("correo", datos.correo)
                 .put("password", datos.password).put("licencia", datos.licencia.name)
                 .put("emisionLicencia", datos.emisionLicencia).put("vencimientoLicencia", datos.vencimientoLicencia)
-                .put("comunaEmision", datos.comunaEmision),
+                .put("comunaEmision", datos.comunaEmision)
+                .put("fotoFrente", datos.fotoFrente?.let { Base64.getEncoder().encodeToString(it) })
+                .put("fotoReverso", datos.fotoReverso?.let { Base64.getEncoder().encodeToString(it) }),
         )
     }
 

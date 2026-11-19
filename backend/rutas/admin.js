@@ -71,6 +71,7 @@ const SQL_CONDUCTOR = `
          c.tipo_licencia, c.municipio_licencia, c.fecha_obtencion_licencia::text, c.fecha_vencimiento_licencia::text,
          c.estado, u.email, ${semaforo('c.fecha_vencimiento_licencia')} AS semaforo,
          COALESCE(u.created_at::date, c.fecha_incorporacion)::text AS registrado,
+         ARRAY(SELECT f.lado FROM licencia_fotos f WHERE f.conductor_id = c.id ORDER BY f.lado) AS fotos,
          (SELECT a.patente FROM asignaciones s JOIN automoviles a ON a.id = s.automovil_id AND a.activo
            WHERE s.conductor_id = c.id AND s.activo LIMIT 1) AS patente
   FROM conductores c LEFT JOIN usuarios u ON u.id = c.usuario_id`;
@@ -170,6 +171,17 @@ router.delete('/api/conductores/:id', soloAdmin, ruta(async (req, res) => {
   });
   await mongo.auditar(req.usuario, 'ELIMINAR_CONDUCTOR', { conductor: Number(req.params.id) });
   res.status(204).end();
+}));
+
+/** Foto de la licencia (frente o reverso). Datos personales: no se guarda en cachés y queda en la auditoría. */
+router.get('/api/conductores/:id/fotos/:lado', soloAdmin, ruta(async (req, res) => {
+  const lado = String(req.params.lado).toUpperCase();
+  if (!['FRENTE', 'REVERSO'].includes(lado)) throw new ErrorHttp(400, 'El lado debe ser frente o reverso');
+  const f = (await query('SELECT tipo, datos FROM licencia_fotos WHERE conductor_id = $1 AND lado = $2',
+    [req.params.id, lado])).rows[0];
+  if (!f) throw new ErrorHttp(404, 'El conductor no tiene esa foto');
+  await mongo.auditar(req.usuario, 'VER_FOTO_LICENCIA', { conductor: Number(req.params.id), lado });
+  res.set({ 'Content-Type': f.tipo, 'Cache-Control': 'no-store' }).send(f.datos);
 }));
 
 /** La administración valida (o rechaza) a un conductor recién registrado. */
