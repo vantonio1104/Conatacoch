@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Panel de administración · CONATACOCH</title>
+  <link rel="icon" href="logo.png">
+  <link rel="stylesheet" href="estilos.css">
+  <script type="module" src="app.js"></script>
+</head>
+<body>
+  <main id="vista-login" class="login" hidden>
+    <section class="tarjeta login-tarjeta" aria-labelledby="login-titulo">
+      <img class="login-logo" src="logo.png" alt="CONATACOCH, Confederación Nacional de Taxis Colectivos de Chile">
+      <h1 id="login-titulo">Panel de administración</h1>
+      <p class="secundario">Ingresa con tu cuenta de administrador</p>
+      <form id="form-login" novalidate>
+        <label for="login-correo">Correo</label>
+        <input id="login-correo" name="email" type="email" autocomplete="username" required>
+        <label for="login-clave">Contraseña</label>
+        <input id="login-clave" name="password" type="password" autocomplete="current-password" required>
+        <div id="login-error"></div>
+        <button class="boton boton-principal boton-ancho" type="submit">Ingresar</button>
+      </form>
+      <p class="nota" id="login-nota"></p>
+    </section>
+  </main>
+
+  <div id="vista-panel" class="panel" hidden>
+    <aside class="lateral">
+      <div class="lateral-logo"><img src="logo.png" alt="CONATACOCH"></div>
+      <nav aria-label="Secciones del panel"><ul id="menu"></ul></nav>
+      <button id="boton-salir" class="lateral-item" type="button"></button>
+    </aside>
+    <header class="encabezado">
+      <div>
+        <h1 id="titulo"></h1>
+        <p id="subtitulo" class="secundario"></p>
+      </div>
+      <div class="encabezado-acciones">
+        <button id="boton-tema" class="boton boton-contorno" type="button"></button>
+        <span id="insignia-totp" class="insignia insignia-verde" hidden></span>
+        <span class="usuario"><span id="iniciales" class="avatar" aria-hidden="true"></span><span id="nombre-usuario"></span></span>
+      </div>
+    </header>
+    <main id="contenido" class="contenido" tabindex="-1"></main>
+  </div>
+</body>
+</html>

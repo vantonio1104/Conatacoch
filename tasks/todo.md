@@ -10,7 +10,7 @@ Plan: `tasks/plan.md`. Cada tarea termina con sus pruebas en verde (`npm test` c
     Las rutas de la app siguen funcionando igual.
   - Verificar: pruebas nuevas en `backend/test/sesiones.test.js` + las 28 actuales.
   - Archivos: `database/schema.sql`, `util.js`, `rutas/auth.js`, `test/sesiones.test.js`.
-- [ ] **T2. Panel base**
+- [x] **T2. Panel base**
   - Aceptación: `/admin` entrega el panel con CSP estricta; Admin 1 sin campo TOTP todavía; menú lateral, encabezado,
     «Modo oscuro» y «Cerrar sesión»; un pasajero no entra; vuelve al inicio tras 30 min sin actividad.
   - Verificar: prueba de Supertest (HTML y cabecera CSP) y prueba de humo en Playwright (entrar y salir).

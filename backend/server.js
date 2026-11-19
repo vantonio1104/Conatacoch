@@ -3,6 +3,7 @@
 //  - MongoDB (Atlas): GPS de los vehículos, ocupación, notificaciones y auditoría.
 // Variables de entorno: ver .env.example y DESPLIEGUE.md.
 require('dotenv').config();
+const path = require('path');
 const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
@@ -25,6 +26,16 @@ app.set('trust proxy', 1); // Render pone un proxy delante: así req.ip es la IP
 app.use(cors(opcionesCors));
 // Los trazados de los recorridos pueden pesar algunos cientos de KB.
 app.use(express.json({ limit: '2mb' }));
+
+// Panel web de administración: archivos estáticos con una política de seguridad estricta (sin scripts en línea).
+const CSP_PANEL = [
+  "default-src 'self'", "script-src 'self'", "style-src 'self'", "img-src 'self' data: blob: https://tile.openstreetmap.org",
+  "connect-src 'self'", "font-src 'self'", "object-src 'none'", "base-uri 'none'", "form-action 'self'", "frame-ancestors 'none'",
+].join('; ');
+app.use('/admin', (req, res, next) => {
+  res.set({ 'Content-Security-Policy': CSP_PANEL, 'X-Content-Type-Options': 'nosniff', 'Referrer-Policy': 'no-referrer' });
+  next();
+}, express.static(path.join(__dirname, 'public', 'admin')));
 
 app.use(require('./rutas/publico').router);
 app.use(require('./rutas/auth'));
