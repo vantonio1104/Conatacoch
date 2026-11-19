@@ -8,9 +8,9 @@ const { inicializarBaseDeDatos } = require('../db/init');
 const { pool } = require('../db/postgres');
 
 const ESCENARIOS = [
-  { id: 'PR-01', nombre: 'Consultar recorridos', metodo: 'GET', ruta: '/api/rutas' },
-  { id: 'PR-02', nombre: 'Colectivos de un recorrido', metodo: 'GET', ruta: '/api/rutas/235003/colectivos' },
-  { id: 'PR-03', nombre: 'Inicio de sesión', metodo: 'POST', ruta: '/api/auth/login',
+  { id: 'PR-01a', nombre: 'Consultar recorridos', metodo: 'GET', ruta: '/api/rutas' },
+  { id: 'PR-01b', nombre: 'Colectivos de un recorrido', metodo: 'GET', ruta: '/api/rutas/235003/colectivos' },
+  { id: 'PR-09', nombre: 'Inicio de sesión', metodo: 'POST', ruta: '/api/auth/login',
     cuerpo: JSON.stringify({ email: 'camila.reyes@correo.cl', password: 'colectivo-demo-2026' }) },
 ];
 const USUARIOS = [20, 50, 100];
