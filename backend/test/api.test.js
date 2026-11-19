@@ -299,3 +299,72 @@ test('RP-03 solo el administrador genera reportes; RP-04 la respuesta es un PDF'
     assert.equal(r.body.subarray(0, 4).toString(), '%PDF');
   }
 });
+
+// ---------- Datos propios, aprobación y tiempo real ----------
+
+/** PU-08 cierra el servicio: estas pruebas lo vuelven a abrir con el auto vacío. */
+async function servicioAbierto() {
+  await request(app).post('/api/conductor/servicio/iniciar').set(conToken(tokens.conductor));
+  await request(app).post('/api/conductor/ocupacion').set(conToken(tokens.conductor)).send({ a_bordo: 0 });
+}
+
+test('PI-03 / PSE-02 un pasajero solo ve sus propias reservas', async () => {
+  await servicioAbierto();
+  const a = await registrarPasajero('propio.a@correo.cl');
+  const b = await registrarPasajero('propio.b@correo.cl');
+  const r = await request(app).post('/api/reservas').set(conToken(a)).send({ patente: 'ABCD-12' });
+  assert.equal(r.status, 201, JSON.stringify(r.body));
+  const deA = await request(app).get('/api/reservas').set(conToken(a));
+  const deB = await request(app).get('/api/reservas').set(conToken(b));
+  assert.equal(deA.body.length, 1);
+  assert.equal(deB.body.length, 0); // B no ve la reserva de A
+  await request(app).delete('/api/reservas/activa').set(conToken(a));
+});
+
+test('PI-12 el administrador aprueba a un conductor pendiente', async () => {
+  const id = (await query("SELECT id FROM conductores WHERE rut = '15234567-4'")).rows[0].id;
+  const r = await request(app).post(`/api/conductores/${id}/estado`).set(conToken(tokens.admin)).send({ estado: 'APROBADA' });
+  assert.equal(r.status, 200);
+  assert.equal(r.body.estado, 'APROBADA');
+  const t = await login('r.morales@correo.cl', CLAVE);
+  const s = await request(app).post('/api/conductor/servicio/iniciar').set(conToken(t));
+  assert.equal(s.status, 409); // ya no es 403 (pendiente): ahora falta que le asignen un vehículo
+});
+
+test('PI-09 la posición del conductor llega por WebSocket; sin token se rechaza la conexión', async () => {
+  await servicioAbierto();
+  const { io: cliente } = require('socket.io-client');
+  const servidor = require('http').createServer(app);
+  const { Server } = require('socket.io');
+  const io = new Server(servidor);
+  const jwtLib = require('jsonwebtoken');
+  io.use((socket, next) => {
+    try { socket.user = jwtLib.verify(socket.handshake.auth.token, process.env.JWT_SECRET); next(); } catch { next(new Error('Token WebSocket inválido')); }
+  });
+  io.on('connection', (socket) => socket.on('subscribe_route', (folio) => socket.join(`route_${folio}`)));
+  app.locals.io = io;
+  await new Promise((ok) => servidor.listen(0, ok));
+  const url = `http://127.0.0.1:${servidor.address().port}`;
+  try {
+    const sinToken = cliente(url, { transports: ['websocket'], reconnection: false });
+    const error = await new Promise((ok) => sinToken.on('connect_error', (e) => ok(e.message)));
+    assert.match(error, /inválido/);
+    sinToken.close();
+
+    const pasajero = cliente(url, { transports: ['websocket'], auth: { token: tokens.pasajero }, reconnection: false });
+    await new Promise((ok) => pasajero.on('connect', ok));
+    pasajero.emit('subscribe_route', '235003');
+    await new Promise((ok) => setTimeout(ok, 100));
+    const llega = new Promise((ok) => pasajero.on('position_update', ok));
+    const inicio = Date.now();
+    const p = await request(app).post('/api/conductor/posicion').set(conToken(tokens.conductor)).send({ lat: -33.531, lng: -70.661, velocidad: 30 });
+    assert.equal(p.status, 204);
+    const evento = await llega;
+    assert.equal(evento.patente, 'ABCD-12');
+    assert.ok(Date.now() - inicio < 2000, 'la posición debe llegar en menos de 2 s');
+    pasajero.close();
+  } finally {
+    app.locals.io = undefined;
+    io.close();
+  }
+});

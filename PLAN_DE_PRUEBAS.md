@@ -27,7 +27,7 @@ npm audit --omit=dev
 | --- | --- | --- | --- |
 | Unitarias de la app | JUnit (`test/`) | 32 | 32 |
 | Unitarias del servidor | node:test (`backend/test/unitarias.test.js`) | 5 | 5 |
-| Integración API + PostgreSQL | node:test + Supertest (`backend/test/api.test.js`) | 20 | 20 |
+| Integración API + PostgreSQL | node:test + Supertest + socket.io-client (`backend/test/api.test.js`) | 23 | 23 |
 | Rendimiento | autocannon (`backend/test/carga.js`) | 9 escenarios | ver informe |
 | Dependencias | npm audit (producción) | — | 0 vulnerabilidades |
 

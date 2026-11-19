@@ -28,6 +28,7 @@
   },
   "devDependencies": {
     "autocannon": "^7.15.0",
+    "socket.io-client": "^4.8.1",
     "supertest": "^7.0.0"
   }
 }
