@@ -138,6 +138,13 @@ input[aria-invalid="true"] { border: 2px solid var(--error); }
   background: var(--fondo); color: var(--texto-2); font-size: 0.95rem;
 }
 
+.ayuda { margin: 0.4rem 0 0; color: var(--texto-2); font-size: 0.875rem; }
+.campo-codigo { text-align: center; font-size: 1.5rem; letter-spacing: 0.3em; }
+.pasos { padding-left: 1.25rem; color: var(--texto-2); }
+.pasos li { margin: 0.4rem 0; }
+.qr { display: block; margin: 1rem auto; background: #FFFFFF; border-radius: 8px; }
+.clave { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 1rem; color: var(--texto); word-spacing: 0.3em; }
+
 /* ---------- Estructura del panel ---------- */
 .panel {
   min-height: 100vh;

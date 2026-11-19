@@ -9,6 +9,7 @@ const { app } = require('../server');
 const { inicializarBaseDeDatos } = require('../db/init');
 const { pool, query } = require('../db/postgres');
 const { expirarVencidas } = require('../reservas');
+const { loginAdmin } = require('./ayuda');
 
 const DEMO = 'colectivo-demo-2026';
 const CLAVE = 'una-clave-de-prueba-segura';
@@ -33,7 +34,7 @@ before(async () => {
   // Base limpia para las reglas que dependen del estado.
   await query("UPDATE servicios SET fin = NOW() WHERE fin IS NULL");
   await query("UPDATE reservas SET estado = 'CANCELADA' WHERE estado = 'ACTIVA'");
-  tokens.admin = await login('admin@conatacoch.cl');
+  tokens.admin = await loginAdmin(app);
   tokens.pasajero = await login('camila.reyes@correo.cl');
   tokens.conductor = await login('p.soto@correo.cl');
 });

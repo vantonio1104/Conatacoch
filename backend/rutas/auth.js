@@ -1,11 +1,14 @@
 // Cuentas: registro e inicio de sesión de pasajeros, conductores y administración.
 const express = require('express');
 const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
+const QRCode = require('qrcode');
+const totp = require('../totp');
 const { query, transaccion } = require('../db/postgres');
 const mongo = require('../db/mongo');
 const {
   ruta, ErrorHttp, normalizarEmail, emailValido, passwordValida, fechaIso, iniciarSesion, autenticar, MENSAJE_PASSWORD,
-  rutNormalizado, bloqueado, registrarFallo, limpiarIntentos,
+  rutNormalizado, bloqueado, registrarFallo, limpiarIntentos, JWT_SECRET,
 } = require('../util');
 
 const router = express.Router();
@@ -54,7 +57,7 @@ router.post('/api/auth/login', ruta(async (req, res) => {
   const { password, rol } = req.body;
   if (bloqueado(req, email)) throw new ErrorHttp(429, 'Demasiados intentos fallidos. Espera 15 minutos e inténtalo de nuevo.');
   const r = await query(
-    `SELECT u.id, u.email, u.nombre, u.password_hash, r.nombre AS rol, c.estado AS estado_conductor
+    `SELECT u.id, u.email, u.nombre, u.password_hash, u.totp_activo, r.nombre AS rol, c.estado AS estado_conductor
      FROM usuarios u JOIN roles r ON r.id = u.rol_id
      LEFT JOIN conductores c ON c.usuario_id = u.id
      WHERE u.email = $1 AND u.activo`,
@@ -68,8 +71,60 @@ router.post('/api/auth/login', ruta(async (req, res) => {
     throw new ErrorHttp(401, 'Correo o contraseña incorrectos');
   }
   limpiarIntentos(req, email);
+  // La administración necesita además el código de su app autenticadora (segundo factor).
+  if (u.rol === 'ADMIN') {
+    const desafio = jwt.sign({ tipo: 'desafio-totp', id: u.id }, JWT_SECRET, { expiresIn: MINUTOS_DESAFIO * 60 });
+    return res.json({ requiereTotp: true, configurar: !u.totp_activo, desafio });
+  }
   await mongo.auditar(u, 'INICIO_SESION');
   res.json({ token: await iniciarSesion(u), rol: u.rol, nombre: u.nombre, email: u.email, estado: u.estado_conductor ?? null });
+}));
+
+// ---------- Segundo factor de la administración (TOTP) ----------
+const MINUTOS_DESAFIO = 5;
+
+/** Administrador activo al que pertenece el desafío que entregó el inicio de sesión con contraseña. */
+async function adminDelDesafio(desafio) {
+  let datos;
+  try {
+    datos = jwt.verify(String(desafio || ''), JWT_SECRET);
+  } catch {
+    datos = null;
+  }
+  if (datos?.tipo !== 'desafio-totp') throw new ErrorHttp(401, 'El inicio de sesión venció. Vuelve a ingresar tu contraseña.');
+  const r = await query(
+    `SELECT u.id, u.email, u.nombre, u.totp_secreto, u.totp_activo, u.totp_ultimo_paso, r.nombre AS rol
+     FROM usuarios u JOIN roles r ON r.id = u.rol_id WHERE u.id = $1 AND u.activo AND r.nombre = 'ADMIN'`,
+    [datos.id],
+  );
+  if (!r.rows[0]) throw new ErrorHttp(401, 'El inicio de sesión venció. Vuelve a ingresar tu contraseña.');
+  return r.rows[0];
+}
+
+/** Primera vez: crea la clave y entrega el QR para registrarla en la app autenticadora. */
+router.post('/api/auth/totp/alta', ruta(async (req, res) => {
+  const u = await adminDelDesafio(req.body.desafio);
+  if (u.totp_activo) throw new ErrorHttp(409, 'El segundo factor ya está configurado');
+  const secreto = totp.nuevoSecreto();
+  await query('UPDATE usuarios SET totp_secreto = $2, totp_ultimo_paso = NULL WHERE id = $1', [u.id, secreto]);
+  const uri = totp.uri(u.email, secreto);
+  res.json({ secreto, uri, qr: await QRCode.toDataURL(uri, { margin: 1, width: 220 }) });
+}));
+
+/** Revisa el código de 6 dígitos y entrega la sesión (8 horas). La primera vez además activa el TOTP. */
+router.post('/api/auth/totp', ruta(async (req, res) => {
+  const u = await adminDelDesafio(req.body.desafio);
+  if (bloqueado(req, u.email)) throw new ErrorHttp(429, 'Demasiados intentos fallidos. Espera 15 minutos e inténtalo de nuevo.');
+  const paso = u.totp_secreto ? totp.verificar(u.totp_secreto, req.body.codigo, u.totp_ultimo_paso) : null;
+  if (paso === null) {
+    registrarFallo(req, u.email);
+    await mongo.auditar(u, 'TOTP_FALLIDO');
+    throw new ErrorHttp(401, 'Código incorrecto. Revisa tu app autenticadora.');
+  }
+  await query('UPDATE usuarios SET totp_activo = TRUE, totp_ultimo_paso = $2 WHERE id = $1', [u.id, paso]);
+  limpiarIntentos(req, u.email);
+  await mongo.auditar(u, u.totp_activo ? 'INICIO_SESION' : 'TOTP_ACTIVADO');
+  res.json({ token: await iniciarSesion({ ...u, totp: true }), rol: u.rol, nombre: u.nombre, email: u.email });
 }));
 
 /** Cierra la sesión actual (el token deja de servir). */

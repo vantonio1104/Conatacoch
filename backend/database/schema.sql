@@ -232,3 +232,9 @@ CREATE TABLE IF NOT EXISTS sesiones (
     revocada BOOLEAN DEFAULT FALSE NOT NULL
 );
 CREATE INDEX IF NOT EXISTS sesiones_activas_usuario ON sesiones (usuario_id) WHERE NOT revocada;
+
+-- ===================== v1.6: segundo factor (TOTP) de la administración =====================
+ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS totp_secreto VARCHAR(64);
+ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS totp_activo BOOLEAN NOT NULL DEFAULT FALSE;
+-- Último paso de 30 s aceptado: impide usar dos veces el mismo código.
+ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS totp_ultimo_paso BIGINT;

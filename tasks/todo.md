@@ -16,7 +16,7 @@ Plan: `tasks/plan.md`. Cada tarea termina con sus pruebas en verde (`npm test` c
   - Verificar: prueba de Supertest (HTML y cabecera CSP) y prueba de humo en Playwright (entrar y salir).
   - Archivos: `server.js`, `public/admin/{index.html,estilos.css,app.js,logo.png}`, `test/panel.test.js`,
     `test/e2e/humo.spec.js`, `package.json`.
-- [ ] **T3. TOTP**
+- [x] **T3. TOTP**
   - Aceptación: primer ingreso muestra clave y QR y pide confirmar con un código; los siguientes piden el código;
     códigos incorrectos cuentan para el límite de intentos; el panel muestra «Sesión protegida con TOTP».
   - Verificar: pruebas con códigos calculados para la hora actual, la anterior y una inválida; humo actualizado.

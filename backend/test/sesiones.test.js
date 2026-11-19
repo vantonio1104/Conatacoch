@@ -7,6 +7,7 @@ const jwt = require('jsonwebtoken');
 const { app } = require('../server');
 const { inicializarBaseDeDatos } = require('../db/init');
 const { pool, query } = require('../db/postgres');
+const { loginAdmin } = require('./ayuda');
 
 const DEMO = 'colectivo-demo-2026';
 const conToken = (t) => ({ Authorization: `Bearer ${t}` });
@@ -44,14 +45,14 @@ test('SE-03 una sesión revocada en el servidor deja de servir', async () => {
 });
 
 test('SE-04 el token del administrador dura 8 horas; el de la app, 30 días', async () => {
-  const admin = jwt.decode(await login('admin@conatacoch.cl'));
+  const admin = jwt.decode(await loginAdmin(app));
   const pasajero = jwt.decode(await login('camila.reyes@correo.cl'));
   assert.equal(admin.exp - admin.iat, 8 * 3600);
   assert.equal(pasajero.exp - pasajero.iat, 30 * 24 * 3600);
 });
 
 test('SE-05 el administrador sale tras 30 minutos sin actividad; el pasajero no', async () => {
-  const admin = await login('admin@conatacoch.cl');
+  const admin = await loginAdmin(app);
   const pasajero = await login('camila.reyes@correo.cl');
   await query("UPDATE sesiones SET ultimo_uso = NOW() - INTERVAL '31 minutes' WHERE id = ANY($1)", [[sid(admin), sid(pasajero)]]);
   assert.equal((await request(app).get('/api/admin/resumen').set(conToken(admin))).status, 401);

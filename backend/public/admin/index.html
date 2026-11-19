@@ -10,7 +10,7 @@
 </head>
 <body>
   <main id="vista-login" class="login" hidden>
-    <section class="tarjeta login-tarjeta" aria-labelledby="login-titulo">
+    <section id="login-tarjeta-principal" class="tarjeta login-tarjeta" aria-labelledby="login-titulo">
       <img class="login-logo" src="logo.png" alt="CONATACOCH, Confederación Nacional de Taxis Colectivos de Chile">
       <h1 id="login-titulo">Panel de administración</h1>
       <p class="secundario">Ingresa con tu cuenta de administrador</p>
@@ -19,10 +19,31 @@
         <input id="login-correo" name="email" type="email" autocomplete="username" required>
         <label for="login-clave">Contraseña</label>
         <input id="login-clave" name="password" type="password" autocomplete="current-password" required>
+        <label for="login-codigo">Código de la aplicación autenticadora</label>
+        <input id="login-codigo" class="campo-codigo" name="codigo" inputmode="numeric" autocomplete="one-time-code"
+               maxlength="7" aria-describedby="login-codigo-ayuda">
+        <p id="login-codigo-ayuda" class="ayuda">Segundo factor: código de 6 dígitos que cambia cada 30 segundos</p>
         <div id="login-error"></div>
         <button class="boton boton-principal boton-ancho" type="submit">Ingresar</button>
       </form>
       <p class="nota" id="login-nota"></p>
+    </section>
+    <section id="alta-totp" class="tarjeta login-tarjeta" aria-labelledby="alta-titulo" hidden>
+      <h1 id="alta-titulo">Configura el segundo factor</h1>
+      <p class="secundario">Es la primera vez que entras. Protege tu cuenta con una app autenticadora.</p>
+      <ol class="pasos">
+        <li>Abre tu app autenticadora (Google Authenticator, Microsoft Authenticator u otra).</li>
+        <li>Escanea este código QR o escribe la clave a mano.</li>
+        <li>Ingresa el código de 6 dígitos que muestra la app.</li>
+      </ol>
+      <img id="alta-qr" class="qr" alt="Código QR para registrar CONATACOCH en la app autenticadora" width="220" height="220">
+      <p class="secundario">Clave: <code id="alta-clave" class="clave"></code></p>
+      <form id="form-alta" novalidate>
+        <label for="alta-codigo">Código de la aplicación autenticadora</label>
+        <input id="alta-codigo" class="campo-codigo" inputmode="numeric" autocomplete="one-time-code" maxlength="7" required>
+        <div id="alta-error"></div>
+        <button class="boton boton-principal boton-ancho" type="submit">Activar y entrar</button>
+      </form>
     </section>
   </main>
 

@@ -117,7 +117,9 @@ async function iniciarSesion(u) {
   const segundos = SEGUNDOS_SESION(u.rol);
   await query('INSERT INTO sesiones (id, usuario_id, expira) VALUES ($1, $2, NOW() + make_interval(secs => $3))',
     [sid, u.id, segundos]);
-  return jwt.sign({ sid, id: u.id, email: u.email, rol: u.rol, nombre: u.nombre }, JWT_SECRET, { expiresIn: segundos });
+  const datos = { sid, id: u.id, email: u.email, rol: u.rol, nombre: u.nombre };
+  if (u.totp) datos.totp = true; // la sesión de la administración pasó por el segundo factor
+  return jwt.sign(datos, JWT_SECRET, { expiresIn: segundos });
 }
 
 const SESION_VENCIDA = { error: 'Sesión vencida, vuelve a iniciar sesión' };
