@@ -117,19 +117,14 @@ deja el panel en blanco.
 - Asignaciones con fecha y horario, con detección de choque como en Admin 3.
 - El perfil administrador sale de la app Android cuando el panel esté listo.
 
-## Preguntas abiertas
+## Decisiones de la segunda revisión (19-11-2026)
 
-- **P10. Fotos de licencia, quién las sube:** el conductor en el registro de la app (cambio en Android: elegir foto o
-  cámara) o el administrador desde el panel. Se guardan en PostgreSQL (Render no conserva archivos en disco), solo
-  JPEG o PNG de hasta 1 MB cada una, y solo el rol ADMIN las ve.
-- **P11. Alta del TOTP:** no hay vista en Figma para configurarlo. Propuesta: la primera vez que el administrador entra,
-  el panel le muestra la clave y un código QR para registrarla en su app autenticadora y le pide un código para
-  confirmar. Se implementa con el módulo crypto de Node (RFC 6238), sin librería; el QR necesita una librería pequeña
-  o se muestra solo la clave para escribirla a mano.
-- **P12. Asignaciones y turnos:** con fecha y horario, la asignación pasa a ser lo que define cuándo trabaja cada
-  conductor. Propuesta: «Salidas y turnos» muestra esas mismas asignaciones por semana (Mañana 06:00–14:00 y Tarde
-  14:00–22:00 se vuelven horarios rápidos) y desaparece la tabla `turnos` aparte. El conductor solo inicia servicio
-  dentro de una asignación vigente para ese momento.
-- **P7. Duración del token del administrador:** propuesta de 8 horas, más cierre a los 30 minutos sin actividad.
-- **P8. Playwright** como dependencia de desarrollo para la prueba de humo en el navegador.
-- **Plazo:** el alcance completo son unos 8 a 10 días de trabajo; cabe antes del 09-12-2026, con poco margen.
+- **P10:** las fotos de la licencia las sube el conductor al registrarse en la app (cambio en Android).
+- **P11:** alta del TOTP la primera vez que el administrador entra, con clave y código QR; RFC 6238 con el módulo
+  crypto de Node y una librería pequeña solo para dibujar el QR.
+- **P12:** «Salidas y turnos» muestra por semana las mismas asignaciones con fecha y horario; no hay dos tablas que
+  definan cuándo trabaja un conductor. El conductor solo inicia servicio dentro de una asignación vigente.
+- **P7:** token del administrador de 8 horas y cierre a los 30 minutos sin actividad.
+- **P8:** Playwright como dependencia de desarrollo para la prueba de humo.
+
+Estado: **aprobada**. El plan está en `tasks/plan.md` y las tareas en `tasks/todo.md`.
