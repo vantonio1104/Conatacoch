@@ -369,3 +369,22 @@ test('PI-09 la posición del conductor llega por WebSocket; sin token se rechaza
     io.close();
   }
 });
+
+// ---------- Panel web: validación de conductores ----------
+
+test('AD-01 la lista de pendientes trae la fecha de registro y los datos de la licencia', async () => {
+  const nuevo = await request(app).post('/api/auth/registro-conductor').send({
+    rut: '11.111.111-1', nombre: 'Felipe Contreras Lagos', direccion: 'Calle 2', comuna: 'La Pintana',
+    celular: '+56922222222', telefonoEmergencia: '+56933333333', licencia: 'A3', comunaEmision: 'La Pintana',
+    correo: 'f.contreras@correo.cl', password: CLAVE, emisionLicencia: '01-02-2024', vencimientoLicencia: '01-02-2030',
+  });
+  assert.equal(nuevo.status, 201);
+  const r = await request(app).get('/api/conductores?estado=PENDIENTE').set(conToken(tokens.admin));
+  assert.equal(r.status, 200);
+  assert.ok(r.body.some((c) => c.rut === '11111111-1'));
+  for (const c of r.body) {
+    assert.equal(c.estado, 'PENDIENTE');
+    assert.match(c.registrado, /^\d{4}-\d{2}-\d{2}$/);
+    assert.ok(c.tipo_licencia && c.municipio_licencia && c.fecha_vencimiento_licencia);
+  }
+});

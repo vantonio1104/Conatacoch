@@ -24,7 +24,7 @@ Plan: `tasks/plan.md`. Cada tarea termina con sus pruebas en verde (`npm test` c
 
 ## Fase B · Modelo de trabajo
 
-- [ ] **T4. Validar conductores (Admin 2)**
+- [x] **T4. Validar conductores (Admin 2)**
   - Aceptación: lista de pendientes y detalle con datos personales y licencia; «Rechazar»; «Aprobar y vincular» aprueba
     y vincula recorrido y vehículo en un solo paso; avisa si la licencia no es A2 o A3.
   - Verificar: prueba de integración del vínculo; revisión contra Figma en claro y oscuro.

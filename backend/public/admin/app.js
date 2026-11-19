@@ -5,6 +5,8 @@ import { el, icono, mensaje } from './ui.js';
 /** Pantallas del menú, en el orden de Figma. Cada una vive en pantallas/<id>.js y exporta mostrar(raiz). */
 const PANTALLAS = [
   { id: 'inicio', titulo: 'Inicio', subtitulo: 'Panel de administración de CONATACOCH', icono: 'inicio' },
+  { id: 'validar', menu: 'Validar conductores', titulo: 'Validación de conductores',
+    subtitulo: 'Revisa los datos y la licencia antes de aprobar el registro', icono: 'validar' },
 ];
 
 const MINUTOS_INACTIVIDAD = 30;
@@ -117,7 +119,7 @@ for (const evento of ['pointerdown', 'keydown']) document.addEventListener(event
 // ---------- Panel ----------
 function armarMenu() {
   $('menu').replaceChildren(...PANTALLAS.map((p) => el('li', {},
-    el('a', { class: 'lateral-item', href: `#${p.id}`, 'data-id': p.id }, icono(p.icono), p.titulo))));
+    el('a', { class: 'lateral-item', href: `#${p.id}`, 'data-id': p.id }, icono(p.icono), p.menu ?? p.titulo))));
   $('boton-salir').replaceChildren(icono('salir'), 'Cerrar sesión');
 }
 $('boton-salir').addEventListener('click', () => cerrarSesion());
@@ -126,7 +128,8 @@ function mostrarPanel() {
   const s = sesion.leer();
   $('vista-login').hidden = true;
   $('vista-panel').hidden = false;
-  $('nombre-usuario').textContent = s.nombre;
+  $('nombre-usuario').textContent = 'Administrador'; // como en Figma; el nombre completo queda en el título
+  $('nombre-usuario').title = `${s.nombre} · ${s.email}`;
   $('insignia-totp').hidden = !s.totp;
   $('insignia-totp').replaceChildren(icono('escudo'), 'Sesión protegida con TOTP');
   $('iniciales').textContent = s.nombre.split(/\s+/).map((p) => p[0]).join('').slice(0, 2).toUpperCase();

@@ -70,6 +70,7 @@ const SQL_CONDUCTOR = `
   SELECT c.id, c.nombre_completo, c.rut, c.direccion, c.comuna, c.fono_celular, c.fono_domicilio, c.fono_emergencia,
          c.tipo_licencia, c.municipio_licencia, c.fecha_obtencion_licencia::text, c.fecha_vencimiento_licencia::text,
          c.estado, u.email, ${semaforo('c.fecha_vencimiento_licencia')} AS semaforo,
+         COALESCE(u.created_at::date, c.fecha_incorporacion)::text AS registrado,
          (SELECT a.patente FROM asignaciones s JOIN automoviles a ON a.id = s.automovil_id AND a.activo
            WHERE s.conductor_id = c.id AND s.activo LIMIT 1) AS patente
   FROM conductores c LEFT JOIN usuarios u ON u.id = c.usuario_id`;
