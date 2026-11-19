@@ -1,5 +1,7 @@
 // Utilidades compartidas por las rutas del servidor.
+const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
+const { query } = require('./db/postgres');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'conatacoch_secret_key_2026';
 if (!process.env.JWT_SECRET) console.warn('[aviso] JWT_SECRET no está configurado: se usa una clave de desarrollo.');
@@ -104,18 +106,47 @@ function registrarFallo(req, email) {
 }
 function limpiarIntentos(req, email) { intentosFallidos.delete(claveIntento(req, email)); }
 
-function firmarToken(u) {
-  return jwt.sign({ id: u.id, email: u.email, rol: u.rol, nombre: u.nombre }, JWT_SECRET, { expiresIn: '30d' });
+/** Duración del token: 8 horas para la administración (panel web) y 30 días para la app. */
+const SEGUNDOS_SESION = (rol) => (rol === 'ADMIN' ? 8 * 3600 : 30 * 24 * 3600);
+/** La administración sale tras 30 minutos sin actividad. */
+const MINUTOS_INACTIVIDAD_ADMIN = 30;
+
+/** Crea la sesión en la base y devuelve su token. */
+async function iniciarSesion(u) {
+  const sid = crypto.randomUUID();
+  const segundos = SEGUNDOS_SESION(u.rol);
+  await query('INSERT INTO sesiones (id, usuario_id, expira) VALUES ($1, $2, NOW() + make_interval(secs => $3))',
+    [sid, u.id, segundos]);
+  return jwt.sign({ sid, id: u.id, email: u.email, rol: u.rol, nombre: u.nombre }, JWT_SECRET, { expiresIn: segundos });
 }
 
+const SESION_VENCIDA = { error: 'Sesión vencida, vuelve a iniciar sesión' };
+
+/** Exige un token válido cuya sesión siga abierta, no vencida y de una cuenta activa. */
 function autenticar(req, res, next) {
   const token = (req.headers.authorization || '').split(' ')[1];
   if (!token) return res.status(401).json({ error: 'Token requerido' });
-  jwt.verify(token, JWT_SECRET, (err, usuario) => {
-    if (err) return res.status(401).json({ error: 'Sesión vencida, vuelve a iniciar sesión' });
+  let usuario;
+  try {
+    usuario = jwt.verify(token, JWT_SECRET);
+  } catch {
+    return res.status(401).json(SESION_VENCIDA);
+  }
+  if (!usuario.sid) return res.status(401).json(SESION_VENCIDA);
+  query(
+    `SELECT s.revocada, s.expira < NOW() AS vencida, u.activo,
+            s.ultimo_uso < NOW() - make_interval(mins => $2) AS inactiva,
+            s.ultimo_uso < NOW() - INTERVAL '1 minute' AS refrescar
+     FROM sesiones s JOIN usuarios u ON u.id = s.usuario_id WHERE s.id = $1`,
+    [usuario.sid, MINUTOS_INACTIVIDAD_ADMIN],
+  ).then(async ({ rows: [s] }) => {
+    if (!s || s.revocada || s.vencida || !s.activo || (usuario.rol === 'ADMIN' && s.inactiva)) {
+      return res.status(401).json(SESION_VENCIDA);
+    }
+    if (s.refrescar) await query('UPDATE sesiones SET ultimo_uso = NOW() WHERE id = $1', [usuario.sid]);
     req.usuario = usuario;
     next();
-  });
+  }).catch(next);
 }
 
 const requiereRol = (rol) => (req, res, next) =>
@@ -123,6 +154,6 @@ const requiereRol = (rol) => (req, res, next) =>
 
 module.exports = {
   JWT_SECRET, MINUTOS_VIGENCIA_RESERVA, ruta, ErrorHttp, normalizarEmail, emailValido, passwordValida, texto,
-  fechaIso, fechaOpcional, nombreCorto, firmarToken, autenticar, requiereRol, MENSAJE_PASSWORD,
+  fechaIso, fechaOpcional, nombreCorto, iniciarSesion, autenticar, requiereRol, MENSAJE_PASSWORD,
   rutNormalizado, patenteNormalizada, bloqueado, registrarFallo, limpiarIntentos, PASSWORD_MIN, PASSWORD_MAX,
 };

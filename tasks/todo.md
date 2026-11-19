@@ -4,7 +4,7 @@ Plan: `tasks/plan.md`. Cada tarea termina con sus pruebas en verde (`npm test` c
 
 ## Fase A · Acceso seguro
 
-- [ ] **T1. Sesiones revocables en el servidor**
+- [x] **T1. Sesiones revocables en el servidor**
   - Aceptación: cada inicio de sesión crea una sesión; un token de una sesión revocada o vencida responde 401; el
     token del administrador dura 8 h y su sesión se cierra tras 30 min sin uso; «cerrar sesión» revoca la actual.
     Las rutas de la app siguen funcionando igual.
@@ -74,7 +74,8 @@ Plan: `tasks/plan.md`. Cada tarea termina con sus pruebas en verde (`npm test` c
 ## Fase E · Cierre
 
 - [ ] **T14. Quitar la administración de la app Android** (selector de perfil, navegación, `ui/admin`,
-  `AdminRepository` y sus pruebas). Tú compilas y pruebas la app.
+  `AdminRepository` y sus pruebas). La app también llama a `POST /api/auth/logout` al cerrar sesión. Tú compilas y
+  pruebas la app.
 - [ ] **T15. Prueba de humo completa** en Playwright: entrar con TOTP, aprobar un conductor, asignar, ver la semana,
   cambiar una tarifa, descargar los 2 PDF, cerrar sesiones de una cuenta y salir.
 - [ ] **T16. Documentación e informe:** README, INSTALACION, DESPLIEGUE, CLAUDE.md y PLAN_DE_PRUEBAS; en el informe,

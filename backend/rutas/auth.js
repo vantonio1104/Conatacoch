@@ -4,7 +4,7 @@ const bcrypt = require('bcryptjs');
 const { query, transaccion } = require('../db/postgres');
 const mongo = require('../db/mongo');
 const {
-  ruta, ErrorHttp, normalizarEmail, emailValido, passwordValida, fechaIso, firmarToken, autenticar, MENSAJE_PASSWORD,
+  ruta, ErrorHttp, normalizarEmail, emailValido, passwordValida, fechaIso, iniciarSesion, autenticar, MENSAJE_PASSWORD,
   rutNormalizado, bloqueado, registrarFallo, limpiarIntentos,
 } = require('../util');
 
@@ -29,7 +29,7 @@ router.post('/api/auth/registro', ruta(async (req, res) => {
   if (r.rowCount === 0) throw new ErrorHttp(409, 'Ese correo ya tiene una cuenta. Inicia sesión.');
   const usuario = { id: r.rows[0].id, email, nombre, rol: 'PASAJERO' };
   await mongo.auditar(usuario, 'REGISTRO_PASAJERO');
-  res.status(201).json({ email, nombre, rol: 'PASAJERO', token: firmarToken(usuario) });
+  res.status(201).json({ email, nombre, rol: 'PASAJERO', token: await iniciarSesion(usuario) });
 }));
 
 // Ya no se usa desde la app (el registro no pide código). Se deja por compatibilidad, pero solo con la
@@ -44,7 +44,7 @@ router.post('/api/auth/verificar', autenticar, ruta(async (req, res) => {
   );
   if (r.rowCount === 0) throw new ErrorHttp(404, 'No encontramos esa cuenta');
   const u = r.rows[0];
-  res.json({ token: firmarToken(u), rol: u.rol, nombre: u.nombre, email: u.email });
+  res.json({ token: await iniciarSesion(u), rol: u.rol, nombre: u.nombre, email: u.email });
 }));
 
 router.post('/api/auth/reenviar-codigo', (req, res) => res.status(204).end());
@@ -69,7 +69,13 @@ router.post('/api/auth/login', ruta(async (req, res) => {
   }
   limpiarIntentos(req, email);
   await mongo.auditar(u, 'INICIO_SESION');
-  res.json({ token: firmarToken(u), rol: u.rol, nombre: u.nombre, email: u.email, estado: u.estado_conductor ?? null });
+  res.json({ token: await iniciarSesion(u), rol: u.rol, nombre: u.nombre, email: u.email, estado: u.estado_conductor ?? null });
+}));
+
+/** Cierra la sesión actual (el token deja de servir). */
+router.post('/api/auth/logout', autenticar, ruta(async (req, res) => {
+  await query('UPDATE sesiones SET revocada = TRUE WHERE id = $1', [req.usuario.sid]);
+  res.status(204).end();
 }));
 
 router.post('/api/auth/registro-conductor', ruta(async (req, res) => {

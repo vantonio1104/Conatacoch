@@ -220,3 +220,15 @@ UPDATE conductores SET rut = '9876543-3'
 UPDATE conductores SET fecha_obtencion_licencia = '2025-03-15', duracion_licencia_anos = 4,
        fecha_vencimiento_licencia = '2029-03-15'
  WHERE rut = '12345678-5' AND fecha_vencimiento_licencia = '2020-03-15';
+
+-- ===================== v1.5: sesiones revocables (panel web, defecto D-13) =====================
+-- Cada inicio de sesión queda aquí. El token lleva el id; cerrar sesión o desactivar la cuenta la invalida.
+CREATE TABLE IF NOT EXISTS sesiones (
+    id UUID PRIMARY KEY,
+    usuario_id INT REFERENCES usuarios(id) ON DELETE CASCADE NOT NULL,
+    creada TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+    ultimo_uso TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+    expira TIMESTAMPTZ NOT NULL,
+    revocada BOOLEAN DEFAULT FALSE NOT NULL
+);
+CREATE INDEX IF NOT EXISTS sesiones_activas_usuario ON sesiones (usuario_id) WHERE NOT revocada;
