@@ -235,6 +235,40 @@ input[aria-invalid="true"] { border: 2px solid var(--error); }
 .tabla td { padding: 1rem; border-bottom: 1px solid var(--divisor); white-space: nowrap; }
 .tabla .fuerte { font-weight: 500; }
 .tabla .vacio { color: var(--texto-2); white-space: normal; }
+/* Salidas y turnos (Admin 4) */
+.barra-semana { display: flex; align-items: flex-end; gap: 1.5rem; flex-wrap: wrap; margin-bottom: 1.5rem; }
+.barra-semana label { margin-top: 0; }
+.barra-semana select { min-width: 220px; }
+.navegar-semana { display: flex; align-items: center; gap: 1rem; }
+.semana-titulo { font-weight: 500; font-size: 1.1rem; }
+.boton-circular {
+  width: 48px; height: 48px; border-radius: 50%; border: 1px solid var(--borde); background: var(--superficie);
+  color: var(--texto); font-size: 1.5rem; line-height: 1; cursor: pointer;
+}
+.boton-nuevo { margin-left: auto; }
+.tabla-semana th[scope="row"] { text-align: left; font-weight: 400; display: grid; gap: 0.1rem; min-width: 150px; }
+.tabla-semana .patente { margin: 0; font-size: 0.85rem; }
+.tabla-semana td { padding: 0.5rem 0.3rem; }
+.turnos-dia { display: grid; gap: 0.35rem; }
+.turno {
+  width: 100%; min-width: 104px; min-height: 44px; padding: 0 0.4rem; border-radius: 8px; border: 1px solid transparent;
+  font: inherit; font-size: 0.9rem; font-weight: 500; cursor: pointer;
+}
+.turno-manana { background: var(--verde-suave); color: var(--verde-texto); }
+.turno-tarde { background: var(--info-suave); color: var(--info-texto); }
+.turno-otro { background: var(--superficie); color: var(--texto); border-color: var(--borde); }
+.turno-libre { background: var(--neutro-suave); color: var(--texto-2); font-weight: 400; }
+.leyenda { list-style: none; display: flex; gap: 1.5rem; flex-wrap: wrap; padding: 0; margin: 1.5rem 0 0; color: var(--texto-2); }
+.leyenda li { display: flex; align-items: center; gap: 0.5rem; }
+.muestra { width: 20px; height: 20px; border-radius: 4px; border: 1px solid var(--borde); }
+.dialogo {
+  width: min(92vw, 520px); border: 1px solid var(--divisor); border-radius: var(--radio); padding: 2rem;
+  background: var(--superficie); color: var(--texto);
+}
+.dialogo::backdrop { background: rgba(0, 0, 0, 0.45); }
+.acciones-dialogo { justify-content: flex-end; margin-top: 1.5rem; }
+.rapidos { border: 0; padding: 0; margin: 1rem 0 0; display: flex; gap: 0.75rem; flex-wrap: wrap; }
+.rapidos legend { font-weight: 500; font-size: 0.95rem; margin-bottom: 0.4rem; padding: 0; }
 @media (max-width: 1200px) {
   .dos-columnas, .dos-columnas-derecha { grid-template-columns: 1fr; }
   .datos { grid-template-columns: repeat(2, 1fr); }

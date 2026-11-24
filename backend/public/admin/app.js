@@ -9,6 +9,8 @@ const PANTALLAS = [
     subtitulo: 'Revisa los datos y la licencia antes de aprobar el registro', icono: 'validar' },
   { id: 'asignar', menu: 'Asignar rutas', titulo: 'Asignación de rutas',
     subtitulo: 'Asigna un recorrido a un conductor y su vehículo', icono: 'asignar' },
+  { id: 'turnos', menu: 'Salidas y turnos', titulo: 'Programación de salidas y turnos',
+    subtitulo: 'Turnos semanales por conductor', icono: 'turnos' },
 ];
 
 const MINUTOS_INACTIVIDAD = 30;

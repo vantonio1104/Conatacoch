@@ -124,3 +124,17 @@ test('AS-09 solo la administración crea, lista o borra turnos', async () => {
   assert.equal((await request(app).post('/api/admin/turnos').set(conToken(t.conductor)).send({})).status, 403);
   assert.equal((await request(app).get('/api/admin/turnos').set(conToken(t.conductor))).status, 403);
 });
+
+test('AS-10 vista semanal: 7 días desde un lunes y solo el recorrido elegido', async () => {
+  const lunes = (await query(`SELECT (date_trunc('week', ${HOY}) + INTERVAL '7 days')::date::text AS f`)).rows[0].f;
+  const r1 = await crear({ conductor_id: ids.pedro, automovil_id: ids.abcd, ruta_folio: '235003', fecha: lunes, hora_inicio: '06:00', hora_fin: '14:00' });
+  const r2 = await crear({ conductor_id: ids.juan, automovil_id: ids.wxyz, ruta_folio: '235005', fecha: lunes, hora_inicio: '14:00', hora_fin: '22:00' });
+  assert.equal(r1.status, 201);
+  assert.equal(r2.status, 201);
+  const semana = await request(app).get(`/api/admin/turnos?desde=${lunes}&dias=7&folio=235005`).set(conToken(t.admin));
+  assert.equal(semana.status, 200);
+  assert.ok(semana.body.length >= 1);
+  assert.ok(semana.body.every((x) => x.ruta_folio === '235005' && x.fecha >= lunes));
+  assert.ok(semana.body.some((x) => x.id === r2.body.id));
+  assert.equal((await request(app).get('/api/admin/turnos?desde=31-02-2026').set(conToken(t.admin))).status, 400);
+});

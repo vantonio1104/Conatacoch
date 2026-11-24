@@ -43,7 +43,7 @@ Plan: `tasks/plan.md`. Cada tarea termina con sus pruebas en verde (`npm test` c
     de horario.
   - Archivos: `database/schema.sql`, `turnos.js`, `rutas/admin.js`, `rutas/conductor.js`,
     `public/admin/pantallas/asignar.js`, `test/asignaciones.test.js`.
-- [ ] **T7. Salidas y turnos (Admin 4)**
+- [x] **T7. Salidas y turnos (Admin 4)**
   - Aceptación: vista semanal por recorrido con las asignaciones de T6; «Nuevo turno» con horarios rápidos de mañana
     y tarde; semana anterior y siguiente; leyenda de colores.
   - Verificar: prueba de la ruta semanal; revisión contra Figma.

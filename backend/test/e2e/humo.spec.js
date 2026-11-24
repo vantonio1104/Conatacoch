@@ -140,3 +140,28 @@ test('HU-05 asignar rutas: avisa el choque de horario y crea un turno', async ({
   await page.getByLabel('Buscar por patente o conductor').fill('GHJK');
   await expect(page.getByRole('row', { name: /Rodrigo Morales Vega GHJK-34 Línea 5003/ })).toContainText('Programada');
 });
+
+test('HU-06 salidas y turnos: asignar un turno desde una celda libre y borrarlo', async ({ page }) => {
+  await entrarAdmin(page);
+  await page.getByRole('link', { name: 'Salidas y turnos' }).click();
+  await page.getByLabel('Recorrido').selectOption('235003');
+  await expect(page.getByRole('rowheader', { name: /Rodrigo Morales Vega/ })).toBeVisible();
+  await page.getByRole('button', { name: 'Semana siguiente' }).click(); // toda la semana es futura
+  const libre = page.getByRole('button', { name: /^Rodrigo Morales Vega, .*: libre/ }).first();
+  const etiqueta = await libre.getAttribute('aria-label');
+  const fecha = etiqueta.match(/\d{2}-\d{2}-\d{4}/)[0];
+  await libre.click();
+  const dialogo = page.getByRole('dialog');
+  await expect(dialogo.getByRole('heading', { name: 'Nuevo turno' })).toBeVisible();
+  await expect(dialogo.getByLabel('Vehículo')).toHaveValue(/\d+/);
+  await dialogo.getByRole('button', { name: 'Tarde 14:00–22:00' }).click();
+  await dialogo.getByRole('button', { name: 'Guardar turno' }).click();
+  await expect(dialogo).toBeHidden();
+  const chip = page.getByRole('button', { name: `Rodrigo Morales Vega, ${fecha}: 14:00 a 22:00 en GHJK-34` });
+  await expect(chip).toHaveText('14:00–22:00');
+
+  await chip.click();
+  await dialogo.getByRole('button', { name: 'Borrar turno' }).click();
+  await expect(page.getByText(/Turno borrado/)).toBeVisible();
+  await expect(page.getByRole('button', { name: `Rodrigo Morales Vega, ${fecha}: libre. Asignar turno` })).toBeVisible();
+});
