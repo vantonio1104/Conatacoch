@@ -11,10 +11,8 @@ function sumarDias(iso, n) {
   d.setUTCDate(d.getUTCDate() + n);
   return d.toISOString().slice(0, 10);
 }
-function lunesDe(fecha) {
-  const iso = `${fecha.getFullYear()}-${String(fecha.getMonth() + 1).padStart(2, '0')}-${String(fecha.getDate()).padStart(2, '0')}`;
-  return sumarDias(iso, -((fecha.getDay() + 6) % 7));
-}
+const isoLocal = (f) => `${f.getFullYear()}-${String(f.getMonth() + 1).padStart(2, '0')}-${String(f.getDate()).padStart(2, '0')}`;
+const lunesDe = (fecha) => sumarDias(isoLocal(fecha), -((fecha.getDay() + 6) % 7));
 const claseTurno = (t) => (t.inicio === '06:00' && t.fin === '14:00' ? 'turno-manana' : t.inicio === '14:00' && t.fin === '22:00' ? 'turno-tarde' : 'turno-otro');
 
 export async function mostrar(raiz, { api }) {
@@ -59,6 +57,9 @@ export async function mostrar(raiz, { api }) {
 
   function celda(c, fecha) {
     const delDia = turnos.filter((t) => t.conductor_id === c.id && t.fecha === fecha);
+    if (!delDia.length && fecha < isoLocal(new Date())) {
+      return el('td', {}, el('span', { class: 'turno turno-libre turno-pasado' }, 'Libre')); // no se asignan días pasados
+    }
     if (!delDia.length) {
       return el('td', {}, el('button', {
         type: 'button', class: 'turno turno-libre', 'aria-label': `${c.nombre_completo}, ${fechaCl(fecha)}: libre. Asignar turno`,

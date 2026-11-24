@@ -146,7 +146,10 @@ test('HU-06 salidas y turnos: asignar un turno desde una celda libre y borrarlo'
   await page.getByRole('link', { name: 'Salidas y turnos' }).click();
   await page.getByLabel('Recorrido').selectOption('235003');
   await expect(page.getByRole('rowheader', { name: /Rodrigo Morales Vega/ })).toBeVisible();
+  const semana = page.locator('.semana-titulo');
+  const actual = await semana.textContent();
   await page.getByRole('button', { name: 'Semana siguiente' }).click(); // toda la semana es futura
+  await expect(semana).not.toHaveText(actual);
   const libre = page.getByRole('button', { name: /^Rodrigo Morales Vega, .*: libre/ }).first();
   const etiqueta = await libre.getAttribute('aria-label');
   const fecha = etiqueta.match(/\d{2}-\d{2}-\d{4}/)[0];
