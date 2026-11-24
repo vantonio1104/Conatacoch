@@ -9,7 +9,7 @@ const {
   MENSAJE_PASSWORD, rutNormalizado, patenteNormalizada,
 } = require('../util');
 
-const { HORARIOS, generarTurnos, reasignarTurnos, definirTurno } = require('../turnos');
+const turnos = require('../turnos');
 
 const router = express.Router();
 const soloAdmin = [autenticar, requiereRol('ADMIN')];
@@ -287,8 +287,6 @@ async function guardarDetallesAuto(c, autoId, d, admin) {
   const cambio = (actual?.ruta_folio ?? null) !== d.folio || (actual?.conductor_id ?? null) !== conductorId;
   if (!cambio) return;
 
-  // Conductores afectados (el anterior, el nuevo y el que manejaba otro vehículo): se reasignan sus turnos al final.
-  const afectados = [actual?.conductor_id, conductorId].filter(Boolean);
   await c.query('UPDATE asignaciones SET activo = FALSE WHERE automovil_id = $1 AND activo', [autoId]);
   if (conductorId) {
     // Un conductor maneja un solo vehículo: se le quita de cualquier otro.
@@ -298,7 +296,9 @@ async function guardarDetallesAuto(c, autoId, d, admin) {
     await c.query('INSERT INTO asignaciones (conductor_id, automovil_id, ruta_folio) VALUES ($1, $2, $3)',
       [conductorId, autoId, d.folio]);
   }
-  for (const id of afectados) await reasignarTurnos(id, c);
+  // Si el vehículo cambia de recorrido, sus turnos futuros en el recorrido anterior ya no sirven.
+  await c.query(`DELETE FROM turnos WHERE automovil_id = $1 AND fecha + hora_inicio > (NOW() AT TIME ZONE 'America/Santiago')
+                 AND ruta_folio IS DISTINCT FROM $2`, [autoId, d.folio]);
   if (usuarioConductor && conductorId !== (actual?.conductor_id ?? null)) {
     const linea = (await c.query('SELECT linea FROM rutas WHERE folio = $1', [d.folio])).rows[0].linea;
     await mongo.notificar([usuarioConductor], 'NUEVA_ASIGNACION', 'Nueva asignación',
@@ -358,7 +358,7 @@ router.delete('/api/automoviles/:id', soloAdmin, ruta(async (req, res) => {
     await c.query('UPDATE asignaciones SET activo = FALSE WHERE automovil_id = $1 AND activo', [req.params.id]);
     await c.query("UPDATE reservas SET estado = 'CANCELADA', actualizada_en = NOW() WHERE automovil_id = $1 AND estado = 'ACTIVA'",
       [req.params.id]);
-    await c.query(`DELETE FROM turnos WHERE automovil_id = $1 AND fecha >= (NOW() AT TIME ZONE 'America/Santiago')::date AND NOT libre`, [req.params.id]);
+    await c.query(`DELETE FROM turnos WHERE automovil_id = $1 AND fecha + hora_inicio > (NOW() AT TIME ZONE 'America/Santiago')`, [req.params.id]);
   });
   await mongo.auditar(req.usuario, 'BAJA_AUTOMOVIL', { automovil: Number(req.params.id) });
   res.status(204).end();
@@ -393,53 +393,30 @@ router.put('/api/rutas/:folio/trazado', soloAdmin, ruta(async (req, res) => {
 
 // --- Turnos y asignación de conductores ---
 
-/** Conductores aprobados con su vehículo asignado y sus turnos de los próximos [dias] días. */
+// --- Turnos: asignaciones con fecha y horario (Admin 3 y Admin 4) ---
+
+/** Turnos desde [desde] (por defecto, hoy menos 7 días) durante [dias] días (máx. 60), opcionalmente de un recorrido. */
 router.get('/api/admin/turnos', soloAdmin, ruta(async (req, res) => {
-  const dias = Math.min(Math.max(Number(req.query.dias) || 14, 1), 28);
-  const conductores = (await query(
-    `SELECT c.id, c.nombre_completo AS nombre, c.rut, a.id AS automovil_id, a.patente, r.linea, r.folio
-     FROM conductores c
-     LEFT JOIN asignaciones s ON s.conductor_id = c.id AND s.activo
-     LEFT JOIN automoviles a ON a.id = s.automovil_id AND a.activo
-     LEFT JOIN rutas r ON r.folio = s.ruta_folio
-     WHERE c.estado = 'APROBADA' ORDER BY c.nombre_completo`,
-  )).rows;
-  for (const c of conductores) if (c.automovil_id) await generarTurnos(c.id);
-  const turnos = (await query(
-    `SELECT t.conductor_id, t.fecha::text AS fecha, t.libre, to_char(t.hora_inicio, 'HH24:MI') AS inicio
-     FROM turnos t WHERE t.fecha BETWEEN (NOW() AT TIME ZONE 'America/Santiago')::date AND (NOW() AT TIME ZONE 'America/Santiago')::date + ($1::int - 1)`,
-    [dias],
-  )).rows;
-  const fechas = (await query(
-    `SELECT d::date::text AS f FROM generate_series((NOW() AT TIME ZONE 'America/Santiago')::date,
-       (NOW() AT TIME ZONE 'America/Santiago')::date + ($1::int - 1), INTERVAL '1 day') d`, [dias],
-  )).rows.map((x) => x.f);
-  const tipo = (t) => (!t || t.libre ? 'LIBRE' : t.inicio === HORARIOS.MANANA[0] ? 'MANANA' : 'TARDE');
-  res.json(conductores.map((c) => ({
-    ...c,
-    dias: fechas.map((f) => ({ fecha: f, tipo: tipo(turnos.find((t) => t.conductor_id === c.id && t.fecha === f)) })),
-  })));
+  const hoy = (await query("SELECT ((NOW() AT TIME ZONE 'America/Santiago')::date - 7)::text AS d")).rows[0].d;
+  const desde = req.query.desde ? fechaOpcional(req.query.desde, 'inicio') : hoy;
+  const dias = Math.min(Math.max(Number(req.query.dias) || 45, 1), 60);
+  res.json(await turnos.listar({ desde, dias, folio: req.query.folio }));
 }));
 
-/** Define el turno de un día: MANANA, TARDE o LIBRE. */
-router.put('/api/admin/turnos', soloAdmin, ruta(async (req, res) => {
-  const conductorId = Number(req.body.conductor_id);
-  const fecha = fechaOpcional(req.body.fecha, 'turno');
-  const { tipo } = req.body;
-  if (!fecha) throw new ErrorHttp(400, 'Falta la fecha');
-  if (!['MANANA', 'TARDE', 'LIBRE'].includes(tipo)) throw new ErrorHttp(400, 'El turno debe ser MANANA, TARDE o LIBRE');
-  const hoy = (await query("SELECT (NOW() AT TIME ZONE 'America/Santiago')::date::text AS hoy")).rows[0].hoy;
-  if (fecha < hoy) throw new ErrorHttp(400, 'No se pueden cambiar turnos pasados');
-  const c = (await query("SELECT usuario_id FROM conductores WHERE id = $1 AND estado = 'APROBADA'", [conductorId])).rows[0];
-  if (!c) throw new ErrorHttp(404, 'Conductor no encontrado');
-  if (!(await definirTurno(conductorId, fecha, tipo))) {
-    throw new ErrorHttp(409, 'Primero asígnale un vehículo a este conductor');
+router.post('/api/admin/turnos', soloAdmin, ruta(async (req, res) => {
+  const { turno, usuarioConductor } = await turnos.crear(req.body);
+  if (usuarioConductor) {
+    await mongo.notificar([usuarioConductor], 'NUEVA_ASIGNACION', 'Nuevo turno',
+      `El ${turnos.fechaCl(turno.fecha)} de ${turno.inicio} a ${turno.fin}: línea ${turno.linea}, vehículo ${turno.patente}.`);
   }
-  const [a, m, d] = fecha.split('-');
-  const texto = { MANANA: 'de mañana (06:00–14:00)', TARDE: 'de tarde (14:00–22:00)', LIBRE: 'libre' }[tipo];
-  await mongo.notificar([c.usuario_id], 'NUEVA_ASIGNACION', 'Turno actualizado', `El ${d}-${m}-${a} tienes turno ${texto}.`);
-  await mongo.auditar(req.usuario, 'DEFINIR_TURNO', { conductor: conductorId, fecha, tipo });
-  res.json({ conductor_id: conductorId, fecha, tipo });
+  await mongo.auditar(req.usuario, 'CREAR_TURNO', { turno: turno.id, conductor: turno.conductor_id, fecha: turno.fecha });
+  res.status(201).json(turno);
+}));
+
+router.delete('/api/admin/turnos/:id', soloAdmin, ruta(async (req, res) => {
+  await turnos.borrar(req.params.id);
+  await mongo.auditar(req.usuario, 'BORRAR_TURNO', { turno: Number(req.params.id) });
+  res.status(204).end();
 }));
 
 /** Asigna un vehículo (y con él, su línea) a un conductor; automovil_id null = dejarlo sin vehículo. */
@@ -463,10 +440,8 @@ router.post('/api/admin/asignaciones', soloAdmin, ruta(async (req, res) => {
       const enServicio = await c.query('SELECT 1 FROM servicios WHERE automovil_id = $1 AND fin IS NULL', [automovilId]);
       if (enServicio.rowCount > 0) throw new ErrorHttp(409, 'Ese vehículo está en servicio ahora');
     }
-    const anteriorDelDestino = destino?.conductor_id && destino.conductor_id !== conductorId ? destino.conductor_id : null;
     await c.query('UPDATE asignaciones SET conductor_id = NULL WHERE conductor_id = $1 AND activo', [conductorId]);
     if (destino) await c.query('UPDATE asignaciones SET conductor_id = $2 WHERE id = $1', [destino.id, conductorId]);
-    for (const id of [conductorId, anteriorDelDestino].filter(Boolean)) await reasignarTurnos(id, c);
     return { cond, destino };
   });
   if (resultado.destino) {

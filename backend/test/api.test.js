@@ -37,6 +37,10 @@ before(async () => {
   tokens.admin = await loginAdmin(app);
   tokens.pasajero = await login('camila.reyes@correo.cl');
   tokens.conductor = await login('p.soto@correo.cl');
+  // El conductor solo inicia servicio dentro de un turno: uno que cubre todo el día de hoy.
+  await query(`INSERT INTO turnos (conductor_id, fecha, ruta_folio, automovil_id, hora_inicio, hora_fin)
+               SELECT c.id, (NOW() AT TIME ZONE 'America/Santiago')::date, '235003', a.id, '00:00', '23:59'
+               FROM conductores c, automoviles a WHERE c.rut = '12345678-5' AND a.patente = 'ABCD-12'`);
 });
 
 after(async () => {
@@ -237,12 +241,12 @@ test('PU-08 conductor con licencia vencida no puede iniciar servicio: 403', asyn
   }
 });
 
-test('PU-10 un solo turno por conductor y día', async () => {
+test('PU-10 la base rechaza un turno que termina antes de empezar (los choques se prueban en AS-02 y AS-04)', async () => {
   const c = (await query("SELECT id FROM conductores WHERE rut = '12345678-5'")).rows[0].id;
-  await query('DELETE FROM turnos WHERE conductor_id = $1 AND fecha = DATE \'2030-01-01\'', [c]);
-  await query("INSERT INTO turnos (conductor_id, fecha, libre) VALUES ($1, DATE '2030-01-01', TRUE)", [c]);
-  await assert.rejects(query("INSERT INTO turnos (conductor_id, fecha, libre) VALUES ($1, DATE '2030-01-01', TRUE)", [c]),
-    (e) => e.code === '23505');
+  const a = (await query("SELECT id FROM automoviles WHERE patente = 'ABCD-12'")).rows[0].id;
+  await assert.rejects(query(`INSERT INTO turnos (conductor_id, fecha, ruta_folio, automovil_id, hora_inicio, hora_fin)
+                              VALUES ($1, DATE '2030-01-01', '235003', $2, '14:00', '06:00')`, [c, a]),
+  (e) => e.code === '23514');
 });
 
 // ---------- Reportes PDF ----------

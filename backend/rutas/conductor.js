@@ -5,7 +5,7 @@ const { query, transaccion } = require('../db/postgres');
 const mongo = require('../db/mongo');
 const { ruta, ErrorHttp, autenticar, requiereRol, nombreCorto, MINUTOS_VIGENCIA_RESERVA } = require('../util');
 const { expirarVencidas } = require('../reservas');
-const { generarTurnos } = require('../turnos');
+const { turnoVigente, semanaDelConductor } = require('../turnos');
 
 const router = express.Router();
 
@@ -83,19 +83,9 @@ router.get('/api/conductor/perfil', conductorAprobado, ruta(async (req, res) => 
   res.json({ nombre: req.conductor.nombre_completo, rut: req.conductor.rut, asignacion: await asignacionDe(req.conductor.id) });
 }));
 
-/** Turnos de los próximos 7 días (los define la administración o se generan con el ciclo de 6 días). */
+/** Turnos de los próximos 7 días (los define la administración; un día sin turno es libre). */
 router.get('/api/conductor/turnos', conductorAprobado, ruta(async (req, res) => {
-  await generarTurnos(req.conductor.id);
-  const r = await query(
-    `SELECT d::date::text AS fecha, r.linea, a.patente,
-            to_char(t.hora_inicio, 'HH24:MI') || '–' || to_char(t.hora_fin, 'HH24:MI') AS horario
-     FROM generate_series((NOW() AT TIME ZONE 'America/Santiago')::date, (NOW() AT TIME ZONE 'America/Santiago')::date + 6, INTERVAL '1 day') d
-     LEFT JOIN turnos t ON t.conductor_id = $1 AND t.fecha = d::date AND NOT t.libre
-     LEFT JOIN rutas r ON r.folio = t.ruta_folio LEFT JOIN automoviles a ON a.id = t.automovil_id
-     ORDER BY d`,
-    [req.conductor.id],
-  );
-  res.json(r.rows);
+  res.json(await semanaDelConductor(req.conductor.id));
 }));
 
 router.get('/api/conductor/servicio', conductorAprobado, ruta(async (req, res) => {
@@ -104,8 +94,9 @@ router.get('/api/conductor/servicio', conductorAprobado, ruta(async (req, res) =
 
 router.post('/api/conductor/servicio/iniciar', conductorAprobado, ruta(async (req, res) => {
   if (!(await servicioAbierto(req.conductor.id))) {
-    const asig = await asignacionDe(req.conductor.id);
-    if (!asig) throw new ErrorHttp(409, 'No tienes un vehículo asignado. Pide a la administración que te asigne uno.');
+    // Solo dentro de un turno asignado por la administración (o hasta 15 minutos antes), con el vehículo de ese turno.
+    const asig = await turnoVigente(req.conductor.id);
+    if (!asig) throw new ErrorHttp(409, 'No tienes un turno asignado para esta hora. Revisa tus turnos o consulta a la administración.');
     // Solo con licencia vigente (Ley 18.290: licencia profesional A2/A3 al día).
     const lic = await query(
       `SELECT fecha_vencimiento_licencia < (NOW() AT TIME ZONE 'America/Santiago')::date AS vencida

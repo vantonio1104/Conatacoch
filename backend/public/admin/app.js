@@ -7,6 +7,8 @@ const PANTALLAS = [
   { id: 'inicio', titulo: 'Inicio', subtitulo: 'Panel de administración de CONATACOCH', icono: 'inicio' },
   { id: 'validar', menu: 'Validar conductores', titulo: 'Validación de conductores',
     subtitulo: 'Revisa los datos y la licencia antes de aprobar el registro', icono: 'validar' },
+  { id: 'asignar', menu: 'Asignar rutas', titulo: 'Asignación de rutas',
+    subtitulo: 'Asigna un recorrido a un conductor y su vehículo', icono: 'asignar' },
 ];
 
 const MINUTOS_INACTIVIDAD = 30;

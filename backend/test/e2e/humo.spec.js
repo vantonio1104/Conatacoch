@@ -114,3 +114,29 @@ test('HU-04 validar conductores: aprobar y vincular a un pendiente', async ({ pa
   )).rows[0];
   expect(fila).toEqual({ estado: 'APROBADA', patente: 'GHJK-34' });
 });
+
+test('HU-05 asignar rutas: avisa el choque de horario y crea un turno', async ({ page }) => {
+  const manana = (await query("SELECT ((NOW() AT TIME ZONE 'America/Santiago')::date + 1)::text AS f")).rows[0].f;
+  await entrarAdmin(page);
+  await page.getByRole('link', { name: 'Asignar rutas' }).click();
+  await expect(page.getByRole('heading', { name: 'Asignaciones vigentes' })).toBeVisible();
+  await expect(page.getByRole('cell', { name: 'Pedro Soto' }).first()).toBeVisible(); // turnos de ejemplo
+
+  // Pedro ya trabaja de 06:00 a 22:00 (datos de ejemplo): pedir 10:00–18:00 choca.
+  await page.getByLabel('Conductor', { exact: true }).selectOption({ label: 'Pedro Soto' });
+  await expect(page.getByLabel('Vehículo')).toHaveValue(/\d+/); // propone su vehículo vinculado
+  await page.getByLabel('Fecha').fill(manana);
+  await page.getByLabel('Desde').fill('10:00');
+  await page.getByLabel('Hasta').fill('18:00');
+  await expect(page.getByRole('alert')).toContainText('Choque de horario: Pedro Soto ya tiene asignada la línea 5003');
+  await expect(page.getByRole('button', { name: 'Asignar ruta' })).toBeDisabled();
+
+  // Rodrigo (aprobado y vinculado a GHJK-34 en HU-04) sí puede.
+  await page.getByLabel('Conductor', { exact: true }).selectOption({ label: 'Rodrigo Morales Vega' });
+  await page.getByLabel('Desde').fill('06:00');
+  await page.getByLabel('Hasta').fill('14:00');
+  await page.getByRole('button', { name: 'Asignar ruta' }).click();
+  await expect(page.getByText(/Turno asignado: Rodrigo Morales Vega, GHJK-34/)).toBeVisible();
+  await page.getByLabel('Buscar por patente o conductor').fill('GHJK');
+  await expect(page.getByRole('row', { name: /Rodrigo Morales Vega GHJK-34 Línea 5003/ })).toContainText('Programada');
+});

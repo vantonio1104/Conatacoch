@@ -162,7 +162,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS uq_permiso_por_auto ON permisos_circulacion(au
 CREATE UNIQUE INDEX IF NOT EXISTS uq_revision_por_auto ON revisiones_tecnicas(automovil_id);
 CREATE UNIQUE INDEX IF NOT EXISTS uq_seguro_por_auto ON seguros_obligatorios(automovil_id);
 
--- Turnos del conductor (un turno por día). Sin fila = día libre.
+-- Turnos: cuándo trabaja cada conductor (fecha, horario, vehículo y recorrido). Sin fila = día libre.
 CREATE TABLE IF NOT EXISTS turnos (
     id SERIAL PRIMARY KEY,
     conductor_id INT REFERENCES conductores(id) ON DELETE CASCADE NOT NULL,
@@ -170,8 +170,7 @@ CREATE TABLE IF NOT EXISTS turnos (
     ruta_folio VARCHAR(50) REFERENCES rutas(folio) ON DELETE CASCADE NOT NULL,
     automovil_id INT REFERENCES automoviles(id) ON DELETE CASCADE NOT NULL,
     hora_inicio TIME NOT NULL,
-    hora_fin TIME NOT NULL,
-    UNIQUE (conductor_id, fecha)
+    hora_fin TIME NOT NULL
 );
 
 -- Cada vez que un conductor inicia y finaliza su servicio.
@@ -202,14 +201,6 @@ CREATE INDEX IF NOT EXISTS idx_avisos_fecha ON avisos(creado_en DESC);
 -- Los vehículos no tienen cámaras: el conductor marca en su panel cuántos pasajeros van a bordo.
 -- Asientos libres = capacidad − ocupados − reservas activas (las reservas vencen a los 3 minutos).
 ALTER TABLE servicios ADD COLUMN IF NOT EXISTS ocupados INT NOT NULL DEFAULT 0 CHECK (ocupados >= 0);
-
--- ===================== v1.4: turnos editables por la administración =====================
--- Un día puede quedar marcado como libre (libre = TRUE, sin vehículo ni horario).
-ALTER TABLE turnos ALTER COLUMN ruta_folio DROP NOT NULL;
-ALTER TABLE turnos ALTER COLUMN automovil_id DROP NOT NULL;
-ALTER TABLE turnos ALTER COLUMN hora_inicio DROP NOT NULL;
-ALTER TABLE turnos ALTER COLUMN hora_fin DROP NOT NULL;
-ALTER TABLE turnos ADD COLUMN IF NOT EXISTS libre BOOLEAN NOT NULL DEFAULT FALSE;
 
 -- Corrección única de los datos de ejemplo (defecto D-08): los RUT de prueba tenían un dígito verificador
 -- inválido y la licencia del conductor de prueba estaba vencida desde 2020. No toca otros registros.
@@ -248,3 +239,22 @@ CREATE TABLE IF NOT EXISTS licencia_fotos (
     subida TIMESTAMPTZ DEFAULT NOW() NOT NULL,
     PRIMARY KEY (conductor_id, lado)
 );
+
+-- ===================== v1.8: turnos = asignaciones con fecha y horario (panel web, Admin 3 y 4) =====================
+-- Un conductor puede tener varios turnos en un día; los choques de horario los revisa el servidor.
+-- Los días libres ya no se guardan (día sin turno = libre). Migración de la versión anterior:
+DO $$ BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'turnos' AND column_name = 'libre') THEN
+    DELETE FROM turnos WHERE libre OR automovil_id IS NULL OR ruta_folio IS NULL OR hora_inicio IS NULL OR hora_fin IS NULL;
+    ALTER TABLE turnos DROP COLUMN libre;
+    ALTER TABLE turnos ALTER COLUMN ruta_folio SET NOT NULL;
+    ALTER TABLE turnos ALTER COLUMN automovil_id SET NOT NULL;
+    ALTER TABLE turnos ALTER COLUMN hora_inicio SET NOT NULL;
+    ALTER TABLE turnos ALTER COLUMN hora_fin SET NOT NULL;
+  END IF;
+END $$;
+ALTER TABLE turnos DROP CONSTRAINT IF EXISTS turnos_conductor_id_fecha_key;
+ALTER TABLE turnos DROP CONSTRAINT IF EXISTS turnos_horario_valido;
+ALTER TABLE turnos ADD CONSTRAINT turnos_horario_valido CHECK (hora_fin > hora_inicio);
+CREATE INDEX IF NOT EXISTS turnos_conductor_fecha ON turnos (conductor_id, fecha);
+CREATE INDEX IF NOT EXISTS turnos_automovil_fecha ON turnos (automovil_id, fecha);

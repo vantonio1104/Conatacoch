@@ -35,7 +35,7 @@ Plan: `tasks/plan.md`. Cada tarea termina con sus pruebas en verde (`npm test` c
   - Verificar: pruebas de tipo, tamaño y rol; tú compilas la app y registras un conductor con fotos.
   - Archivos: `database/schema.sql`, `rutas/auth.js`, `rutas/admin.js`, `test/fotos.test.js`,
     `ui/conductor/AuthConductorScreens.kt`, `ConductorAuthViewModel.kt`, `ApiAuthRepository.kt`, `Modelos.kt`.
-- [ ] **T6. Asignaciones con fecha y horario (Admin 3)**
+- [x] **T6. Asignaciones con fecha y horario (Admin 3)**
   - Aceptación: crear una asignación (conductor, vehículo, recorrido, fecha, desde, hasta); rechazar choques con el
     mensaje de Figma; estados Programada, Activa y Finalizada; el conductor solo inicia servicio dentro de una
     asignación vigente; se elimina el ciclo automático de 6 días.

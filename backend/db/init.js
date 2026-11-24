@@ -150,6 +150,16 @@ async function inicializarBaseDeDatos() {
       await c.query(`INSERT INTO seguros_obligatorios (automovil_id, fecha_vencimiento) VALUES ($1, ${fecha(90)}) ON CONFLICT DO NOTHING`, [id]);
     }
 
+    // Demo: Pedro Soto tiene turno de 06:00 a 22:00 los próximos 14 días que aún no tengan uno, con su vehículo.
+    // Así la app del conductor se puede probar sin pasar antes por el panel. No toca a otros conductores.
+    await c.query(
+      `INSERT INTO turnos (conductor_id, fecha, ruta_folio, automovil_id, hora_inicio, hora_fin)
+       SELECT s.conductor_id, d::date, s.ruta_folio, s.automovil_id, TIME '06:00', TIME '22:00'
+       FROM generate_series((NOW() AT TIME ZONE 'America/Santiago')::date, (NOW() AT TIME ZONE 'America/Santiago')::date + 13, INTERVAL '1 day') d
+       JOIN asignaciones s ON s.activo AND s.conductor_id = (SELECT id FROM conductores WHERE rut = '12345678-5')
+       WHERE NOT EXISTS (SELECT 1 FROM turnos t WHERE t.conductor_id = s.conductor_id AND t.fecha = d::date)`,
+    );
+
     return (await c.query('SELECT COUNT(*)::int AS n FROM automoviles')).rows[0].n;
   });
 
