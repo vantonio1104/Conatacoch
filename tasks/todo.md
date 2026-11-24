@@ -51,7 +51,7 @@ Plan: `tasks/plan.md`. Cada tarea termina con sus pruebas en verde (`npm test` c
 
 ## Fase C · Resto de Figma
 
-- [ ] **T8. Avisos (Admin 5)**
+- [x] **T8. Avisos (Admin 5)**
   - Aceptación: franja de emergencia activa, filtros (origen, tipo, conductor, vehículo, fecha) y «Ver en mapa» con la
     ubicación guardada.
   - Archivos: `database/schema.sql`, `rutas/conductor.js`, `rutas/admin.js`, `public/admin/pantallas/avisos.js`.

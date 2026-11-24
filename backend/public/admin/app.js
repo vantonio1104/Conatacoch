@@ -11,6 +11,7 @@ const PANTALLAS = [
     subtitulo: 'Asigna un recorrido a un conductor y su vehículo', icono: 'asignar' },
   { id: 'turnos', menu: 'Salidas y turnos', titulo: 'Programación de salidas y turnos',
     subtitulo: 'Turnos semanales por conductor', icono: 'turnos' },
+  { id: 'avisos', menu: 'Avisos', titulo: 'Consulta de avisos', subtitulo: 'Todos los avisos de los conductores', icono: 'avisos' },
 ];
 
 const MINUTOS_INACTIVIDAD = 30;

@@ -171,14 +171,29 @@ router.post('/api/conductor/reservas/:id/cancelar', conductorAprobado, ruta(asyn
 }));
 
 /** Aviso de un toque. AC-01 y AC-02 llegan como notificación a los pasajeros con reserva. */
+/**
+ * Dónde se envió el aviso: la posición que manda la app o, si no viene, la última del GPS del vehículo
+ * (de los últimos 10 minutos). Sin ninguna, queda sin ubicación.
+ */
+async function ubicacionDelAviso(cuerpo, patente) {
+  const lat = Number(cuerpo.lat);
+  const lng = Number(cuerpo.lng);
+  if (cuerpo.lat != null && cuerpo.lng != null && Math.abs(lat) <= 90 && Math.abs(lng) <= 180) return { lat, lng };
+  if (!patente) return { lat: null, lng: null };
+  const p = (await mongo.ultimasPosiciones([patente]).catch(() => ({})))[patente];
+  if (!p || Date.now() - new Date(p.timestamp).getTime() > 10 * 60_000) return { lat: null, lng: null };
+  return { lat: p.lat, lng: p.lng };
+}
+
 router.post('/api/conductor/avisos', conductorAprobado, ruta(async (req, res) => {
   const codigo = String(req.body.codigo || '');
   const titulo = AVISOS[codigo];
   if (!titulo) throw new ErrorHttp(400, 'Aviso desconocido');
   const sv = await servicioAbierto(req.conductor.id);
   const asig = sv ?? (await asignacionDe(req.conductor.id));
-  await query('INSERT INTO avisos (conductor_id, automovil_id, ruta_folio, codigo, titulo) VALUES ($1, $2, $3, $4, $5)',
-    [req.conductor.id, asig?.automovil_id ?? null, asig?.folio ?? null, codigo, titulo]);
+  const { lat, lng } = await ubicacionDelAviso(req.body, asig?.patente);
+  await query('INSERT INTO avisos (conductor_id, automovil_id, ruta_folio, codigo, titulo, lat, lng) VALUES ($1, $2, $3, $4, $5, $6, $7)',
+    [req.conductor.id, asig?.automovil_id ?? null, asig?.folio ?? null, codigo, titulo, lat, lng]);
   if (asig && (codigo === 'AC-01' || codigo === 'AC-02')) {
     const pasajeros = await query(
       "SELECT pasajero_id FROM reservas WHERE automovil_id = $1 AND estado = 'ACTIVA'", [asig.automovil_id],

@@ -466,12 +466,20 @@ router.get('/api/admin/flota', soloAdmin, ruta(async (req, res) => {
   res.json(r.rows.map((v) => ({ ...v, posicion: posiciones[v.patente] ?? null })));
 }));
 
+/** Avisos de los conductores, del más nuevo al más antiguo (máx. 200). Filtros: ?fecha=aaaa-mm-dd y ?codigo=AC-0x. */
 router.get('/api/admin/avisos', soloAdmin, ruta(async (req, res) => {
+  const fecha = req.query.fecha ? fechaOpcional(req.query.fecha, 'los avisos') : null;
   const r = await query(
-    `SELECT av.id, av.codigo, av.titulo, av.creado_en, a.patente, r.linea, c.nombre_completo AS conductor
+    `SELECT av.id, av.codigo, av.titulo, av.creado_en, av.lat, av.lng, a.patente, r.linea, c.nombre_completo AS conductor,
+            to_char(av.creado_en AT TIME ZONE 'America/Santiago', 'YYYY-MM-DD') AS fecha,
+            to_char(av.creado_en AT TIME ZONE 'America/Santiago', 'HH24:MI') AS hora,
+            av.creado_en > NOW() - INTERVAL '60 minutes' AS reciente
      FROM avisos av LEFT JOIN automoviles a ON a.id = av.automovil_id
      LEFT JOIN rutas r ON r.folio = av.ruta_folio LEFT JOIN conductores c ON c.id = av.conductor_id
-     ORDER BY av.creado_en DESC LIMIT 100`,
+     WHERE ($1::date IS NULL OR (av.creado_en AT TIME ZONE 'America/Santiago')::date = $1::date)
+       AND ($2::text IS NULL OR av.codigo = $2)
+     ORDER BY av.creado_en DESC, av.id DESC LIMIT 200`,
+    [fecha, req.query.codigo || null],
   );
   res.json(r.rows);
 }));

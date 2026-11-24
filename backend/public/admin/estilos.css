@@ -270,7 +270,26 @@ input[aria-invalid="true"] { border: 2px solid var(--error); }
 .acciones-dialogo { justify-content: flex-end; margin-top: 1.5rem; }
 .rapidos { border: 0; padding: 0; margin: 1rem 0 0; display: flex; gap: 0.75rem; flex-wrap: wrap; }
 .rapidos legend { font-weight: 500; font-size: 0.95rem; margin-bottom: 0.4rem; padding: 0; }
+/* Avisos (Admin 5) */
+.banner-emergencia {
+  display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;
+  margin-bottom: 1.5rem; padding: 1.25rem 1.5rem; border-radius: var(--radio);
+  background: #B3261E; color: #FFFFFF;
+}
+.banner-emergencia .icono { width: 32px; height: 32px; }
+.banner-emergencia > div { display: grid; gap: 0.2rem; flex: 1 1 300px; }
+.banner-emergencia strong { font-size: 1.15rem; }
+.boton-blanco { background: #FFFFFF; color: #B3261E; text-decoration: none; }
+.filtros { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-bottom: 1rem; }
+.filtros label { margin-top: 0; }
+.tipo-aviso { display: inline-flex; align-items: center; gap: 0.6rem; }
+.insignia-emergencia { background: #B3261E; color: #FFFFFF; }
+.fila-emergencia td { background: var(--error-suave); }
+.enlace { color: var(--principal); font-weight: 500; }
+:root[data-theme="dark"] .enlace { color: var(--verde-marca); }
+.nota-pie { margin-top: 1rem; }
 @media (max-width: 1200px) {
+  .filtros { grid-template-columns: repeat(2, 1fr); }
   .dos-columnas, .dos-columnas-derecha { grid-template-columns: 1fr; }
   .datos { grid-template-columns: repeat(2, 1fr); }
   .licencia { grid-template-columns: 1fr 1fr; }

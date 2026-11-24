@@ -258,3 +258,8 @@ ALTER TABLE turnos DROP CONSTRAINT IF EXISTS turnos_horario_valido;
 ALTER TABLE turnos ADD CONSTRAINT turnos_horario_valido CHECK (hora_fin > hora_inicio);
 CREATE INDEX IF NOT EXISTS turnos_conductor_fecha ON turnos (conductor_id, fecha);
 CREATE INDEX IF NOT EXISTS turnos_automovil_fecha ON turnos (automovil_id, fecha);
+
+-- ===================== v1.9: ubicación de los avisos («Ver en mapa», Admin 5) =====================
+ALTER TABLE avisos ADD COLUMN IF NOT EXISTS lat DOUBLE PRECISION CHECK (lat BETWEEN -90 AND 90);
+ALTER TABLE avisos ADD COLUMN IF NOT EXISTS lng DOUBLE PRECISION CHECK (lng BETWEEN -180 AND 180);
+CREATE INDEX IF NOT EXISTS avisos_creado_en ON avisos (creado_en DESC);

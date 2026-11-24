@@ -168,3 +168,26 @@ test('HU-06 salidas y turnos: asignar un turno desde una celda libre y borrarlo'
   await expect(page.getByText(/Turno borrado/)).toBeVisible();
   await expect(page.getByRole('button', { name: `Rodrigo Morales Vega, ${fecha}: libre. Asignar turno` })).toBeVisible();
 });
+
+test('HU-07 avisos: la emergencia reciente se destaca con su ubicación y el filtro por tipo funciona', async ({ page }) => {
+  const api = (ruta, cuerpo, token) => fetch(new URL(ruta, base), {
+    method: 'POST', headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+    body: JSON.stringify(cuerpo),
+  }).then((r) => r.json());
+  const { token } = await api('/api/auth/login', { email: 'p.soto@correo.cl', password: DEMO });
+  await api('/api/conductor/avisos', { codigo: 'AC-01' }, token);
+  await api('/api/conductor/avisos', { codigo: 'AC-06', lat: -33.5312, lng: -70.6623 }, token);
+
+  await entrarAdmin(page);
+  await page.getByRole('link', { name: 'Avisos' }).click();
+  const banner = page.locator('.banner-emergencia');
+  await expect(banner).toContainText('Emergencia activa · AC-06');
+  await expect(banner).toContainText('ABCD-12 · Pedro Soto');
+  await expect(banner.getByRole('link', { name: /Ver ubicación en el mapa/ })).toHaveAttribute('href', /mlat=-33\.5312&mlon=-70\.6623/);
+  await expect(page.getByRole('row', { name: /AC-06 Emergencia Pedro Soto ABCD-12/ })).toBeVisible();
+
+  await page.getByLabel('Tipo').selectOption('AC-01');
+  await expect(page.getByRole('row', { name: /AC-06/ })).toHaveCount(0);
+  await expect(page.getByRole('row', { name: /AC-01 Voy con retraso/ })).toContainText('Sin ubicación');
+  await expect(banner).toContainText('Emergencia activa'); // sigue visible aunque el filtro la esconda
+});
