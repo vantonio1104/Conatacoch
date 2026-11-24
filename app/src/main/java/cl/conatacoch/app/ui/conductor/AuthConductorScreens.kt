@@ -41,6 +41,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -52,6 +53,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.core.content.FileProvider
 import androidx.fragment.app.FragmentActivity
 import cl.conatacoch.app.domain.model.ClaseLicencia
 import cl.conatacoch.app.domain.model.EstadoCuenta
@@ -68,6 +70,7 @@ import cl.conatacoch.app.ui.components.MargenPantalla
 import cl.conatacoch.app.ui.pasajero.ErrorGenerico
 import cl.conatacoch.app.ui.pasajero.Formulario
 import cl.conatacoch.app.ui.theme.Extra
+import java.io.File
 
 private const val OBLIGATORIO = "Campo obligatorio"
 
@@ -136,8 +139,12 @@ fun RegistroConductorPaso2Screen(vm: ConductorAuthViewModel, onAtras: () -> Unit
     val contexto = LocalContext.current
     fun ayuda(valor: String) = OBLIGATORIO.takeIf { vm.vacio(valor, paso = 2) }
 
-    val camaraFrente = rememberLauncherForActivityResult(ActivityResultContracts.TakePicturePreview()) { if (it != null) vm.fotoFrente = it }
-    val camaraReverso = rememberLauncherForActivityResult(ActivityResultContracts.TakePicturePreview()) { if (it != null) vm.fotoReverso = it }
+    // Foto en resolución completa (la vista previa de la cámara es muy chica para leer la licencia).
+    val archivoFrente = remember { File(contexto.cacheDir, "fotos/licencia-frente.jpg").apply { parentFile?.mkdirs() } }
+    val archivoReverso = remember { File(contexto.cacheDir, "fotos/licencia-reverso.jpg").apply { parentFile?.mkdirs() } }
+    fun uriDe(archivo: File) = FileProvider.getUriForFile(contexto, "${contexto.packageName}.archivos", archivo)
+    val camaraFrente = rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) { ok -> if (ok) vm.usarFoto(archivoFrente, frente = true) }
+    val camaraReverso = rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) { ok -> if (ok) vm.usarFoto(archivoReverso, frente = false) }
     fun abrir(lanzar: () -> Unit) = try {
         lanzar()
     } catch (e: ActivityNotFoundException) {
@@ -162,8 +169,8 @@ fun RegistroConductorPaso2Screen(vm: ConductorAuthViewModel, onAtras: () -> Unit
         }
         CampoTexto("Comuna de emisión", f.comunaEmision, { vm.form = f.copy(comunaEmision = it) }, error = vm.vacio(f.comunaEmision, 2), ayuda = ayuda(f.comunaEmision))
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            BotonFoto("Foto frente", vm.fotoFrente != null, Modifier.weight(1f)) { abrir { camaraFrente.launch(null) } }
-            BotonFoto("Foto reverso", vm.fotoReverso != null, Modifier.weight(1f)) { abrir { camaraReverso.launch(null) } }
+            BotonFoto("Foto frente", vm.fotoFrente != null, Modifier.weight(1f)) { abrir { camaraFrente.launch(uriDe(archivoFrente)) } }
+            BotonFoto("Foto reverso", vm.fotoReverso != null, Modifier.weight(1f)) { abrir { camaraReverso.launch(uriDe(archivoReverso)) } }
         }
         if (vm.fotosError) Text("Agrega ambas fotos de la licencia", color = MaterialTheme.colorScheme.error)
         vm.errorServidor?.let { ErrorGenerico(it) }

@@ -1,6 +1,7 @@
 package cl.conatacoch.app.ui.conductor
 
 import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.util.Patterns
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -13,8 +14,11 @@ import cl.conatacoch.app.domain.model.RegistroConductor
 import cl.conatacoch.app.domain.repository.AuthRepository
 import cl.conatacoch.app.domain.validation.PasswordValidator
 import cl.conatacoch.app.domain.validation.RutValidator
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.io.ByteArrayOutputStream
+import java.io.File
 
 data class FormConductor(
     val rut: String = "",
@@ -39,6 +43,14 @@ class ConductorAuthViewModel(private val auth: AuthRepository) : ViewModel() {
     var form by mutableStateOf(FormConductor())
     var fotoFrente by mutableStateOf<Bitmap?>(null)
     var fotoReverso by mutableStateOf<Bitmap?>(null)
+
+    /** Lee la foto que tomó la cámara, la reduce y borra el archivo (datos personales: no quedan en el teléfono). */
+    fun usarFoto(archivo: File, frente: Boolean) {
+        viewModelScope.launch {
+            val foto = withContext(Dispatchers.IO) { fotoReducida(archivo).also { archivo.delete() } }
+            if (frente) fotoFrente = foto else fotoReverso = foto
+        }
+    }
     var biometria by mutableStateOf(Biometria.HUELLA)
 
     /** Mensaje del servidor o de la conexión (RUT ya registrado, sin internet, etc.). */
@@ -120,6 +132,30 @@ class ConductorAuthViewModel(private val auth: AuthRepository) : ViewModel() {
     }
 }
 
-/** Foto para enviar al servidor (JPEG, calidad 85). */
-private fun Bitmap.comoJpeg(): ByteArray =
-    ByteArrayOutputStream().also { compress(Bitmap.CompressFormat.JPEG, 85, it) }.toByteArray()
+/** Lado mayor de la foto que se envía: suficiente para leer la licencia. */
+private const val LADO_MAXIMO = 1600
+
+/** El servidor acepta hasta 1 MB por foto; se deja margen. */
+private const val BYTES_MAXIMOS = 900_000
+
+/** Decodifica la foto achicándola a [LADO_MAXIMO] px en su lado mayor (sin cargarla entera en memoria). */
+private fun fotoReducida(archivo: File): Bitmap? {
+    val medidas = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+    BitmapFactory.decodeFile(archivo.path, medidas)
+    var muestra = 1
+    while (maxOf(medidas.outWidth, medidas.outHeight) / (muestra * 2) >= LADO_MAXIMO) muestra *= 2
+    val foto = BitmapFactory.decodeFile(archivo.path, BitmapFactory.Options().apply { inSampleSize = muestra }) ?: return null
+    val mayor = maxOf(foto.width, foto.height)
+    if (mayor <= LADO_MAXIMO) return foto
+    return Bitmap.createScaledBitmap(foto, foto.width * LADO_MAXIMO / mayor, foto.height * LADO_MAXIMO / mayor, true)
+}
+
+/** Foto para enviar al servidor: JPEG que baja la calidad hasta quedar bajo [BYTES_MAXIMOS]. */
+private fun Bitmap.comoJpeg(): ByteArray {
+    var calidad = 85
+    while (true) {
+        val bytes = ByteArrayOutputStream().also { compress(Bitmap.CompressFormat.JPEG, calidad, it) }.toByteArray()
+        if (bytes.size <= BYTES_MAXIMOS || calidad <= 40) return bytes
+        calidad -= 15
+    }
+}

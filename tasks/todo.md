@@ -74,7 +74,8 @@ Plan: `tasks/plan.md`. Cada tarea termina con sus pruebas en verde (`npm test` c
 ## Fase E · Cierre
 
 - [ ] **T14. Quitar la administración de la app Android** (selector de perfil, navegación, `ui/admin`,
-  `AdminRepository` y sus pruebas). La app también llama a `POST /api/auth/logout` al cerrar sesión. Tú compilas y
+  `AdminRepository` y sus pruebas). La app también llama a `POST /api/auth/logout` al cerrar sesión. Se quita la ruta `reportes/` de `res/xml/archivos.xml`, pero
+  el FileProvider se queda: lo usan las fotos de la licencia. Tú compilas y
   pruebas la app.
 - [ ] **T15. Prueba de humo completa** en Playwright: entrar con TOTP, aprobar un conductor, asignar, ver la semana,
   cambiar una tarifa, descargar los 2 PDF, cerrar sesiones de una cuenta y salir.
