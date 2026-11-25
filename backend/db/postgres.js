@@ -2,7 +2,7 @@
 const { Pool } = require('pg');
 
 if (!process.env.DATABASE_URL) {
-  throw new Error('Falta DATABASE_URL (cadena de conexión de PostgreSQL). Ver DESPLIEGUE.md');
+  throw new Error('Falta DATABASE_URL (cadena de conexión de PostgreSQL). Ver INSTALACION.md');
 }
 
 const pool = new Pool({

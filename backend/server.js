@@ -1,7 +1,7 @@
 // Servidor REST + WebSocket de CONATACOCH.
 //  - PostgreSQL (Neon): usuarios, conductores, recorridos, vehículos, reservas, turnos, servicios y avisos.
 //  - MongoDB (Atlas): GPS de los vehículos, ocupación, notificaciones y auditoría.
-// Variables de entorno: ver .env.example y DESPLIEGUE.md.
+// Variables de entorno: ver .env.example e INSTALACION.md.
 require('dotenv').config();
 const path = require('path');
 const express = require('express');
