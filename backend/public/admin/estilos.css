@@ -294,6 +294,8 @@ input[aria-invalid="true"] { border: 2px solid var(--error); }
 .filtros-cuentas label { margin-top: 0; font-weight: 400; color: var(--texto-2); }
 .filtros-cuentas select { min-width: 160px; }
 .usuario-celda { display: grid; gap: 0.1rem; }
+.usuario-celda > .insignia { justify-self: start; }
+.tabla .celda-ajustable { white-space: normal; min-width: 240px; }
 .usuario-celda .secundario { margin: 0; font-size: 0.9rem; }
 .boton-chico { min-height: 44px; padding: 0 1rem; }
 .boton-exito { background: transparent; color: var(--principal); border-color: var(--principal); }
@@ -327,7 +329,15 @@ a.cifra { border-color: var(--verde-marca); }
 .avisos-recientes { list-style: none; margin: 0; padding: 0; }
 .avisos-recientes li { display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap; padding: 0.75rem 0; border-bottom: 1px solid var(--divisor); }
 .avisos-recientes .secundario { margin: 0; }
+/* Mantenedores: conductores y automóviles */
+.dialogo-ancho { width: min(94vw, 860px); max-height: 92vh; }
+.dialogo h3 { margin-top: 1.5rem; }
+.rejilla-form { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0 1rem; }
+.rejilla-form .campo { min-width: 0; }
+.filtros-cuentas { align-items: flex-end; }
+.boton-nuevo-fila { white-space: nowrap; }
 @media (max-width: 1200px) {
+  .rejilla-form { grid-template-columns: repeat(2, 1fr); }
   .cifras { grid-template-columns: repeat(3, 1fr); }
   .tres-columnas { grid-template-columns: 1fr; }
   .filtros { grid-template-columns: repeat(2, 1fr); }
@@ -347,5 +357,5 @@ a.cifra { border-color: var(--verde-marca); }
   #boton-salir { margin-top: 0; width: auto; }
   .encabezado, .contenido { padding: 1rem; }
   h1 { font-size: 1.5rem; }
-  .datos, .datos-2 { grid-template-columns: 1fr; }
+  .datos, .datos-2, .rejilla-form { grid-template-columns: 1fr; }
 }

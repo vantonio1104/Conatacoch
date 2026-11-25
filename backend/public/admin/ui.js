@@ -59,3 +59,14 @@ export const fechaCl = (iso) => (iso ? `${iso.slice(8, 10)}-${iso.slice(5, 7)}-$
 export function mensaje(tipo, texto) {
   return el('p', { class: `mensaje mensaje-${tipo}`, role: tipo === 'error' ? 'alert' : 'status' }, icono(tipo === 'info' ? 'info' : 'alerta'), el('span', {}, texto));
 }
+
+/** Etiqueta + control, para formularios. */
+export const campo = (id, etiqueta, control, ayuda) => el('div', { class: 'campo' },
+  el('label', { for: id }, etiqueta), control, ayuda ? el('p', { class: 'ayuda' }, ayuda) : null);
+
+const SEMAFORO = {
+  VIGENTE: ['Vigente', 'insignia-verde'], POR_VENCER: ['Por vencer', 'insignia-ambar'],
+  VENCIDO: ['Vencido', 'insignia-roja'], SIN_DATOS: ['Sin datos', 'insignia-gris'],
+};
+/** Estado de vigencia escrito (no solo color). */
+export const chipSemaforo = (estado) => el('span', { class: `insignia ${SEMAFORO[estado]?.[1] ?? 'insignia-gris'}` }, SEMAFORO[estado]?.[0] ?? estado);

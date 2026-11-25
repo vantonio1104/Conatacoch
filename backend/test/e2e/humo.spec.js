@@ -261,3 +261,67 @@ test('HU-10 inicio: semáforo de vigencias y descarga de los 2 reportes PDF', as
     await expect(page.getByText(`Se descargó «${archivo}»`)).toBeVisible();
   }
 });
+
+test('HU-11 conductores: crear con los campos del protocolo, editar y eliminar', async ({ page }) => {
+  page.on('dialog', (d) => d.accept());
+  await entrarAdmin(page);
+  await page.getByRole('link', { name: 'Conductores', exact: true }).click();
+  await page.getByRole('button', { name: '+ Nuevo conductor' }).click();
+  const d = page.getByRole('dialog');
+  for (const [id, valor] of [['c-nombre', 'Manuel Rojas Castro'], ['c-rut', '13.131.313-6'], ['c-direccion', 'Av. Central 100'],
+    ['c-comuna', 'La Cisterna'], ['c-celular', '+56911112222'], ['c-emergencia', '+56933334444'], ['c-incorporacion', '2025-02-01'],
+    ['c-municipio', 'La Cisterna'], ['c-obtencion', '2024-05-10'], ['c-duracion', '4'], ['c-vencimiento', '2028-05-10']]) {
+    await d.locator(`#${id}`).fill(valor);
+  }
+  await d.getByLabel('Clase').selectOption('A3');
+  await d.getByRole('button', { name: 'Crear conductor' }).click();
+  await expect(page.getByText('Manuel Rojas Castro quedó registrado y aprobado.')).toBeVisible();
+  const fila = page.getByRole('row', { name: /Manuel Rojas Castro/ });
+  await expect(fila).toContainText('A3 · vence 10-05-2028');
+  await expect(fila).toContainText('Aprobado');
+
+  await page.getByRole('button', { name: 'Editar a Manuel Rojas Castro' }).click();
+  await expect(d.locator('#c-duracion')).toHaveValue('4');
+  await expect(d.locator('#c-incorporacion')).toHaveValue('2025-02-01');
+  await d.locator('#c-direccion').fill('Av. Central 200');
+  await d.getByRole('button', { name: 'Guardar cambios' }).click();
+  await expect(page.getByText('Se guardaron los cambios de Manuel Rojas Castro.')).toBeVisible();
+
+  await page.getByRole('button', { name: 'Eliminar a Manuel Rojas Castro' }).click();
+  await expect(page.getByText('Manuel Rojas Castro fue eliminado.')).toBeVisible();
+  await expect(page.getByRole('row', { name: /Manuel Rojas Castro/ })).toHaveCount(0);
+});
+
+test('HU-12 automóviles: crear con sus 3 documentos, editar y dar de baja', async ({ page }) => {
+  page.on('dialog', (d) => d.accept());
+  await entrarAdmin(page);
+  await page.getByRole('link', { name: 'Automóviles' }).click();
+  await page.getByRole('button', { name: '+ Nuevo automóvil' }).click();
+  const d = page.getByRole('dialog');
+  for (const [id, valor] of [['a-patente', 'rstv78'], ['a-marca', 'Toyota'], ['a-modelo', 'Yaris'], ['a-ano', '2023'],
+    ['a-comuna-permiso', 'San Ramón'], ['a-otorgacion', '2026-04-01'], ['a-permiso', '2027-03-31'],
+    ['a-planta', 'PRT San Ramón'], ['a-comuna-revision', 'San Ramón'], ['a-revision', '2027-05-15'],
+    ['a-compania', 'Consorcio'], ['a-prima', '45000'], ['a-seguro', '2027-03-30']]) {
+    await d.locator(`#${id}`).fill(valor);
+  }
+  await d.locator('#a-folio').selectOption({ label: 'Línea 5003' });
+  await d.getByRole('button', { name: 'Crear automóvil' }).click();
+  await expect(page.getByText('RSTV-78 quedó registrado.')).toBeVisible();
+  const fila = page.getByRole('row', { name: /RSTV-78/ });
+  await expect(fila).toContainText('Línea 5003');
+  await expect(fila).toContainText('Vigente');
+
+  await page.getByRole('button', { name: 'Editar RSTV-78' }).click();
+  await expect(d.locator('#a-compania')).toHaveValue('Consorcio');
+  await expect(d.locator('#a-prima')).toHaveValue('45000');
+  await d.locator('#a-prima').fill('-5');
+  await d.getByRole('button', { name: 'Guardar cambios' }).click();
+  await expect(d.getByRole('alert')).toContainText('prima');
+  await d.locator('#a-prima').fill('47000');
+  await d.getByRole('button', { name: 'Guardar cambios' }).click();
+  await expect(page.getByText('Se guardaron los cambios de RSTV-78.')).toBeVisible();
+
+  await page.getByRole('button', { name: 'Dar de baja RSTV-78' }).click();
+  await expect(page.getByText('RSTV-78 quedó dado de baja.')).toBeVisible();
+  await expect(page.getByRole('row', { name: /RSTV-78/ })).toHaveCount(0);
+});

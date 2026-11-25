@@ -70,6 +70,7 @@ router.get('/api/admin/resumen', soloAdmin, ruta(async (req, res) => {
 const SQL_CONDUCTOR = `
   SELECT c.id, c.nombre_completo, c.rut, c.direccion, c.comuna, c.fono_celular, c.fono_domicilio, c.fono_emergencia,
          c.tipo_licencia, c.municipio_licencia, c.fecha_obtencion_licencia::text, c.fecha_vencimiento_licencia::text,
+         c.fecha_incorporacion::text, c.duracion_licencia_anos,
          c.estado, u.email, ${semaforo('c.fecha_vencimiento_licencia')} AS semaforo,
          COALESCE(u.created_at::date, c.fecha_incorporacion)::text AS registrado,
          ARRAY(SELECT f.lado FROM licencia_fotos f WHERE f.conductor_id = c.id ORDER BY f.lado) AS fotos,
@@ -83,6 +84,9 @@ router.get('/api/conductores', soloAdmin, ruta(async (req, res) => {
     req.query.estado ? [req.query.estado] : []);
   res.json(r.rows);
 }));
+
+/** Fecha de hoy en Santiago, "aaaa-mm-dd". */
+const hoySantiago = () => new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Santiago' }).format(new Date());
 
 /** Lee y valida los datos del formulario de conductor. */
 function datosConductor(b) {
@@ -98,7 +102,13 @@ function datosConductor(b) {
     municipio: texto(b.municipio_licencia),
     obtencion: fechaOpcional(b.fecha_obtencion_licencia, 'obtención de la licencia'),
     vencimiento: fechaOpcional(b.fecha_vencimiento_licencia, 'vencimiento de la licencia'),
+    incorporacion: fechaOpcional(b.fecha_incorporacion, 'incorporación'),
+    duracion: b.duracion_licencia_anos == null || b.duracion_licencia_anos === '' ? null : Number(b.duracion_licencia_anos),
   };
+  if (d.incorporacion && d.incorporacion > hoySantiago()) throw new ErrorHttp(400, 'La fecha de incorporación no puede ser futura');
+  if (d.duracion !== null && (!Number.isInteger(d.duracion) || d.duracion < 1 || d.duracion > 8)) {
+    throw new ErrorHttp(400, 'La duración de la licencia debe ser de 1 a 8 años');
+  }
   if (!d.nombre) throw new ErrorHttp(400, 'Ingresa el nombre');
   if (!d.direccion) throw new ErrorHttp(400, 'Ingresa la dirección');
   if (!d.celular) throw new ErrorHttp(400, 'Ingresa el celular');
@@ -136,10 +146,10 @@ router.post('/api/conductores', soloAdmin, ruta(async (req, res) => {
     const r = await c.query(
       `INSERT INTO conductores (usuario_id, nombre_completo, rut, direccion, comuna, fono_celular, fono_domicilio,
                                 fono_emergencia, tipo_licencia, municipio_licencia, fecha_obtencion_licencia,
-                                fecha_vencimiento_licencia, estado)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, 'APROBADA') RETURNING id`,
+                                fecha_vencimiento_licencia, fecha_incorporacion, duracion_licencia_anos, estado)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, COALESCE($13, CURRENT_DATE), $14, 'APROBADA') RETURNING id`,
       [usuarioId, d.nombre, d.rut, d.direccion, d.comuna, d.celular, d.fijo, d.emergencia, d.licencia, d.municipio,
-        d.obtencion, d.vencimiento],
+        d.obtencion, d.vencimiento, d.incorporacion, d.duracion],
     ).catch((err) => errorUnico(err, 'Ese RUT ya está registrado'));
     return r.rows[0].id;
   });
@@ -152,10 +162,11 @@ router.put('/api/conductores/:id', soloAdmin, ruta(async (req, res) => {
   const r = await query(
     `UPDATE conductores SET nombre_completo = $2, rut = $3, direccion = $4, comuna = $5, fono_celular = $6,
             fono_domicilio = $7, fono_emergencia = $8, tipo_licencia = $9, municipio_licencia = $10,
-            fecha_obtencion_licencia = $11, fecha_vencimiento_licencia = $12
+            fecha_obtencion_licencia = $11, fecha_vencimiento_licencia = $12,
+            fecha_incorporacion = COALESCE($13, fecha_incorporacion), duracion_licencia_anos = $14
      WHERE id = $1 RETURNING id, usuario_id`,
     [req.params.id, d.nombre, d.rut, d.direccion, d.comuna, d.celular, d.fijo, d.emergencia, d.licencia, d.municipio,
-      d.obtencion, d.vencimiento],
+      d.obtencion, d.vencimiento, d.incorporacion, d.duracion],
   ).catch((err) => errorUnico(err, 'Ese RUT ya está registrado'));
   if (r.rowCount === 0) throw new ErrorHttp(404, 'Conductor no encontrado');
   if (r.rows[0].usuario_id) await query('UPDATE usuarios SET nombre = $2 WHERE id = $1', [r.rows[0].usuario_id, d.nombre]);
@@ -202,6 +213,8 @@ const SQL_AUTO = `
          s.ruta_folio, r.linea, s.conductor_id, c.nombre_completo AS conductor, c.rut AS conductor_rut,
          p.fecha_vencimiento::text AS vencimiento_permiso, rt.fecha_vencimiento::text AS vencimiento_revision,
          so.fecha_vencimiento::text AS vencimiento_seguro,
+         p.comuna AS comuna_permiso, p.fecha_otorgacion::text AS otorgacion_permiso,
+         rt.planta_revision, rt.comuna AS comuna_revision, so.compania AS compania_seguro, so.prima::float8 AS prima_seguro,
          CASE WHEN p.id IS NULL OR rt.id IS NULL OR so.id IS NULL THEN 'SIN_DATOS'
               ELSE ${semaforo('LEAST(p.fecha_vencimiento, rt.fecha_vencimiento, so.fecha_vencimiento)')} END AS semaforo,
          EXISTS (SELECT 1 FROM servicios sv WHERE sv.automovil_id = a.id AND sv.fin IS NULL) AS en_servicio
@@ -230,7 +243,20 @@ function datosAuto(b) {
     permiso: fechaOpcional(b.vencimiento_permiso, 'vencimiento del permiso de circulación'),
     revision: fechaOpcional(b.vencimiento_revision, 'vencimiento de la revisión técnica'),
     seguro: fechaOpcional(b.vencimiento_seguro, 'vencimiento del seguro'),
+    comunaPermiso: texto(b.comuna_permiso) || null,
+    otorgacion: fechaOpcional(b.otorgacion_permiso, 'otorgación del permiso de circulación'),
+    planta: texto(b.planta_revision) || null,
+    comunaRevision: texto(b.comuna_revision) || null,
+    compania: texto(b.compania_seguro) || null,
+    prima: b.prima_seguro == null || b.prima_seguro === '' ? null : Number(b.prima_seguro),
   };
+  if (d.prima !== null && !(Number.isFinite(d.prima) && d.prima > 0)) throw new ErrorHttp(400, 'La prima del seguro debe ser un monto mayor que cero');
+  if (d.otorgacion && d.permiso && d.otorgacion >= d.permiso) {
+    throw new ErrorHttp(400, 'La otorgación del permiso de circulación debe ser anterior a su vencimiento');
+  }
+  if ((d.comunaPermiso || d.otorgacion) && !d.permiso) throw new ErrorHttp(400, 'Ingresa el vencimiento del permiso de circulación');
+  if ((d.planta || d.comunaRevision) && !d.revision) throw new ErrorHttp(400, 'Ingresa el vencimiento de la revisión técnica');
+  if ((d.compania || d.prima) && !d.seguro) throw new ErrorHttp(400, 'Ingresa el vencimiento del seguro obligatorio');
   if (!d.marca || !d.modelo) throw new ErrorHttp(400, 'Ingresa la marca y el modelo');
   const anoMax = new Date().getFullYear() + 1;
   if (!Number.isInteger(d.ano) || d.ano < 1990 || d.ano > anoMax) throw new ErrorHttp(400, `El año debe estar entre 1990 y ${anoMax}`);
@@ -243,27 +269,29 @@ function datosAuto(b) {
 
 /** Guarda documentos, recorrido y conductor de un vehículo (dentro de una transacción). */
 async function guardarDetallesAuto(c, autoId, d, admin) {
+  // Cada documento se guarda completo con los datos del formulario (protocolo: defecto D-12).
   if (d.permiso) {
     await c.query(
-      `INSERT INTO permisos_circulacion (automovil_id, fecha_vencimiento) VALUES ($1, $2)
-       ON CONFLICT (automovil_id) DO UPDATE SET fecha_vencimiento = EXCLUDED.fecha_vencimiento,
-         fecha_otorgacion = CASE WHEN permisos_circulacion.fecha_otorgacion < EXCLUDED.fecha_vencimiento
-                                 THEN permisos_circulacion.fecha_otorgacion END`,
-      [autoId, d.permiso],
+      `INSERT INTO permisos_circulacion (automovil_id, comuna, fecha_otorgacion, fecha_vencimiento) VALUES ($1, $2, $3, $4)
+       ON CONFLICT (automovil_id) DO UPDATE SET comuna = EXCLUDED.comuna, fecha_otorgacion = EXCLUDED.fecha_otorgacion,
+         fecha_vencimiento = EXCLUDED.fecha_vencimiento`,
+      [autoId, d.comunaPermiso, d.otorgacion, d.permiso],
     );
   }
   if (d.revision) {
     await c.query(
-      `INSERT INTO revisiones_tecnicas (automovil_id, fecha_vencimiento) VALUES ($1, $2)
-       ON CONFLICT (automovil_id) DO UPDATE SET fecha_vencimiento = EXCLUDED.fecha_vencimiento`,
-      [autoId, d.revision],
+      `INSERT INTO revisiones_tecnicas (automovil_id, planta_revision, comuna, fecha_vencimiento) VALUES ($1, $2, $3, $4)
+       ON CONFLICT (automovil_id) DO UPDATE SET planta_revision = EXCLUDED.planta_revision, comuna = EXCLUDED.comuna,
+         fecha_vencimiento = EXCLUDED.fecha_vencimiento`,
+      [autoId, d.planta, d.comunaRevision, d.revision],
     );
   }
   if (d.seguro) {
     await c.query(
-      `INSERT INTO seguros_obligatorios (automovil_id, fecha_vencimiento) VALUES ($1, $2)
-       ON CONFLICT (automovil_id) DO UPDATE SET fecha_vencimiento = EXCLUDED.fecha_vencimiento`,
-      [autoId, d.seguro],
+      `INSERT INTO seguros_obligatorios (automovil_id, compania, prima, fecha_vencimiento) VALUES ($1, $2, $3, $4)
+       ON CONFLICT (automovil_id) DO UPDATE SET compania = EXCLUDED.compania, prima = EXCLUDED.prima,
+         fecha_vencimiento = EXCLUDED.fecha_vencimiento`,
+      [autoId, d.compania, d.prima, d.seguro],
     );
   }
 

@@ -392,3 +392,48 @@ test('AD-01 la lista de pendientes trae la fecha de registro y los datos de la l
     assert.ok(c.tipo_licencia && c.municipio_licencia && c.fecha_vencimiento_licencia);
   }
 });
+
+// ---------- Campos del protocolo en los mantenedores (defecto D-12) ----------
+
+test('D12-C el conductor guarda fecha de incorporación y duración de la licencia', async () => {
+  const datos = {
+    rut: '13.131.313-6', nombre_completo: 'Conductor Protocolo', direccion: 'Calle 4', comuna: 'La Granja',
+    fono_celular: '+56944444444', tipo_licencia: 'A2', municipio_licencia: 'La Granja',
+    fecha_obtencion_licencia: '01-03-2024', fecha_vencimiento_licencia: '01-03-2028',
+    fecha_incorporacion: '15-01-2025', duracion_licencia_anos: 4,
+  };
+  const c = await request(app).post('/api/conductores').set(conToken(tokens.admin)).send(datos);
+  assert.equal(c.status, 201, JSON.stringify(c.body));
+  assert.equal(c.body.fecha_incorporacion, '2025-01-15');
+  assert.equal(c.body.duracion_licencia_anos, 4);
+  const e = await request(app).put(`/api/conductores/${c.body.id}`).set(conToken(tokens.admin)).send({ ...datos, duracion_licencia_anos: 5 });
+  assert.equal(e.body.duracion_licencia_anos, 5);
+  const futura = await request(app).post('/api/conductores').set(conToken(tokens.admin))
+    .send({ ...datos, rut: '14.141.414-3', fecha_incorporacion: '01-01-2099' });
+  assert.equal(futura.status, 400);
+  assert.equal((await request(app).post('/api/conductores').set(conToken(tokens.admin))
+    .send({ ...datos, rut: '14.141.414-3', duracion_licencia_anos: 0 })).status, 400);
+  await request(app).delete(`/api/conductores/${c.body.id}`).set(conToken(tokens.admin));
+});
+
+test('D12-A el automóvil guarda los datos completos de permiso, revisión técnica y seguro', async () => {
+  const datos = {
+    patente: 'PRTC-11', marca: 'Kia', modelo: 'Rio', ano: 2022, combustible: 'bencina', capacidad: 4,
+    comuna_permiso: 'San Ramón', otorgacion_permiso: '01-04-2026', vencimiento_permiso: '31-03-2027',
+    planta_revision: 'PRT San Ramón', comuna_revision: 'San Ramón', vencimiento_revision: '15-05-2027',
+    compania_seguro: 'Consorcio', prima_seguro: 45000, vencimiento_seguro: '30-03-2027',
+  };
+  const a = await request(app).post('/api/automoviles').set(conToken(tokens.admin)).send(datos);
+  assert.equal(a.status, 201, JSON.stringify(a.body));
+  assert.deepEqual(
+    [a.body.comuna_permiso, a.body.otorgacion_permiso, a.body.planta_revision, a.body.comuna_revision, a.body.compania_seguro, a.body.prima_seguro],
+    ['San Ramón', '2026-04-01', 'PRT San Ramón', 'San Ramón', 'Consorcio', 45000],
+  );
+  const e = await request(app).put(`/api/automoviles/${a.body.id}`).set(conToken(tokens.admin)).send({ ...datos, compania_seguro: 'BCI' });
+  assert.equal(e.body.compania_seguro, 'BCI');
+  const malo = (extra) => request(app).put(`/api/automoviles/${a.body.id}`).set(conToken(tokens.admin)).send({ ...datos, ...extra });
+  assert.equal((await malo({ prima_seguro: -1 })).status, 400);
+  assert.equal((await malo({ prima_seguro: 'mucho' })).status, 400);
+  assert.equal((await malo({ otorgacion_permiso: '01-04-2027' })).status, 400); // otorgado después de vencer
+  await request(app).delete(`/api/automoviles/${a.body.id}`).set(conToken(tokens.admin));
+});
