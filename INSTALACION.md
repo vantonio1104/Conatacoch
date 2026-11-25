@@ -47,11 +47,14 @@ Tiempo estimado para publicar por primera vez: 30–45 minutos.
 ### 2.2 MongoDB en Atlas
 
 1. Entra a <https://www.mongodb.com/cloud/atlas/register> y crea una cuenta.
-2. **Create a cluster** → **Free (M0)**, proveedor AWS, región **São Paulo (sa-east-1)** → **Create**.
-3. Crea un **usuario de base de datos** y anota usuario y contraseña (solo letras y números, para evitar problemas en la URL).
-4. **Network Access** → **Add IP Address** → **Allow access from anywhere** (`0.0.0.0/0`). Render cambia de IP; la
+2. Primero crea un proyecto: **Create new project** → nombre `conatacoch` → **Next** → **Create Project**.
+   Sin proyecto no aparece la opción de crear el cluster.
+3. Dentro del proyecto: **Create** (o **Build a Cluster**) → **Free (M0)**, proveedor AWS, región
+   **São Paulo (sa-east-1)** → **Create Deployment**. Si São Paulo no está en el plan gratis, usa la región más cercana.
+4. Crea un **usuario de base de datos** y anota usuario y contraseña (solo letras y números, para evitar problemas en la URL).
+5. **Network Access** → **Add IP Address** → **Allow access from anywhere** (`0.0.0.0/0`). Render cambia de IP; la
    seguridad la dan el usuario y la contraseña.
-5. **Database** → **Connect** → **Drivers** → copia la cadena `mongodb+srv://...` y reemplaza `<db_password>` por la
+6. **Database** → **Connect** → **Drivers** → copia la cadena `mongodb+srv://...` y reemplaza `<db_password>` por la
    contraseña. Es tu **MONGODB_URI**.
 
 ### 2.3 Repositorio en GitHub
