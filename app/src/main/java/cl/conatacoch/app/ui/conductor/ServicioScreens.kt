@@ -183,7 +183,7 @@ private fun CabeceraServicio(estado: String, colorEstado: Color, titulo: String,
         Row(verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
                 Text(estado, color = colorEstado, style = MaterialTheme.typography.labelLarge, letterSpacing = 1.sp)
-                Text(titulo, color = Color.White, style = MaterialTheme.typography.headlineSmall)
+                Text(titulo, color = Color.White, style = MaterialTheme.typography.titleLarge, maxLines = 1)
             }
             if (s.enServicio) {
                 // En el prototipo se cambia a mano; después vendrá del GPS.
@@ -194,7 +194,7 @@ private fun CabeceraServicio(estado: String, colorEstado: Color, titulo: String,
                     contentColor = if (s.detenido) Color.Black else Color.White,
                     border = if (s.detenido) null else BorderStroke(1.dp, Color.White),
                 ) {
-                    Row(Modifier.padding(horizontal = 16.dp, vertical = 12.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Row(Modifier.padding(horizontal = 14.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
                         Icon(if (s.detenido) Icons.Filled.Pause else Icons.Filled.PlayArrow, contentDescription = null, Modifier.size(18.dp))
                         Spacer(Modifier.width(6.dp))
                         Text(if (s.detenido) "Detenido" else "En movimiento", style = MaterialTheme.typography.titleMedium)

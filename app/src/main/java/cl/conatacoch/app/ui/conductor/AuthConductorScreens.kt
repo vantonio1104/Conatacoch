@@ -48,6 +48,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.input.KeyboardType
@@ -208,11 +214,22 @@ private fun BotonFoto(texto: String, lista: Boolean, modifier: Modifier, onClick
     val cs = MaterialTheme.colorScheme
     Surface(
         onClick = onClick,
-        modifier = modifier,
+        // Sin foto: borde punteado, como en Figma.
+        modifier = if (lista) modifier else modifier.drawWithContent {
+            drawContent()
+            val ancho = 1.dp.toPx()
+            drawRoundRect(
+                cs.outline,
+                topLeft = Offset(ancho / 2, ancho / 2),
+                size = Size(size.width - ancho, size.height - ancho),
+                cornerRadius = CornerRadius(16.dp.toPx()),
+                style = Stroke(ancho, pathEffect = PathEffect.dashPathEffect(floatArrayOf(6.dp.toPx(), 4.dp.toPx()))),
+            )
+        },
         shape = RoundedCornerShape(16.dp),
         color = if (lista) cs.primaryContainer else cs.background,
         contentColor = if (lista) Extra.verdeTexto else cs.onSurface,
-        border = BorderStroke(if (lista) 2.dp else 1.dp, if (lista) cs.secondary else cs.outline),
+        border = if (lista) BorderStroke(2.dp, cs.secondary) else null,
     ) {
         Column(Modifier.padding(vertical = 22.dp), horizontalAlignment = Alignment.CenterHorizontally) {
             Icon(if (lista) Icons.Filled.Check else Icons.Outlined.PhotoCamera, contentDescription = null)
