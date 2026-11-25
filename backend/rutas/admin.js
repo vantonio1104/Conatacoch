@@ -373,6 +373,35 @@ function puntosValidos(lista) {
   return ok ? lista.map(([lat, lng]) => [Math.round(lat * 1e5) / 1e5, Math.round(lng * 1e5) / 1e5]) : null;
 }
 
+// --- Recorridos y tarifas (Admin 8) ---
+
+/** Los recorridos con su tarifa, si tienen trazado guardado y cuántos vehículos tienen turno hoy. */
+router.get('/api/admin/recorridos', soloAdmin, ruta(async (req, res) => {
+  const r = await query(
+    `SELECT r.folio, r.linea, r.origen_comuna, r.destino_comuna, r.tarifa,
+            EXISTS (SELECT 1 FROM ruta_trazados t WHERE t.ruta_folio = r.folio) AS trazado_guardado,
+            (SELECT COUNT(DISTINCT t.automovil_id) FROM turnos t
+              WHERE t.ruta_folio = r.folio AND t.fecha = (NOW() AT TIME ZONE 'America/Santiago')::date)::int AS asignados_hoy
+     FROM rutas r ORDER BY r.linea`,
+  );
+  res.json(r.rows);
+}));
+
+/** Cambia la tarifa (CLP, entero de 1 a 20.000). Rige para los pagos nuevos y queda en la auditoría. */
+router.put('/api/admin/recorridos/:folio/tarifa', soloAdmin, ruta(async (req, res) => {
+  const tarifa = req.body.tarifa;
+  if (!Number.isInteger(tarifa) || tarifa < 1 || tarifa > 20000) throw new ErrorHttp(400, 'La tarifa debe ser un número entero entre $1 y $20.000');
+  const r = await query(
+    `UPDATE rutas n SET tarifa = $2 FROM rutas a WHERE n.folio = $1 AND a.folio = n.folio
+     RETURNING n.folio, n.linea, n.tarifa, a.tarifa AS anterior`,
+    [req.params.folio, tarifa],
+  );
+  if (r.rowCount === 0) throw new ErrorHttp(404, 'Recorrido no encontrado');
+  const { anterior, ...ruta_ } = r.rows[0];
+  await mongo.auditar(req.usuario, 'CAMBIAR_TARIFA', { folio: ruta_.folio, anterior, nueva: tarifa });
+  res.json(ruta_);
+}));
+
 router.put('/api/rutas/:folio/trazado', soloAdmin, ruta(async (req, res) => {
   const ida = puntosValidos(req.body.ida);
   const regreso = puntosValidos(req.body.regreso);

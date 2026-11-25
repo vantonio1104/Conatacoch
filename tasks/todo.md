@@ -60,7 +60,7 @@ Plan: `tasks/plan.md`. Cada tarea termina con sus pruebas en verde (`npm test` c
     cuenta desactivada no entra y pierde sus sesiones); «Crear administrador» con contraseña temporal y cambio
     obligatorio al entrar.
   - Archivos: `rutas/admin.js`, `rutas/auth.js`, `public/admin/pantallas/cuentas.js`, `test/cuentas.test.js`.
-- [ ] **T10. Recorridos y tarifas (Admin 8)**
+- [x] **T10. Recorridos y tarifas (Admin 8)**
   - Aceptación: tabla de recorridos con tarifa y vehículos asignados hoy; «Guardar tarifa» con auditoría; la app del
     pasajero muestra la nueva tarifa. Sin la sección Recaudación.
   - Archivos: `rutas/admin.js`, `public/admin/pantallas/tarifas.js`, `test/api.test.js`.

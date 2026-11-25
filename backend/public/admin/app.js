@@ -9,6 +9,7 @@ const PANTALLAS = [
     subtitulo: 'Revisa los datos y la licencia antes de aprobar el registro', icono: 'validar' },
   { id: 'asignar', menu: 'Asignar rutas', titulo: 'Asignación de rutas',
     subtitulo: 'Asigna un recorrido a un conductor y su vehículo', icono: 'asignar' },
+  { id: 'tarifas', menu: 'Recorridos y tarifas', titulo: 'Recorridos y tarifas', subtitulo: 'Tarifa de cada recorrido', icono: 'tarifas' },
   { id: 'turnos', menu: 'Salidas y turnos', titulo: 'Programación de salidas y turnos',
     subtitulo: 'Turnos semanales por conductor', icono: 'turnos' },
   { id: 'avisos', menu: 'Avisos', titulo: 'Consulta de avisos', subtitulo: 'Todos los avisos de los conductores', icono: 'avisos' },

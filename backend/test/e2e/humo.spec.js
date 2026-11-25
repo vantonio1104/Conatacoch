@@ -227,3 +227,18 @@ test('HU-08 cuentas: cerrar sesiones, desactivar y crear un administrador que ca
   await page.getByRole('button', { name: 'Guardar y entrar' }).click();
   await expect(page.getByRole('navigation')).toBeVisible();
 });
+
+test('HU-09 recorridos y tarifas: cambiar la tarifa de una línea', async ({ page }) => {
+  await entrarAdmin(page);
+  await page.getByRole('link', { name: 'Recorridos y tarifas' }).click();
+  await expect(page.getByRole('row', { name: /Línea 5003/ })).toContainText('$800');
+  await page.getByLabel('Recorrido', { exact: true }).selectOption({ label: 'Línea 5003' });
+  await expect(page.getByLabel('Tarifa (CLP)')).toHaveValue('800');
+  await page.getByLabel('Tarifa (CLP)').fill('850.5');
+  await page.getByRole('button', { name: 'Guardar tarifa' }).click();
+  await expect(page.getByRole('alert')).toContainText('número entero');
+  await page.getByLabel('Tarifa (CLP)').fill('900');
+  await page.getByRole('button', { name: 'Guardar tarifa' }).click();
+  await expect(page.getByText('Tarifa de la línea 5003 actualizada a $900.')).toBeVisible();
+  await expect(page.getByRole('row', { name: /Línea 5003/ })).toContainText('$900');
+});
