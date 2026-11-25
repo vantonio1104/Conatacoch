@@ -69,7 +69,7 @@ Plan: `tasks/plan.md`. Cada tarea termina con sus pruebas en verde (`npm test` c
 
 - [x] **T11. Resumen y reportes PDF** (inicio del panel con semáforo de vigencias y los 2 botones de reporte).
 - [x] **T12. CRUD de conductores y de automóviles con documentos.** (cierra el defecto D-12)
-- [ ] **T13. Mapa global en vivo** (Leaflet, posiciones cada 10 s).
+- [x] **T13. Mapa global en vivo** (Leaflet, posiciones cada 10 s).
 
 ## Fase E · Cierre
 

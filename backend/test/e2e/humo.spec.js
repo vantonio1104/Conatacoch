@@ -325,3 +325,31 @@ test('HU-12 automóviles: crear con sus 3 documentos, editar y dar de baja', asy
   await expect(page.getByText('RSTV-78 quedó dado de baja.')).toBeVisible();
   await expect(page.getByRole('row', { name: /RSTV-78/ })).toHaveCount(0);
 });
+
+test('HU-13 mapa en vivo: marcadores de los colectivos en servicio y estado sin señal', async ({ page }) => {
+  const errores = [];
+  page.on('pageerror', (e) => errores.push(e.message));
+  // Sin MongoDB en las pruebas no hay GPS: se agregan posiciones a la respuesta real de la flota.
+  await page.route('**/api/admin/flota', async (ruta) => {
+    const respuesta = await ruta.fetch();
+    const flota = (await respuesta.json()).map((v) => {
+      if (v.patente === 'ABCD-12') return { ...v, en_servicio: true, posicion: { lat: -33.531, lng: -70.662, velocidad: 32, timestamp: new Date().toISOString() } };
+      if (v.patente === 'GHJK-34') return { ...v, en_servicio: true, posicion: { lat: -33.54, lng: -70.65, velocidad: 0, timestamp: new Date(Date.now() - 5 * 60_000).toISOString() } };
+      return v;
+    });
+    await ruta.fulfill({ response: respuesta, json: flota });
+  });
+  await entrarAdmin(page);
+  await page.getByRole('link', { name: 'Mapa en vivo' }).click();
+  await expect(page.locator('.leaflet-container')).toBeVisible();
+  await expect(page.locator('path.leaflet-interactive')).toHaveCount(2);
+  const lista = page.getByRole('region', { name: 'Colectivos' }).or(page.locator('.lista-flota'));
+  await expect(page.locator('.lista-flota li').filter({ hasText: 'ABCD-12' })).toContainText('En servicio');
+  await expect(page.locator('.lista-flota li').filter({ hasText: 'GHJK-34' })).toContainText('Sin señal GPS');
+  await page.getByLabel('Línea', { exact: true }).selectOption('5003');
+  await expect(lista.first()).toBeVisible();
+  await page.locator('.lista-flota').getByRole('button', { name: /ABCD-12/ }).click();
+  await page.locator('path.leaflet-interactive').first().click();
+  await expect(page.locator('.leaflet-popup')).toContainText('ABCD-12 · Línea 5003');
+  expect(errores).toEqual([]);
+});

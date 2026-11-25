@@ -160,8 +160,9 @@ input[aria-invalid="true"] { border: 2px solid var(--error); }
   padding: 1.5rem 0.75rem;
   display: flex; flex-direction: column; gap: 1.5rem;
   position: sticky; top: 0; height: 100vh;
+  overflow-y: auto; /* en pantallas bajas «Cerrar sesión» sigue alcanzable */
 }
-.lateral-logo { background: #FFFFFF; border-radius: 12px; padding: 0.75rem; text-align: center; }
+.lateral-logo { background: #FFFFFF; border-radius: 12px; padding: 0.75rem; text-align: center; flex: none; }
 .lateral-logo img { width: 100%; max-width: 180px; height: auto; }
 .lateral ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.25rem; }
 .lateral-item {
@@ -329,6 +330,18 @@ a.cifra { border-color: var(--verde-marca); }
 .avisos-recientes { list-style: none; margin: 0; padding: 0; }
 .avisos-recientes li { display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap; padding: 0.75rem 0; border-bottom: 1px solid var(--divisor); }
 .avisos-recientes .secundario { margin: 0; }
+/* Mapa global en vivo */
+.tarjeta-mapa { padding: 0; overflow: hidden; }
+.mapa { height: min(70vh, 640px); min-height: 360px; }
+.lista-flota { list-style: none; margin: 1rem 0 0; padding: 0; display: grid; gap: 0.5rem; max-height: 52vh; overflow-y: auto; }
+.item-flota {
+  width: 100%; display: grid; gap: 0.2rem; justify-items: start; text-align: left; padding: 0.75rem 1rem;
+  border: 1px solid var(--divisor); border-radius: 12px; background: var(--superficie); color: inherit; font: inherit;
+}
+button.item-flota { cursor: pointer; }
+.item-flota .secundario { margin: 0; font-size: 0.9rem; }
+.popup-flota { display: grid; gap: 0.2rem; font-family: Roboto, system-ui, sans-serif; }
+
 /* Mantenedores: conductores y automóviles */
 .dialogo-ancho { width: min(94vw, 860px); max-height: 92vh; }
 .dialogo h3 { margin-top: 1.5rem; }

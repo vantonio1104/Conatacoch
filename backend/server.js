@@ -38,6 +38,8 @@ app.use('/admin', (req, res, next) => {
   res.set({ 'Content-Security-Policy': CSP_PANEL, 'X-Content-Type-Options': 'nosniff', 'Referrer-Policy': 'no-referrer' });
   next();
 }, express.static(path.join(__dirname, 'public', 'admin')));
+// Leaflet (mapa global del panel) se entrega desde aquí, no desde un CDN, para mantener la CSP estricta.
+app.use('/admin/vendor/leaflet', express.static(path.join(__dirname, 'node_modules', 'leaflet', 'dist')));
 
 app.use(require('./rutas/publico').router);
 app.use(require('./rutas/auth'));

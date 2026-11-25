@@ -16,6 +16,7 @@ const PANTALLAS = [
   { id: 'cuentas', menu: 'Cuentas', titulo: 'Gestión de cuentas', subtitulo: 'Administradores, conductores y pasajeros', icono: 'cuentas' },
   { id: 'conductores', menu: 'Conductores', titulo: 'Conductores', subtitulo: 'Registro de conductores y sus licencias', icono: 'conductores' },
   { id: 'automoviles', menu: 'Automóviles', titulo: 'Automóviles', subtitulo: 'Vehículos, documentos y asignación', icono: 'automoviles' },
+  { id: 'mapa', menu: 'Mapa en vivo', titulo: 'Mapa global en vivo', subtitulo: 'Posición de los colectivos en servicio', icono: 'mapa' },
 ];
 
 const MINUTOS_INACTIVIDAD = 30;
