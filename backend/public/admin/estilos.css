@@ -302,7 +302,34 @@ input[aria-invalid="true"] { border: 2px solid var(--error); }
 .insignia-espacio { margin-left: 0.4rem; }
 .clave-temporal p { margin: 0 0 0.5rem; }
 .clave-temporal .clave { display: block; margin-bottom: 0.5rem; font-size: 1.05rem; user-select: all; }
+/* Inicio: resumen, semáforo y reportes */
+.cifras { display: grid; grid-template-columns: repeat(5, 1fr); gap: 1rem; margin-bottom: 1.5rem; }
+.cifra {
+  display: grid; gap: 0.25rem; padding: 1.25rem 1.5rem; border-radius: var(--radio);
+  background: var(--superficie); border: 1px solid var(--divisor); color: inherit; text-decoration: none;
+}
+a.cifra { border-color: var(--verde-marca); }
+.cifra strong { font-size: 2rem; font-weight: 700; }
+.cifra span { color: var(--texto-2); }
+.tres-columnas { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; margin-bottom: 1.5rem; align-items: start; }
+.tres-columnas > * { min-width: 0; }
+.semaforo { list-style: none; margin: 0.5rem 0 0; padding: 0; display: grid; gap: 0.5rem; }
+.semaforo-fila { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 0.75rem;
+  padding: 0.75rem 1rem; border-radius: 12px; background: var(--fondo); }
+.semaforo-fila strong { font-size: 1.25rem; }
+.semaforo-punto { width: 14px; height: 14px; border-radius: 50%; }
+.semaforo-verde .semaforo-punto { background: var(--verde-marca); }
+.semaforo-ambar .semaforo-punto { background: #F2A900; }
+.semaforo-rojo .semaforo-punto { background: var(--error); }
+.semaforo-gris .semaforo-punto { background: var(--borde); }
+.botones-reportes { display: grid; gap: 0.75rem; }
+.boton-reporte { justify-content: flex-start; text-align: left; border-radius: 12px; min-height: 56px; }
+.avisos-recientes { list-style: none; margin: 0; padding: 0; }
+.avisos-recientes li { display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap; padding: 0.75rem 0; border-bottom: 1px solid var(--divisor); }
+.avisos-recientes .secundario { margin: 0; }
 @media (max-width: 1200px) {
+  .cifras { grid-template-columns: repeat(3, 1fr); }
+  .tres-columnas { grid-template-columns: 1fr; }
   .filtros { grid-template-columns: repeat(2, 1fr); }
   .dos-columnas, .dos-columnas-derecha { grid-template-columns: 1fr; }
   .datos { grid-template-columns: repeat(2, 1fr); }

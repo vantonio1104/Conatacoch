@@ -242,3 +242,22 @@ test('HU-09 recorridos y tarifas: cambiar la tarifa de una línea', async ({ pag
   await expect(page.getByText('Tarifa de la línea 5003 actualizada a $900.')).toBeVisible();
   await expect(page.getByRole('row', { name: /Línea 5003/ })).toContainText('$900');
 });
+
+test('HU-10 inicio: semáforo de vigencias y descarga de los 2 reportes PDF', async ({ page }) => {
+  await entrarAdmin(page);
+  await expect(page.getByRole('heading', { name: 'Inicio' })).toBeVisible();
+  const licencias = page.getByRole('region', { name: 'Licencias de conductores' });
+  await expect(licencias.getByRole('listitem').filter({ hasText: 'Vencidas' })).toContainText(/\d+/); // Juan Pérez, vencida en 2022
+  await expect(page.getByRole('region', { name: 'Documentos de vehículos' })).toContainText('Alguno vencido');
+
+  for (const [boton, archivo] of [
+    ['Conductores con licencia que vence en 30 días', 'licencias-por-vencer-30-dias.pdf'],
+    ['Vehículos con documentación vencida', 'vehiculos-documentos-vencidos.pdf'],
+  ]) {
+    const [descarga] = await Promise.all([page.waitForEvent('download'), page.getByRole('button', { name: boton }).click()]);
+    expect(descarga.suggestedFilename()).toBe(archivo);
+    const contenido = require('fs').readFileSync(await descarga.path());
+    expect(contenido.subarray(0, 4).toString()).toBe('%PDF');
+    await expect(page.getByText(`Se descargó «${archivo}»`)).toBeVisible();
+  }
+});

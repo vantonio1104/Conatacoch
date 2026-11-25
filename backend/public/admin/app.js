@@ -4,7 +4,7 @@ import { el, icono, mensaje } from './ui.js';
 
 /** Pantallas del menú, en el orden de Figma. Cada una vive en pantallas/<id>.js y exporta mostrar(raiz). */
 const PANTALLAS = [
-  { id: 'inicio', titulo: 'Inicio', subtitulo: 'Panel de administración de CONATACOCH', icono: 'inicio' },
+  { id: 'inicio', titulo: 'Inicio', subtitulo: 'Resumen de la operación, vigencias y reportes', icono: 'inicio' },
   { id: 'validar', menu: 'Validar conductores', titulo: 'Validación de conductores',
     subtitulo: 'Revisa los datos y la licencia antes de aprobar el registro', icono: 'validar' },
   { id: 'asignar', menu: 'Asignar rutas', titulo: 'Asignación de rutas',

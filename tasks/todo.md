@@ -67,7 +67,7 @@ Plan: `tasks/plan.md`. Cada tarea termina con sus pruebas en verde (`npm test` c
 
 ## Fase D · Pantallas sin Figma
 
-- [ ] **T11. Resumen y reportes PDF** (inicio del panel con semáforo de vigencias y los 2 botones de reporte).
+- [x] **T11. Resumen y reportes PDF** (inicio del panel con semáforo de vigencias y los 2 botones de reporte).
 - [ ] **T12. CRUD de conductores y de automóviles con documentos.**
 - [ ] **T13. Mapa global en vivo** (Leaflet, posiciones cada 10 s).
 
