@@ -139,10 +139,9 @@ private fun InicioServicio(vm: ConductorViewModel, modifier: Modifier) {
                     }
                 } else {
                     Tarjeta {
-                        val asignacion = vm.asignacion
-                        Text(if (asignacion != null) "Hoy no tienes turno" else "Sin vehículo asignado", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text("Hoy no tienes turno", color = MaterialTheme.colorScheme.onSurfaceVariant)
                         Text(
-                            asignacion?.let { "Tu vehículo: $it" } ?: "La administración debe asignarte un vehículo para iniciar servicio.",
+                            "Para iniciar servicio, la administración debe asignarte un turno. Revisa tus turnos en Rutas.",
                             style = MaterialTheme.typography.titleMedium,
                         )
                     }
@@ -157,8 +156,8 @@ private fun InicioServicio(vm: ConductorViewModel, modifier: Modifier) {
                         onClick = vm::iniciarServicio,
                         modifier = Modifier.size(200.dp),
                         shape = CircleShape,
-                        // Se puede iniciar fuera de turno si tiene vehículo asignado.
-                        enabled = hoy?.recorrido != null || vm.asignacion != null,
+                        // Solo con turno hoy; fuera de su horario, el servidor responde con el motivo.
+                        enabled = hoy?.recorrido != null,
                     ) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
                             Icon(Icons.Filled.PlayArrow, contentDescription = null, Modifier.size(56.dp))

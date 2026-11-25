@@ -124,6 +124,15 @@ data class Preferencias(
     val desvios: Boolean = true,
     val sinUbicacion: Boolean = false,
 ) {
+    /** Si el pasajero quiere ver este tipo de notificación; los tipos sin preferencia se muestran siempre. */
+    fun permite(tipo: TipoNotificacion): Boolean = when (tipo) {
+        TipoNotificacion.RESERVA_CONFIRMADA -> reservaConfirmada
+        TipoNotificacion.RETRASO -> retrasos
+        TipoNotificacion.DESVIO -> desvios
+        TipoNotificacion.SIN_UBICACION -> sinUbicacion
+        else -> true
+    }
+
     companion object { val OPCIONES_ANTICIPACION = listOf(2, 5, 10) }
 }
 

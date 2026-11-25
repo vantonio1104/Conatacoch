@@ -87,8 +87,16 @@ class ApiConductorRepository(private val api: ApiCliente) : ConductorRepository 
         aplicar(api.postObjeto("/api/conductor/reservas/$reservaId/cancelar", JSONObject()))
     }
 
+    /** Última posición enviada, para adjuntarla a los avisos («Ver en mapa» en el panel). */
+    private var ultimaPosicion: Triple<Double, Double, Long>? = null
+
     override suspend fun enviarAviso(aviso: Aviso) {
-        api.post("/api/conductor/avisos", JSONObject().put("codigo", aviso.codigo))
+        val cuerpo = JSONObject().put("codigo", aviso.codigo)
+        // Solo si es reciente (menos de 2 minutos); si no, el servidor usa la última del GPS que tenga.
+        ultimaPosicion?.takeIf { System.currentTimeMillis() - it.third < 120_000 }?.let { (lat, lng) ->
+            cuerpo.put("lat", lat).put("lng", lng)
+        }
+        api.post("/api/conductor/avisos", cuerpo)
     }
 
     override suspend fun cambiarOcupados(ocupados: Int) {
@@ -101,6 +109,7 @@ class ApiConductorRepository(private val api: ApiCliente) : ConductorRepository 
         velocidad?.let { cuerpo.put("velocidad", it.toDouble()) }
         rumbo?.let { cuerpo.put("rumbo", it.toDouble()) }
         api.post("/api/conductor/posicion", cuerpo)
+        ultimaPosicion = Triple(lat, lng, System.currentTimeMillis())
         // Menos de ~5 km/h se considera detenido (habilita los avisos AC-01 a AC-05).
         if (velocidad != null) cambiarDetenido(velocidad < 1.5f)
     }

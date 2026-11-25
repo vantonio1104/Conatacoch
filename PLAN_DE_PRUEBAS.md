@@ -29,7 +29,7 @@ En el entorno de desarrollo, `backend/test/correr.sh` recrea la base de prueba l
 
 | Nivel | Herramienta | Casos | Aprobados |
 | --- | --- | --- | --- |
-| Unitarias de la app | JUnit (`test/`), con el APK compilado el 25-11-2026 | 32 | 32 |
+| Unitarias de la app | JUnit (`test/`), con el APK compilado el 25-11-2026 | 36 | 36 |
 | Unitarias del servidor | node:test (`unitarias.test.js`, TOTP con los vectores del RFC 6238) | 5 + 1 | 6 |
 | Integración API + PostgreSQL | node:test + Supertest + socket.io-client (`api`, `sesiones`, `totp`, `fotos`, `asignaciones`, `avisos`, `cuentas`, `recorridos`, `mapa`, `panel`) | 75 | 75 |
 | Panel web de punta a punta | Playwright + Chromium (`test/e2e/humo.spec.js`, HU-01 a HU-13) | 13 | 13 |

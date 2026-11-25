@@ -74,7 +74,8 @@ class PasajeroViewModel(
     val reserva = repo.reservaActiva
     val reservas = repo.reservas.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
     val historial = repo.historial.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
-    val notificaciones = repo.notificaciones.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+    val notificaciones = combine(repo.notificaciones, prefs.preferencias) { lista, p -> lista.filter { p.permite(it.tipo) } }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
     val preferencias: StateFlow<Preferencias> = prefs.preferencias
 
     /** Datos leídos del QR; null mientras no se escanea. */
