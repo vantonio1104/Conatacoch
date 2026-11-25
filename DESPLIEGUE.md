@@ -108,7 +108,9 @@ Después de cambiarlo: **File → Sync Project with Gradle Files**.
 | Los 15 recorridos, sus calles y sus trazados (versiones) | PostgreSQL · `rutas`, `ruta_calles`, `ruta_trazados`, `operadores` |
 | Vehículos, documentos (permiso, revisión técnica, SOAP) y asignación a recorrido y conductor | PostgreSQL · `automoviles`, `permisos_circulacion`, `revisiones_tecnicas`, `seguros_obligatorios`, `asignaciones` |
 | Reservas (activa e historial; solo una activa por pasajero; vencen a los 3 minutos) | PostgreSQL · `reservas` |
-| Turnos del conductor (los define la administración; días libres incluidos) | PostgreSQL · `turnos` |
+| Turnos del conductor con fecha, horario, vehículo y recorrido (los define la administración; sin turno = libre) | PostgreSQL · `turnos` |
+| Sesiones abiertas (se pueden cerrar desde el panel) y TOTP de la administración | PostgreSQL · `sesiones`, `usuarios` |
+| Fotos de la licencia que sube el conductor al registrarse | PostgreSQL · `licencia_fotos` |
 | Servicios (cada inicio y fin de servicio) y asientos ocupados que marca el conductor | PostgreSQL · `servicios` |
 | Avisos de un toque del conductor (AC-01, 02, 03, 05 y 06) | PostgreSQL · `avisos` |
 | GPS del teléfono del conductor en servicio (se borra solo a las 24 h) | MongoDB · `posiciones_vehiculos` |
@@ -126,13 +128,14 @@ Mientras un vehículo no envíe GPS, la app del pasajero simula su movimiento so
 
 - **Ver los datos:** en Neon, **SQL Editor**, por ejemplo `SELECT email, nombre, created_at FROM usuarios;`.
   En Atlas, **Browse Collections**.
-- **Aprobar un conductor recién registrado** (queda "pendiente de validación"): en la app, entra como
-  administrador → **Conductores** → botón **Aprobar**. (También se puede en el SQL Editor de Neon:
-  `UPDATE conductores SET estado = 'APROBADA' WHERE rut = '11111111-1';`)
-- **Asignar un vehículo a un conductor:** administrador → **Turnos y asignación** → **Vehículo** (o en
-  **Automóviles**, editando el vehículo). El conductor maneja la línea del vehículo. Sin vehículo no puede iniciar servicio.
-- **Turnos:** administrador → **Turnos y asignación**: toca cada día para cambiarlo (Mañana → Tarde → Libre).
-  Los días que no defines se completan solos con un ciclo de 6 días (2 de mañana, 2 libres, 2 de tarde).
+- **Panel de administración:** `https://conatacoch-api.onrender.com/admin`. Correo, contraseña y código TOTP; la
+  primera vez muestra un QR para registrar la cuenta en una app autenticadora.
+- **Aprobar un conductor recién registrado** (queda "pendiente de validación"): panel → **Validar conductores** →
+  elige recorrido y vehículo → **Aprobar y vincular**.
+- **Turnos:** panel → **Asignar rutas** (un turno con fecha y horario) o **Salidas y turnos** (semana por recorrido;
+  toca un día libre para asignarlo). El servidor rechaza choques de horario del conductor o del vehículo. El conductor
+  solo inicia servicio dentro de un turno vigente (o 15 minutos antes). El conductor de ejemplo, Pedro Soto, recibe
+  turnos de 06:00 a 22:00 los próximos 14 días.
 - **Cuentas de prueba** (las crea el servidor la primera vez; la contraseña de prueba la entrega el equipo (no se publica en el repositorio); la del administrador se cambia con `ADMIN_PASSWORD`):
   `camila.reyes@correo.cl` (pasajero), `p.soto@correo.cl` (conductor), `admin@conatacoch.cl` (administración).
 

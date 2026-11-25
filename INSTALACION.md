@@ -84,6 +84,9 @@ Notas:
    ```
 
 ## 5. Demostración de las Tres Vistas (Administrador, Conductor, Pasajero)
+- **Administración:** panel web en `http://localhost:3000/admin` (local) o `https://conatacoch-api.onrender.com/admin`.
+  La primera vez pide configurar el TOTP con una app autenticadora (Google Authenticator, Microsoft Authenticator…).
+- **Pasajero y conductor:** app Android.
 - **Cuentas de Acceso:**
   - **Administrador:** `admin@conatacoch.cl`
   - **Conductor:** `p.soto@correo.cl` (Vehículo patente `ABCD-12`, Ruta `235003`)
@@ -91,4 +94,6 @@ Notas:
   - Contraseña: la contraseña de prueba la entrega el equipo (no se publica en el repositorio).
 - Para probar el tiempo real (GPS del conductor reflejado en el pasajero y administrador):
   1. Inicia sesión como **Conductor**, cambia el estado a **"En servicio"**.
-  2. Inicia sesión como **Pasajero** o **Administrador** en otro emulador/dispositivo y selecciona la línea correspondiente para ver el movimiento en el mapa interactivo con osmdroid y cálculo de ETA.
+  2. Inicia sesión como **Pasajero** en otro emulador/dispositivo y selecciona la línea para ver el movimiento en el mapa con
+     osmdroid y el tiempo estimado; o abre **Mapa en vivo** en el panel web.
+  3. El conductor solo inicia servicio dentro de un turno asignado en el panel (el de ejemplo trabaja de 06:00 a 22:00).

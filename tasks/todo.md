@@ -77,7 +77,7 @@ Plan: `tasks/plan.md`. Cada tarea termina con sus pruebas en verde (`npm test` c
   `AdminRepository` y sus pruebas). La app también llama a `POST /api/auth/logout` al cerrar sesión. Se quita la ruta `reportes/` de `res/xml/archivos.xml`, pero
   el FileProvider se queda: lo usan las fotos de la licencia. Tú compilas y
   pruebas la app.
-- [ ] **T15. Prueba de humo completa** en Playwright: entrar con TOTP, aprobar un conductor, asignar, ver la semana,
+- [x] **T15. Prueba de humo completa** (HU-01 a HU-13, en orden sobre el mismo servidor) en Playwright: entrar con TOTP, aprobar un conductor, asignar, ver la semana,
   cambiar una tarifa, descargar los 2 PDF, cerrar sesiones de una cuenta y salir.
 - [ ] **T16. Documentación e informe:** README, INSTALACION, DESPLIEGUE, CLAUDE.md y PLAN_DE_PRUEBAS; en el informe,
   la Tabla 10, el manual de uso, las pruebas nuevas y los espacios para capturas del panel.

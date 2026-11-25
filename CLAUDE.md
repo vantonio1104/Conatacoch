@@ -1,7 +1,8 @@
 # CONATACOCH · App móvil (prototipo)
 
 App Android de la Confederación Nacional de Taxis Colectivos de Chile. Proyecto universitario (INACAP).
-Una sola app con dos perfiles: **pasajero** y **conductor**. El panel web de administración va en otro repositorio.
+Una sola app con dos perfiles: **pasajero** y **conductor**. La administración es un panel web (`backend/public/admin`,
+HTML/CSS/JS sin framework) que entrega el mismo servidor en `/admin`; especificación en `SPEC-panel-web.md`.
 
 Estado actual: la app usa el backend (`backend/server.js`) en https://conatacoch-api.onrender.com
 (`API_URL` en `app/build.gradle.kts`, se cambia en `local.properties`; `API_URL=` vacío usa `data/fake`). Con servidor se guarda todo salvo los pagos:
@@ -13,12 +14,13 @@ cuentas, conductores, vehículos y documentos, asignaciones, recorridos y trazad
   No existe el aviso AC-04 ni la pantalla de corrección de ocupación.
 Despliegue y cuentas de servicios: `DESPLIEGUE.md`. No conectar Rutpay ni Firebase hasta que se pida.
 - `data/remote/ApiCliente.kt` (HTTP + token), `ApiAuthRepository`, `ApiPasajeroRepository` (delega pagos a
-  `FakePasajeroRepository`), `ApiConductorRepository`, `ApiAdminRepository`, `ServidorMapaRepository` (trazado guardado
+  `FakePasajeroRepository`), `ApiConductorRepository`, `ServidorMapaRepository` (trazado guardado
   por la administración; si no hay, OpenStreetMap). Backend: `backend/rutas/{publico,auth,pasajero,conductor,admin}.js`.
 - Conductor: el GPS del teléfono (`ui/conductor/Gps.kt`) se envía cada ~5 s mientras está en servicio, y la pantalla
   de servicio muestra el mapa de su línea siguiendo su ubicación (`MapaRecorrido(seguirUbicacion = true)`).
-- Admin → Turnos y asignación (`AdminTurnosScreen`): vehículo por conductor y turnos de 14 días (Mañana/Tarde/Libre).
-  Backend: `backend/turnos.js`, `GET/PUT /api/admin/turnos`, `POST /api/admin/asignaciones`. Fechas en hora de Santiago. Errores del servidor llegan como `ErrorApi` con mensaje para el usuario; los ViewModels
+- Turnos = asignaciones con fecha y horario (`backend/turnos.js`, `GET/POST/DELETE /api/admin/turnos`); el conductor
+  solo inicia servicio dentro de un turno vigente. `POST /api/admin/asignaciones` es el vínculo fijo conductor–vehículo.
+  Sesiones revocables (tabla `sesiones`), TOTP de la administración (`backend/totp.js`). Fechas en hora de Santiago. Errores del servidor llegan como `ErrorApi` con mensaje para el usuario; los ViewModels
   los muestran con `ErrorGenerico` (nunca dejar que una llamada de red cierre la app).
 Mapa real con OpenStreetMap (osmdroid, sin clave): `ui/pasajero/MapaOsm.kt`. Trazados con Overpass + OSRM
 en `data/remote/OsmMapaRepository.kt`, guardados en `filesDir/trazados`.
