@@ -2,7 +2,7 @@
 
 App Android de la Confederación Nacional de Taxis Colectivos de Chile. Proyecto universitario (INACAP).
 Una sola app con dos perfiles: **pasajero** y **conductor**. La administración es un panel web (`backend/public/admin`,
-HTML/CSS/JS sin framework) que entrega el mismo servidor en `/admin`; especificación en `SPEC-panel-web.md`.
+HTML/CSS/JS sin framework) que entrega el mismo servidor en `/admin`, con las vistas `Admin *` de Figma.
 
 Estado actual: la app usa el backend (`backend/server.js`) en https://conatacoch-api.onrender.com
 (`API_URL` en `app/build.gradle.kts`, se cambia en `local.properties`; `API_URL=` vacío usa `data/fake`). Con servidor se guarda todo salvo los pagos:
