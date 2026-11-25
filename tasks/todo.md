@@ -79,5 +79,5 @@ Plan: `tasks/plan.md`. Cada tarea termina con sus pruebas en verde (`npm test` c
   pruebas la app.
 - [x] **T15. Prueba de humo completa** (HU-01 a HU-13, en orden sobre el mismo servidor) en Playwright: entrar con TOTP, aprobar un conductor, asignar, ver la semana,
   cambiar una tarifa, descargar los 2 PDF, cerrar sesiones de una cuenta y salir.
-- [ ] **T16. Documentación e informe:** README, INSTALACION, DESPLIEGUE, CLAUDE.md y PLAN_DE_PRUEBAS; en el informe,
+- [x] **T16. Documentación e informe:** README, INSTALACION, DESPLIEGUE, CLAUDE.md y PLAN_DE_PRUEBAS; en el informe,
   la Tabla 10, el manual de uso, las pruebas nuevas y los espacios para capturas del panel.
