@@ -93,7 +93,7 @@ async function adminDelDesafio(desafio) {
   }
   if (datos?.tipo !== 'desafio-totp') throw new ErrorHttp(401, 'El inicio de sesión venció. Vuelve a ingresar tu contraseña.');
   const r = await query(
-    `SELECT u.id, u.email, u.nombre, u.totp_secreto, u.totp_activo, u.totp_ultimo_paso, r.nombre AS rol
+    `SELECT u.id, u.email, u.nombre, u.totp_secreto, u.totp_activo, u.totp_ultimo_paso, u.debe_cambiar_clave, r.nombre AS rol
      FROM usuarios u JOIN roles r ON r.id = u.rol_id WHERE u.id = $1 AND u.activo AND r.nombre = 'ADMIN'`,
     [datos.id],
   );
@@ -124,7 +124,22 @@ router.post('/api/auth/totp', ruta(async (req, res) => {
   await query('UPDATE usuarios SET totp_activo = TRUE, totp_ultimo_paso = $2 WHERE id = $1', [u.id, paso]);
   limpiarIntentos(req, u.email);
   await mongo.auditar(u, u.totp_activo ? 'INICIO_SESION' : 'TOTP_ACTIVADO');
-  res.json({ token: await iniciarSesion({ ...u, totp: true }), rol: u.rol, nombre: u.nombre, email: u.email });
+  res.json({ token: await iniciarSesion({ ...u, totp: true }), rol: u.rol, nombre: u.nombre, email: u.email,
+    debeCambiarClave: u.debe_cambiar_clave });
+}));
+
+/** Cambia la contraseña propia. Cierra las demás sesiones de la cuenta y quita la marca de contraseña temporal. */
+router.post('/api/auth/cambiar-clave', autenticar, ruta(async (req, res) => {
+  const actual = String(req.body.actual || '');
+  const nueva = req.body.nueva;
+  const u = (await query('SELECT password_hash FROM usuarios WHERE id = $1', [req.usuario.id])).rows[0];
+  if (!u || !(await bcrypt.compare(actual, u.password_hash))) throw new ErrorHttp(400, 'La contraseña actual no es correcta');
+  if (!passwordValida(nueva)) throw new ErrorHttp(400, MENSAJE_PASSWORD);
+  if (nueva === actual) throw new ErrorHttp(400, 'La contraseña nueva debe ser distinta de la actual');
+  await query('UPDATE usuarios SET password_hash = $2, debe_cambiar_clave = FALSE WHERE id = $1', [req.usuario.id, await bcrypt.hash(nueva, 10)]);
+  await query('UPDATE sesiones SET revocada = TRUE WHERE usuario_id = $1 AND id <> $2 AND NOT revocada', [req.usuario.id, req.usuario.sid]);
+  await mongo.auditar(req.usuario, 'CAMBIO_CLAVE');
+  res.status(204).end();
 }));
 
 /** Cierra la sesión actual (el token deja de servir). */

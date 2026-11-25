@@ -136,7 +136,7 @@ function autenticar(req, res, next) {
   }
   if (!usuario.sid) return res.status(401).json(SESION_VENCIDA);
   query(
-    `SELECT s.revocada, s.expira < NOW() AS vencida, u.activo,
+    `SELECT s.revocada, s.expira < NOW() AS vencida, u.activo, u.debe_cambiar_clave,
             s.ultimo_uso < NOW() - make_interval(mins => $2) AS inactiva,
             s.ultimo_uso < NOW() - INTERVAL '1 minute' AS refrescar
      FROM sesiones s JOIN usuarios u ON u.id = s.usuario_id WHERE s.id = $1`,
@@ -146,13 +146,19 @@ function autenticar(req, res, next) {
       return res.status(401).json(SESION_VENCIDA);
     }
     if (s.refrescar) await query('UPDATE sesiones SET ultimo_uso = NOW() WHERE id = $1', [usuario.sid]);
-    req.usuario = usuario;
+    req.usuario = { ...usuario, debeCambiarClave: s.debe_cambiar_clave };
     next();
   }).catch(next);
 }
 
-const requiereRol = (rol) => (req, res, next) =>
-  req.usuario?.rol === rol ? next() : res.status(403).json({ error: 'Acceso no autorizado para este rol' });
+function requiereRol(rol) {
+  return (req, res, next) => {
+    if (req.usuario?.rol !== rol) return res.status(403).json({ error: 'Acceso no autorizado para este rol' });
+    // Un administrador creado en el panel entra con una contraseña temporal y debe cambiarla primero.
+    if (req.usuario.debeCambiarClave) return res.status(403).json({ error: 'Debes cambiar tu contraseña temporal antes de usar el panel' });
+    next();
+  };
+}
 
 module.exports = {
   JWT_SECRET, MINUTOS_VIGENCIA_RESERVA, ruta, ErrorHttp, normalizarEmail, emailValido, passwordValida, texto,

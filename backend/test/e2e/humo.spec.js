@@ -191,3 +191,39 @@ test('HU-07 avisos: la emergencia reciente se destaca con su ubicación y el fil
   await expect(page.getByRole('row', { name: /AC-01 Voy con retraso/ })).toContainText('Sin ubicación');
   await expect(banner).toContainText('Emergencia activa'); // sigue visible aunque el filtro la esconda
 });
+
+test('HU-08 cuentas: cerrar sesiones, desactivar y crear un administrador que cambia su clave al entrar', async ({ page }) => {
+  page.on('dialog', (d) => d.accept()); // confirmaciones de «Cerrar sesiones» y «Desactivar»
+  await entrarAdmin(page);
+  await page.getByRole('link', { name: 'Cuentas' }).click();
+  await expect(page.getByRole('button', { name: 'Desactivar a Administración CONATACOCH' })).toBeDisabled();
+
+  await page.getByLabel('Rol').selectOption('PASAJERO');
+  await page.getByRole('button', { name: 'Cerrar sesiones de Camila Reyes' }).click();
+  await expect(page.getByText(/Se cerraron \d+ sesiones de Camila Reyes/)).toBeVisible();
+  await page.getByRole('button', { name: 'Desactivar a Camila Reyes' }).click();
+  await expect(page.getByRole('row', { name: /Camila Reyes/ })).toContainText('Desactivada');
+  await page.getByRole('button', { name: 'Reactivar a Camila Reyes' }).click();
+  await expect(page.getByRole('row', { name: /Camila Reyes/ })).toContainText('Activa');
+
+  await page.getByLabel('Nombre completo').fill('Daniela Herrera Soto');
+  await page.locator('#nuevo-admin-correo').fill('d.herrera@conatacoch.cl');
+  await page.getByRole('button', { name: 'Crear administrador' }).click();
+  const clave = (await page.locator('.clave-temporal .clave').textContent()).trim();
+  expect(clave.length).toBeGreaterThanOrEqual(15);
+
+  await page.getByRole('button', { name: 'Cerrar sesión' }).click();
+  await expect(page.getByRole('heading', { name: 'Panel de administración' })).toBeVisible();
+  await entrar(page, 'd.herrera@conatacoch.cl', clave);
+  await expect(page.getByRole('heading', { name: 'Configura el segundo factor' })).toBeVisible();
+  const secreto = (await page.locator('#alta-clave').textContent()).replace(/\s+/g, '');
+  await page.locator('#form-alta').getByLabel('Código de la aplicación autenticadora').fill(totp.codigo(secreto));
+  await page.getByRole('button', { name: 'Activar y entrar' }).click();
+  await expect(page.getByRole('heading', { name: 'Crea tu contraseña' })).toBeVisible();
+  const cambio = page.locator('#form-cambio');
+  await cambio.getByLabel('Contraseña temporal', { exact: true }).fill(clave);
+  await cambio.getByLabel('Contraseña nueva', { exact: true }).fill('una-clave-nueva-y-segura');
+  await cambio.getByLabel('Repite la contraseña nueva', { exact: true }).fill('una-clave-nueva-y-segura');
+  await page.getByRole('button', { name: 'Guardar y entrar' }).click();
+  await expect(page.getByRole('navigation')).toBeVisible();
+});

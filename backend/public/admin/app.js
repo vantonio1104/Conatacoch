@@ -12,6 +12,7 @@ const PANTALLAS = [
   { id: 'turnos', menu: 'Salidas y turnos', titulo: 'Programación de salidas y turnos',
     subtitulo: 'Turnos semanales por conductor', icono: 'turnos' },
   { id: 'avisos', menu: 'Avisos', titulo: 'Consulta de avisos', subtitulo: 'Todos los avisos de los conductores', icono: 'avisos' },
+  { id: 'cuentas', menu: 'Cuentas', titulo: 'Gestión de cuentas', subtitulo: 'Administradores, conductores y pasajeros', icono: 'cuentas' },
 ];
 
 const MINUTOS_INACTIVIDAD = 30;
@@ -40,6 +41,7 @@ function mostrarLogin(nota = '') {
   $('vista-login').hidden = false;
   $('login-tarjeta-principal').hidden = false;
   $('alta-totp').hidden = true;
+  $('cambio-clave').hidden = true;
   $('login-error').replaceChildren();
   $('login-nota').replaceChildren(icono('reloj'), el('span', {}, nota || 'Por seguridad, la sesión se cierra automáticamente tras 30 minutos sin actividad.'));
   $('login-correo').focus();
@@ -58,13 +60,21 @@ siVenceLaSesion(() => {
 
 const soloDigitos = (v) => v.replace(/\s+/g, '');
 
-/** Entra con el token que entrega el servidor después del segundo factor. */
+/** Entra con el token que entrega el servidor después del segundo factor (o pide cambiar la contraseña temporal). */
 function entrar(r) {
-  sesion.guardar({ token: r.token, nombre: r.nombre, email: r.email, totp: true });
+  sesion.guardar({ token: r.token, nombre: r.nombre, email: r.email, totp: true, cambiarClave: Boolean(r.debeCambiarClave) });
   $('form-login').reset();
   $('form-alta').reset();
+  if (r.debeCambiarClave) pedirCambioDeClave(); else mostrarPanel();
+}
+
+function pedirCambioDeClave() {
+  $('vista-panel').hidden = true;
+  $('vista-login').hidden = false;
+  $('login-tarjeta-principal').hidden = true;
   $('alta-totp').hidden = true;
-  mostrarPanel();
+  $('cambio-clave').hidden = false;
+  $('cambio-actual').focus();
 }
 
 async function conBotonOcupado(boton, salidaError, fn) {
@@ -102,6 +112,18 @@ $('form-login').addEventListener('submit', (e) => {
     }
     $('login-codigo').removeAttribute('aria-invalid');
     entrar(await api.post('/api/auth/totp', { desafio, codigo }));
+  });
+});
+
+$('form-cambio').addEventListener('submit', (e) => {
+  e.preventDefault();
+  conBotonOcupado(e.submitter, $('cambio-error'), async () => {
+    if ($('cambio-nueva').value !== $('cambio-repetir').value) throw new Error('Las contraseñas nuevas no coinciden.');
+    await api.post('/api/auth/cambiar-clave', { actual: $('cambio-actual').value, nueva: $('cambio-nueva').value });
+    sesion.guardar({ ...sesion.leer(), cambiarClave: false });
+    $('form-cambio').reset();
+    $('cambio-clave').hidden = true;
+    mostrarPanel();
   });
 });
 
@@ -166,4 +188,4 @@ async function navegar() {
 }
 addEventListener('hashchange', navegar);
 
-if (sesion.leer()) mostrarPanel(); else mostrarLogin();
+if (sesion.leer()?.cambiarClave) pedirCambioDeClave(); else if (sesion.leer()) mostrarPanel(); else mostrarLogin();

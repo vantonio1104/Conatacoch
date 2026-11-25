@@ -55,7 +55,7 @@ Plan: `tasks/plan.md`. Cada tarea termina con sus pruebas en verde (`npm test` c
   - Aceptación: franja de emergencia activa, filtros (origen, tipo, conductor, vehículo, fecha) y «Ver en mapa» con la
     ubicación guardada.
   - Archivos: `database/schema.sql`, `rutas/conductor.js`, `rutas/admin.js`, `public/admin/pantallas/avisos.js`.
-- [ ] **T9. Cuentas (Admin 6)**
+- [x] **T9. Cuentas (Admin 6)**
   - Aceptación: lista con rol, estado y sesiones activas; filtros; «Cerrar sesiones»; «Desactivar» y «Reactivar» (una
     cuenta desactivada no entra y pierde sus sesiones); «Crear administrador» con contraseña temporal y cambio
     obligatorio al entrar.

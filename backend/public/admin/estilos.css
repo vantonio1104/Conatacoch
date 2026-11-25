@@ -225,6 +225,7 @@ input[aria-invalid="true"] { border: 2px solid var(--error); }
 .pie-acciones .secundario { margin: 0; }
 .acciones { display: flex; gap: 1rem; flex-wrap: wrap; }
 .dos-columnas-derecha { grid-template-columns: 2.6fr minmax(300px, 1fr); }
+.dos-columnas > * { min-width: 0; } /* la tabla se desplaza dentro de su tarjeta, no empuja la página */
 .fila-busqueda { align-items: flex-end; flex-wrap: wrap; margin-bottom: 1rem; }
 .fila-busqueda h2 { margin: 0 0 0.75rem; }
 .campo-busqueda { width: min(100%, 320px); }
@@ -288,6 +289,19 @@ input[aria-invalid="true"] { border: 2px solid var(--error); }
 .enlace { color: var(--principal); font-weight: 500; }
 :root[data-theme="dark"] .enlace { color: var(--verde-marca); }
 .nota-pie { margin-top: 1rem; }
+/* Cuentas (Admin 6) */
+.filtros-cuentas { display: flex; gap: 1rem; flex-wrap: wrap; }
+.filtros-cuentas label { margin-top: 0; font-weight: 400; color: var(--texto-2); }
+.filtros-cuentas select { min-width: 160px; }
+.usuario-celda { display: grid; gap: 0.1rem; }
+.usuario-celda .secundario { margin: 0; font-size: 0.9rem; }
+.boton-chico { min-height: 44px; padding: 0 1rem; }
+.boton-exito { background: transparent; color: var(--principal); border-color: var(--principal); }
+:root[data-theme="dark"] .boton-exito { color: var(--verde-marca); border-color: var(--verde-marca); }
+.acciones-fila { flex-wrap: nowrap; gap: 0.5rem; }
+.insignia-espacio { margin-left: 0.4rem; }
+.clave-temporal p { margin: 0 0 0.5rem; }
+.clave-temporal .clave { display: block; margin-bottom: 0.5rem; font-size: 1.05rem; user-select: all; }
 @media (max-width: 1200px) {
   .filtros { grid-template-columns: repeat(2, 1fr); }
   .dos-columnas, .dos-columnas-derecha { grid-template-columns: 1fr; }

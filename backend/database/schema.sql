@@ -263,3 +263,6 @@ CREATE INDEX IF NOT EXISTS turnos_automovil_fecha ON turnos (automovil_id, fecha
 ALTER TABLE avisos ADD COLUMN IF NOT EXISTS lat DOUBLE PRECISION CHECK (lat BETWEEN -90 AND 90);
 ALTER TABLE avisos ADD COLUMN IF NOT EXISTS lng DOUBLE PRECISION CHECK (lng BETWEEN -180 AND 180);
 CREATE INDEX IF NOT EXISTS avisos_creado_en ON avisos (creado_en DESC);
+
+-- ===================== v1.10: contraseña temporal de los administradores creados en el panel =====================
+ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS debe_cambiar_clave BOOLEAN NOT NULL DEFAULT FALSE;

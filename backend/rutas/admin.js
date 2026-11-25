@@ -1,5 +1,6 @@
 // Administración: resumen y semáforo, conductores, automóviles con documentos y asignación,
 // trazados de los recorridos, flota en vivo y avisos. Todo requiere iniciar sesión como ADMIN.
+const crypto = require('crypto');
 const express = require('express');
 const bcrypt = require('bcryptjs');
 const { query, transaccion } = require('../db/postgres');
@@ -450,6 +451,54 @@ router.post('/api/admin/asignaciones', soloAdmin, ruta(async (req, res) => {
   }
   await mongo.auditar(req.usuario, 'ASIGNAR_CONDUCTOR', { conductor: conductorId, automovil: automovilId });
   res.json({ conductor_id: conductorId, automovil_id: automovilId });
+}));
+
+// --- Cuentas (Admin 6) ---
+
+router.get('/api/admin/cuentas', soloAdmin, ruta(async (req, res) => {
+  const r = await query(
+    `SELECT u.id, u.nombre, u.email, r.nombre AS rol, u.activo, u.debe_cambiar_clave,
+            (SELECT COUNT(*) FROM sesiones s WHERE s.usuario_id = u.id AND NOT s.revocada AND s.expira > NOW())::int AS sesiones_activas
+     FROM usuarios u JOIN roles r ON r.id = u.rol_id
+     ORDER BY CASE r.nombre WHEN 'ADMIN' THEN 0 WHEN 'CONDUCTOR' THEN 1 ELSE 2 END, u.nombre`,
+  );
+  res.json(r.rows);
+}));
+
+/** «Cerrar sesiones»: invalida todos los tokens de la cuenta (por ejemplo, si le roban el teléfono a un conductor). */
+router.post('/api/admin/cuentas/:id/cerrar-sesiones', soloAdmin, ruta(async (req, res) => {
+  const r = await query('UPDATE sesiones SET revocada = TRUE WHERE usuario_id = $1 AND NOT revocada', [req.params.id]);
+  await mongo.auditar(req.usuario, 'CERRAR_SESIONES', { usuario: Number(req.params.id), cerradas: r.rowCount });
+  res.json({ cerradas: r.rowCount });
+}));
+
+/** Desactivar (no borra la cuenta: deja de poder entrar y pierde sus sesiones) o reactivar. */
+router.post('/api/admin/cuentas/:id/estado', soloAdmin, ruta(async (req, res) => {
+  const activo = req.body.activo === true;
+  if (!activo && Number(req.params.id) === req.usuario.id) throw new ErrorHttp(400, 'No puedes desactivar tu propia cuenta');
+  const r = await query('UPDATE usuarios SET activo = $2 WHERE id = $1 RETURNING id, activo', [req.params.id, activo]);
+  if (r.rowCount === 0) throw new ErrorHttp(404, 'Cuenta no encontrada');
+  if (!activo) await query('UPDATE sesiones SET revocada = TRUE WHERE usuario_id = $1 AND NOT revocada', [req.params.id]);
+  await mongo.auditar(req.usuario, activo ? 'REACTIVAR_CUENTA' : 'DESACTIVAR_CUENTA', { usuario: Number(req.params.id) });
+  res.json(r.rows[0]);
+}));
+
+/** Crea un administrador con una contraseña temporal que se muestra una sola vez y debe cambiar al entrar. */
+router.post('/api/admin/administradores', soloAdmin, ruta(async (req, res) => {
+  const nombre = texto(req.body.nombre);
+  const email = normalizarEmail(req.body.email);
+  if (!nombre) throw new ErrorHttp(400, 'Ingresa el nombre completo');
+  if (!emailValido(email)) throw new ErrorHttp(400, 'Ingresa un correo válido');
+  const clave = crypto.randomBytes(15).toString('base64url'); // 20 caracteres
+  const r = await query(
+    `INSERT INTO usuarios (email, password_hash, nombre, rol_id, verificado, debe_cambiar_clave)
+     VALUES ($1, $2, $3, (SELECT id FROM roles WHERE nombre = 'ADMIN'), TRUE, TRUE)
+     ON CONFLICT (email) DO NOTHING RETURNING id`,
+    [email, await bcrypt.hash(clave, 10), nombre],
+  );
+  if (r.rowCount === 0) throw new ErrorHttp(409, 'Ese correo ya tiene una cuenta');
+  await mongo.auditar(req.usuario, 'CREAR_ADMINISTRADOR', { usuario: r.rows[0].id, email });
+  res.status(201).json({ id: r.rows[0].id, nombre, email, clave_temporal: clave });
 }));
 
 // --- Flota en vivo y avisos ---
