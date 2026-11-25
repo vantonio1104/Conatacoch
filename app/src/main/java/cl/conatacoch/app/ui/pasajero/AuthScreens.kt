@@ -22,7 +22,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -32,12 +31,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import cl.conatacoch.app.domain.validation.PasswordValidator
 import cl.conatacoch.app.ui.components.BotonPrincipal
 import cl.conatacoch.app.ui.components.BotonSecundario
-import cl.conatacoch.app.ui.components.BotonesSociales
 import cl.conatacoch.app.ui.components.CampoTexto
 import cl.conatacoch.app.ui.components.CirculoIcono
 import cl.conatacoch.app.ui.components.CuerpoLista
@@ -90,7 +87,6 @@ fun RegistroPasajeroScreen(vm: PasajeroAuthViewModel, onRegistrado: () -> Unit, 
             },
         )
         BotonPrincipal("Crear cuenta", { vm.registrar(nombre, correo, password, onRegistrado) })
-        BotonesSociales("o regístrate con")
         ContinuarSinCuenta(onInvitado)
     }
 }
@@ -107,12 +103,7 @@ fun LoginPasajeroScreen(vm: PasajeroAuthViewModel, onIngresado: () -> Unit, onIr
         vm.errorServidor?.let { ErrorGenerico(it) }
         CampoTexto("Correo electrónico", correo, { correo = it }, error = vm.loginError, teclado = KeyboardType.Email)
         CampoTexto("Contraseña", password, { password = it }, error = vm.loginError, password = true)
-        // Recuperar contraseña: no está en el alcance de este paso.
-        TextButton(onClick = {}, Modifier.align(Alignment.End)) {
-            Text("¿Olvidaste tu contraseña?", color = Extra.verdeTexto, textDecoration = TextDecoration.Underline)
-        }
         BotonPrincipal("Ingresar", { vm.ingresar(correo, password, onIngresado) })
-        BotonesSociales("o continúa con")
         ContinuarSinCuenta(onInvitado)
     }
 }

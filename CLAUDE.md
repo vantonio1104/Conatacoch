@@ -32,6 +32,7 @@ Los 15 recorridos oficiales están en `data/local/CatalogoRecorridos.kt` (genera
   respetar distribución, textos y colores. Las vistas `Admin *` son del panel web, no de esta app.
 - Si una pantalla no está clara o no existe en Figma, **preguntar antes de inventarla**.
 - Fuera del alcance de la lista pedida no se agregan funcionalidades.
+- Google, Facebook y "¿Olvidaste tu contraseña?" de Figma están ocultos: no se construyen.
 
 ## Stack
 

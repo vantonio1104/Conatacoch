@@ -221,20 +221,6 @@ fun EnlaceTexto(prefijo: String, enlace: String, onClick: () -> Unit, modifier: 
     }
 }
 
-/** Separador "o regístrate con" + botones Google y Facebook (sin funcionalidad todavía). */
-@Composable
-fun BotonesSociales(texto: String) {
-    Row(Modifier.fillMaxWidth().padding(vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-        HorizontalDivider(Modifier.weight(1f), color = MaterialTheme.colorScheme.outlineVariant)
-        Text(texto, Modifier.padding(horizontal = 12.dp), color = MaterialTheme.colorScheme.onSurfaceVariant)
-        HorizontalDivider(Modifier.weight(1f), color = MaterialTheme.colorScheme.outlineVariant)
-    }
-    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-        BotonSecundario("Google", onClick = {}, Modifier.weight(1f))
-        BotonSecundario("Facebook", onClick = {}, Modifier.weight(1f))
-    }
-}
-
 @Composable
 fun Etiqueta(texto: String, fondo: Color, color: Color, modifier: Modifier = Modifier) {
     Text(
