@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Carpetas de la caché que se comparten: los reportes PDF y las fotos de la licencia que toma la cámara. -->
+<!-- Carpeta de la caché que se comparte: las fotos de la licencia que toma la cámara. -->
 <paths>
-    <cache-path name="reportes" path="reportes/" />
     <cache-path name="fotos" path="fotos/" />
 </paths>

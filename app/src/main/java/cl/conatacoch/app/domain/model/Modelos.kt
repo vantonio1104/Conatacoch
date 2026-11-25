@@ -200,3 +200,10 @@ data class EstadoServicio(
 ) {
     val libres: Int get() = (capacidad - aBordo - reservados).coerceAtLeast(0)
 }
+
+/** Datos del conductor para su app. */
+data class PerfilConductor(
+    val nombre: String,
+    /** "Línea 5003 · ABCD-12"; null = sin vehículo asignado. */
+    val asignacion: String?,
+)

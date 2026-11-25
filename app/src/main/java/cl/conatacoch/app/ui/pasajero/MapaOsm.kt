@@ -61,7 +61,6 @@ import cl.conatacoch.app.domain.model.Colectivo
 import cl.conatacoch.app.domain.model.EstadoOcupacion
 import cl.conatacoch.app.domain.model.Punto
 import cl.conatacoch.app.domain.model.Trazado
-import cl.conatacoch.app.domain.model.VehiculoEnVivo
 import cl.conatacoch.app.ui.theme.Extra
 import cl.conatacoch.app.ui.theme.Negro
 import cl.conatacoch.app.ui.theme.VerdeMarca
@@ -365,65 +364,5 @@ private fun LineaLeyenda(color: Color, discontinua: Boolean) {
         }
     } else {
         Box(Modifier.size(width = 21.dp, height = 4.dp).clip(CircleShape).background(color))
-    }
-}
-
-/** Mapa de la administración con todos los vehículos que enviaron GPS (marcador verde = en servicio). */
-@Composable
-fun MapaFlota(vehiculos: List<VehiculoEnVivo>, modifier: Modifier = Modifier) {
-    val context = LocalContext.current
-    val oscuro = Extra.oscuro
-    val mapa = remember { crearMapa(context).apply { controller.setZoom(12.0) } }
-    val marcadores = remember { mutableMapOf<String, Marker>() }
-    val iconos = remember { CapasMapa() }
-
-    val ciclo = LocalLifecycleOwner.current.lifecycle
-    DisposableEffect(ciclo) {
-        val observador = LifecycleEventObserver { _, evento ->
-            when (evento) {
-                Lifecycle.Event.ON_RESUME -> mapa.onResume()
-                Lifecycle.Event.ON_PAUSE -> mapa.onPause()
-                else -> Unit
-            }
-        }
-        ciclo.addObserver(observador)
-        onDispose {
-            ciclo.removeObserver(observador)
-            mapa.onDetach()
-        }
-    }
-    LaunchedEffect(oscuro) {
-        mapa.overlayManager.tilesOverlay.setColorFilter(if (oscuro) FiltroOscuro else null)
-        mapa.invalidate()
-    }
-    LaunchedEffect(vehiculos) {
-        val patentes = vehiculos.map { it.patente }.toSet()
-        marcadores.keys.filter { it !in patentes }.forEach { p -> marcadores.remove(p)?.let { mapa.overlays.remove(it) } }
-        vehiculos.forEach { v ->
-            val p = v.posicion ?: return@forEach
-            val m = marcadores.getOrPut(v.patente) {
-                Marker(mapa).also {
-                    it.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_CENTER)
-                    mapa.overlays.add(it)
-                }
-            }
-            m.position = p.geo()
-            m.title = "Línea ${v.linea} · ${v.patente}"
-            m.snippet = v.conductor ?: "Sin conductor"
-            m.icon = iconos.icono(context, if (v.enServicio) EstadoOcupacion.CON_ASIENTOS else EstadoOcupacion.SIN_DATO)
-        }
-        mapa.invalidate()
-    }
-
-    Box(modifier.clipToBounds()) {
-        // clipToBounds: sin esto, al mover el mapa (y sus líneas) se dibuja encima del resto de la pantalla.
-        AndroidView(factory = { mapa }, modifier = Modifier.fillMaxSize().clipToBounds())
-        Text(
-            "© OpenStreetMap",
-            Modifier.align(Alignment.BottomEnd).padding(4.dp)
-                .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.7f)).padding(horizontal = 4.dp),
-            style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
     }
 }

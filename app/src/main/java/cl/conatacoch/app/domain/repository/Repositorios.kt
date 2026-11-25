@@ -1,13 +1,8 @@
 package cl.conatacoch.app.domain.repository
 
-import cl.conatacoch.app.domain.model.AutoAdmin
 import cl.conatacoch.app.domain.model.Aviso
 import cl.conatacoch.app.domain.model.Colectivo
-import cl.conatacoch.app.domain.model.ConductorAdmin
-import cl.conatacoch.app.domain.model.DatosAutoAdmin
-import cl.conatacoch.app.domain.model.DatosConductorAdmin
 import cl.conatacoch.app.domain.model.DatosPago
-import cl.conatacoch.app.domain.model.EstadoConductor
 import cl.conatacoch.app.domain.model.EstadoCuenta
 import cl.conatacoch.app.domain.model.EstadoServicio
 import cl.conatacoch.app.domain.model.Notificacion
@@ -15,16 +10,10 @@ import cl.conatacoch.app.domain.model.Pago
 import cl.conatacoch.app.domain.model.PerfilConductor
 import cl.conatacoch.app.domain.model.Preferencias
 import cl.conatacoch.app.domain.model.Recorrido
-import cl.conatacoch.app.domain.model.RecorridoAdmin
 import cl.conatacoch.app.domain.model.RegistroConductor
 import cl.conatacoch.app.domain.model.Reserva
-import cl.conatacoch.app.domain.model.ResumenAdmin
-import cl.conatacoch.app.domain.model.TipoReporte
 import cl.conatacoch.app.domain.model.Trazado
-import cl.conatacoch.app.domain.model.TipoTurno
 import cl.conatacoch.app.domain.model.Turno
-import cl.conatacoch.app.domain.model.TurnosConductor
-import cl.conatacoch.app.domain.model.VehiculoEnVivo
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
 import java.time.LocalDate
@@ -72,34 +61,6 @@ interface PasajeroRepository {
     suspend fun pagar(datos: DatosPago): Pago?
     val historial: Flow<List<Pago>>
     val notificaciones: Flow<List<Notificacion>>
-}
-
-/** Administración: todo lo que se guarda en la base de datos desde el panel. */
-interface AdminRepository {
-    /** false si el correo o la contraseña no son de un administrador. */
-    suspend fun login(email: String, password: String): Boolean
-    fun cerrarSesion()
-    suspend fun resumen(): ResumenAdmin
-    suspend fun conductores(): List<ConductorAdmin>
-    /** id null = crear. */
-    suspend fun guardarConductor(id: Int?, datos: DatosConductorAdmin)
-    suspend fun eliminarConductor(id: Int)
-    suspend fun cambiarEstadoConductor(id: Int, estado: EstadoConductor)
-    suspend fun automoviles(): List<AutoAdmin>
-    /** id null = crear. */
-    suspend fun guardarAuto(id: Int?, datos: DatosAutoAdmin)
-    suspend fun darDeBajaAuto(id: Int)
-    suspend fun recorridos(): List<RecorridoAdmin>
-    /** Guarda una nueva versión del trazado y devuelve su número. */
-    suspend fun guardarTrazado(folio: String, trazado: Trazado): Int
-    suspend fun flota(): List<VehiculoEnVivo>
-    /** Conductores aprobados con su vehículo y sus turnos de los próximos [dias] días. */
-    suspend fun turnos(dias: Int = 14): List<TurnosConductor>
-    suspend fun guardarTurno(conductorId: Int, fecha: LocalDate, tipo: TipoTurno)
-    /** automovilId null = dejar al conductor sin vehículo. */
-    suspend fun asignarVehiculo(conductorId: Int, automovilId: Int?)
-    /** Contenido del PDF del reporte, generado por el servidor (solo administración). */
-    suspend fun reportePdf(tipo: TipoReporte): ByteArray
 }
 
 interface PreferenciasRepository {

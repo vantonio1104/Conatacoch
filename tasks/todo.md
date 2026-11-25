@@ -73,7 +73,7 @@ Plan: `tasks/plan.md`. Cada tarea termina con sus pruebas en verde (`npm test` c
 
 ## Fase E · Cierre
 
-- [ ] **T14. Quitar la administración de la app Android** (selector de perfil, navegación, `ui/admin`,
+- [x] **T14. Quitar la administración de la app Android** (hecho; **pendiente de compilar**) (selector de perfil, navegación, `ui/admin`,
   `AdminRepository` y sus pruebas). La app también llama a `POST /api/auth/logout` al cerrar sesión. Se quita la ruta `reportes/` de `res/xml/archivos.xml`, pero
   el FileProvider se queda: lo usan las fotos de la licencia. Tú compilas y
   pruebas la app.

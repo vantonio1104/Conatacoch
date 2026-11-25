@@ -1,8 +1,11 @@
 package cl.conatacoch.app.data.remote
 
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.json.JSONArray
 import org.json.JSONObject
@@ -29,8 +32,14 @@ class ApiCliente(baseUrl: String) {
         _token.value = token
     }
 
+    /** Para avisos que no deben esperar a la pantalla, como cerrar la sesión en el servidor. */
+    private val alcance = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+
+    /** Olvida el token y avisa al servidor para que deje de servir (sin esperar la respuesta). */
     fun cerrarSesion() {
+        val token = _token.value ?: return
         _token.value = null
+        alcance.launch { runCatching { pedir("POST", "/api/auth/logout", JSONObject(), token) } }
     }
 
     suspend fun get(ruta: String): String = pedir("GET", ruta, null)
@@ -40,34 +49,9 @@ class ApiCliente(baseUrl: String) {
 
     suspend fun getArray(ruta: String) = JSONArray(get(ruta))
 
-    /** Descarga un archivo (por ejemplo, un reporte PDF) con la sesión iniciada. */
-    suspend fun descargar(ruta: String): ByteArray = withContext(Dispatchers.IO) {
-        val conexion = try {
-            (URL("$base$ruta").openConnection() as HttpURLConnection).apply {
-                connectTimeout = 30_000
-                readTimeout = 70_000
-                _token.value?.let { setRequestProperty("Authorization", "Bearer $it") }
-            }
-        } catch (e: IOException) {
-            throw ErrorApi(SIN_CONEXION)
-        }
-        try {
-            val codigo = conexion.responseCode
-            if (codigo !in 200..299) {
-                val texto = conexion.errorStream?.bufferedReader()?.use { it.readText() }.orEmpty()
-                val mensaje = runCatching { JSONObject(texto).getString("error") }.getOrNull()
-                throw ErrorApi(mensaje ?: "El servidor respondió con un error ($codigo)", codigo)
-            }
-            conexion.inputStream.use { it.readBytes() }
-        } catch (e: IOException) {
-            throw ErrorApi(SIN_CONEXION)
-        } finally {
-            conexion.disconnect()
-        }
-    }
     suspend fun postObjeto(ruta: String, cuerpo: JSONObject) = JSONObject(post(ruta, cuerpo))
 
-    private suspend fun pedir(metodo: String, ruta: String, cuerpo: JSONObject?): String = withContext(Dispatchers.IO) {
+    private suspend fun pedir(metodo: String, ruta: String, cuerpo: JSONObject?, token: String? = _token.value): String = withContext(Dispatchers.IO) {
         val conexion = try {
             (URL("$base$ruta").openConnection() as HttpURLConnection).apply {
                 requestMethod = metodo
@@ -75,7 +59,7 @@ class ApiCliente(baseUrl: String) {
                 connectTimeout = 30_000
                 readTimeout = 70_000
                 setRequestProperty("Accept", "application/json")
-                _token.value?.let { setRequestProperty("Authorization", "Bearer $it") }
+                token?.let { setRequestProperty("Authorization", "Bearer $it") }
                 if (cuerpo != null) {
                     doOutput = true
                     setRequestProperty("Content-Type", "application/json; charset=utf-8")

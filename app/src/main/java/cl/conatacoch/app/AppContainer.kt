@@ -1,18 +1,15 @@
 package cl.conatacoch.app
 
-import cl.conatacoch.app.data.fake.FakeAdminRepository
 import cl.conatacoch.app.data.fake.FakeAuthRepository
 import cl.conatacoch.app.data.fake.FakeConductorRepository
 import cl.conatacoch.app.data.fake.FakePasajeroRepository
 import cl.conatacoch.app.data.fake.FakePreferenciasRepository
-import cl.conatacoch.app.data.remote.ApiAdminRepository
 import cl.conatacoch.app.data.remote.ApiAuthRepository
 import cl.conatacoch.app.data.remote.ApiCliente
 import cl.conatacoch.app.data.remote.ApiConductorRepository
 import cl.conatacoch.app.data.remote.ApiPasajeroRepository
 import cl.conatacoch.app.data.remote.OsmMapaRepository
 import cl.conatacoch.app.data.remote.ServidorMapaRepository
-import cl.conatacoch.app.domain.repository.AdminRepository
 import cl.conatacoch.app.domain.repository.AuthRepository
 import cl.conatacoch.app.domain.repository.ConductorRepository
 import cl.conatacoch.app.domain.repository.MapaRepository
@@ -48,5 +45,4 @@ object AppContainer {
     }
     val preferencias: PreferenciasRepository = FakePreferenciasRepository()
     val conductor: ConductorRepository = api?.let { ApiConductorRepository(it) } ?: FakeConductorRepository()
-    val admin: AdminRepository = api?.let { ApiAdminRepository(it) } ?: FakeAdminRepository()
 }

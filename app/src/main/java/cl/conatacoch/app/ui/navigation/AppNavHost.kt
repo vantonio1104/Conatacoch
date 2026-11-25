@@ -69,7 +69,6 @@ import cl.conatacoch.app.ui.pasajero.RegistroPasajeroScreen
 import cl.conatacoch.app.ui.pasajero.ReservaActivaScreen
 import cl.conatacoch.app.ui.pasajero.SinCuentaScreen
 import cl.conatacoch.app.ui.theme.Extra
-import cl.conatacoch.app.ui.admin.*
 
 object Rutas {
     const val PERFIL = "perfil"
@@ -95,13 +94,6 @@ object Rutas {
     const val C_RUTAS = "conductor/rutas"
     const val C_ALERTAS = "conductor/alertas"
 
-    const val A_LOGIN = "admin/login"
-    const val A_DASHBOARD = "admin/dashboard"
-    const val A_CONDUCTORES = "admin/conductores"
-    const val A_AUTOMOVILES = "admin/automoviles"
-    const val A_MAPA = "admin/mapa"
-    const val A_RUTAS = "admin/rutas"
-    const val A_TURNOS = "admin/turnos"
 
     fun detalle(patente: String) = "pasajero/detalle/$patente"
 }
@@ -133,7 +125,6 @@ fun AppNavHost() {
     val conductor = viewModel {
         ConductorViewModel(AppContainer.conductor, AppContainer.preferencias, AppContainer.mapa, AppContainer.pasajero.recorridos)
     }
-    val admin = viewModel { AdminViewModel(AppContainer.admin, AppContainer.mapa) }
 
     fun irAInicio(ruta: String) = nav.navigate(ruta) { popUpTo(nav.graph.id) { inclusive = true } }
 
@@ -172,29 +163,8 @@ fun AppNavHost() {
             SelectorPerfil(
                 onPasajero = { nav.navigate(Rutas.P_LOGIN) },
                 onConductor = { nav.navigate(Rutas.C_LOGIN) },
-                onAdmin = { nav.navigate(Rutas.A_LOGIN) }
             )
         }
-        composable(Rutas.A_LOGIN) {
-            AdminLoginScreen(admin, onLoginSuccess = { nav.navigate(Rutas.A_DASHBOARD) { popUpTo(Rutas.A_LOGIN) { inclusive = true } } })
-        }
-        composable(Rutas.A_DASHBOARD) {
-            AdminDashboardScreen(
-                admin,
-                onNavigateToConductores = { nav.navigate(Rutas.A_CONDUCTORES) },
-                onNavigateToAutomoviles = { nav.navigate(Rutas.A_AUTOMOVILES) },
-                onNavigateToRutas = { nav.navigate(Rutas.A_RUTAS) },
-                onNavigateToMapa = { nav.navigate(Rutas.A_MAPA) },
-                onNavigateToTurnos = { nav.navigate(Rutas.A_TURNOS) },
-                onCerrarSesion = { irAInicio(Rutas.PERFIL) },
-            )
-        }
-        composable(Rutas.A_CONDUCTORES) { AdminConductoresScreen(admin, onBack = { nav.popBackStack() }) }
-        composable(Rutas.A_AUTOMOVILES) { AdminAutomovilesScreen(admin, onBack = { nav.popBackStack() }) }
-        composable(Rutas.A_MAPA) { AdminMapaGlobalScreen(admin, onBack = { nav.popBackStack() }) }
-        composable(Rutas.A_RUTAS) { AdminRutasScreen(admin, onBack = { nav.popBackStack() }) }
-        composable(Rutas.A_TURNOS) { AdminTurnosScreen(admin, onBack = { nav.popBackStack() }) }
-
         // --- Pasajero ---
         composable(Rutas.P_LOGIN) {
             LoginPasajeroScreen(
@@ -380,7 +350,7 @@ private fun ConBarra(
 
 /** Entrada a la app. No está en Figma: solo elige el perfil. */
 @Composable
-private fun SelectorPerfil(onPasajero: () -> Unit, onConductor: () -> Unit, onAdmin: () -> Unit) {
+private fun SelectorPerfil(onPasajero: () -> Unit, onConductor: () -> Unit) {
     Scaffold { padding ->
         Column(
             Modifier.padding(padding).fillMaxSize().padding(MargenPantalla),
@@ -394,8 +364,7 @@ private fun SelectorPerfil(onPasajero: () -> Unit, onConductor: () -> Unit, onAd
             BotonPrincipal("Soy pasajero", onPasajero)
             Spacer(Modifier.height(12.dp))
             BotonSecundario("Soy conductor", onConductor)
-            Spacer(Modifier.height(12.dp))
-            BotonSecundario("Soy administrador", onAdmin)
+            // La administración usa el panel web: https://conatacoch-api.onrender.com/admin
         }
     }
 }
