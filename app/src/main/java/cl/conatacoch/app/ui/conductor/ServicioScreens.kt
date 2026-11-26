@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -58,6 +59,7 @@ import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -266,7 +268,7 @@ private fun PantallaServicio(vm: ConductorViewModel, s: EstadoServicio, modifier
                 }
                 OutlinedButton(
                     onClick = vm::finalizarServicio,
-                    modifier = Modifier.fillMaxWidth().height(56.dp),
+                    modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp),
                     border = BorderStroke(2.dp, MaterialTheme.colorScheme.onSurface),
                     colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.onSurface),
                 ) {
@@ -340,7 +342,7 @@ private fun Asiento(numero: Int, estado: EstadoAsiento, nombre: String?, modifie
     Surface(
         onClick = onClick,
         enabled = estado != EstadoAsiento.RESERVADO,
-        modifier = modifier.height(84.dp),
+        modifier = modifier.heightIn(min = 84.dp),
         shape = RoundedCornerShape(16.dp),
         color = colorAsiento(estado),
         contentColor = if (estado == EstadoAsiento.LIBRE) Color.Black else Color.White,
@@ -351,7 +353,7 @@ private fun Asiento(numero: Int, estado: EstadoAsiento, nombre: String?, modifie
                 Spacer(Modifier.width(6.dp))
                 Text("Asiento $numero", style = MaterialTheme.typography.titleMedium)
             }
-            Text(nombre ?: estado.texto, style = MaterialTheme.typography.bodyMedium, maxLines = 1)
+            Text(nombre ?: estado.texto, style = MaterialTheme.typography.bodyMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
         }
     }
 }
@@ -386,11 +388,11 @@ private fun ReservaEnPanel(p: PasajeroEnEspera, onAbordo: () -> Unit, onEliminar
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             OutlinedButton(
                 onClick = onEliminar,
-                modifier = Modifier.weight(1f).height(56.dp),
+                modifier = Modifier.weight(1f).heightIn(min = 56.dp),
                 border = BorderStroke(2.dp, MaterialTheme.colorScheme.error),
                 colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error),
             ) { Text("Eliminar", style = MaterialTheme.typography.titleMedium) }
-            Button(onAbordo, Modifier.weight(1f).height(56.dp)) {
+            Button(onAbordo, Modifier.weight(1f).heightIn(min = 56.dp)) {
                 Icon(Icons.Filled.Check, contentDescription = null)
                 Spacer(Modifier.width(8.dp))
                 Text("Subió", style = MaterialTheme.typography.titleMedium)

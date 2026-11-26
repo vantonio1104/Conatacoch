@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -91,7 +92,7 @@ fun Logo(modifier: Modifier = Modifier) {
 
 @Composable
 fun BotonPrincipal(texto: String, onClick: () -> Unit, modifier: Modifier = Modifier, enabled: Boolean = true) {
-    Button(onClick, modifier.fillMaxWidth().height(52.dp), enabled = enabled) {
+    Button(onClick, modifier.fillMaxWidth().heightIn(min = 52.dp), enabled = enabled) {
         Text(texto, style = MaterialTheme.typography.titleMedium)
     }
 }
@@ -105,7 +106,7 @@ fun BotonSecundario(
     borde: Color = MaterialTheme.colorScheme.outline,
 ) {
     OutlinedButton(
-        onClick, modifier.fillMaxWidth().height(52.dp),
+        onClick, modifier.fillMaxWidth().heightIn(min = 52.dp),
         border = BorderStroke(1.dp, borde),
         colors = ButtonDefaults.outlinedButtonColors(contentColor = color),
     ) { Text(texto, style = MaterialTheme.typography.titleMedium) }
