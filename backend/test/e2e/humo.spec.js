@@ -339,9 +339,17 @@ test('HU-13 mapa en vivo: marcadores de los colectivos en servicio y estado sin 
     });
     await ruta.fulfill({ response: respuesta, json: flota });
   });
+  // OpenStreetMap responde 403 a los mosaicos sin Referer: se revisa que el panel lo envíe.
+  const referers = [];
+  await page.route('https://tile.openstreetmap.org/**', (ruta) => {
+    referers.push(ruta.request().headers().referer);
+    return ruta.fulfill({ status: 204 });
+  });
   await entrarAdmin(page);
   await page.getByRole('link', { name: 'Mapa en vivo' }).click();
   await expect(page.locator('.leaflet-container')).toBeVisible();
+  await expect.poll(() => referers.length).toBeGreaterThan(0);
+  expect(referers.every((r) => /^http:\/\/(localhost|127\.0\.0\.1):\d+\/$/.test(r || ''))).toBe(true);
   await expect(page.locator('path.leaflet-interactive')).toHaveCount(2);
   const lista = page.getByRole('region', { name: 'Colectivos' }).or(page.locator('.lista-flota'));
   await expect(page.locator('.lista-flota li').filter({ hasText: 'ABCD-12' })).toContainText('En servicio');

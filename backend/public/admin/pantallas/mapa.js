@@ -44,6 +44,8 @@ export async function mostrar(raiz, { api }) {
   const mapa = L.map(contenedor, { zoomControl: true }).setView(CENTRO, 13);
   L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
     maxZoom: 19, attribution: '© OpenStreetMap',
+    // OpenStreetMap bloquea (403) los mosaicos pedidos sin Referer; el resto del panel sigue con no-referrer.
+    referrerPolicy: 'strict-origin-when-cross-origin',
   }).addTo(mapa);
   const capa = L.layerGroup().addTo(mapa);
   let flota = [];
