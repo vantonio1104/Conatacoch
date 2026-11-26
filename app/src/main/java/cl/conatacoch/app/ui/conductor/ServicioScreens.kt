@@ -183,7 +183,7 @@ private fun CabeceraServicio(estado: String, colorEstado: Color, titulo: String,
         Row(verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
                 Text(estado, color = colorEstado, style = MaterialTheme.typography.labelLarge, letterSpacing = 1.sp)
-                Text(titulo, color = Color.White, style = MaterialTheme.typography.titleLarge, maxLines = 1)
+                Text(titulo, color = Color.White, style = MaterialTheme.typography.titleLarge)
             }
             if (s.enServicio) {
                 // En el prototipo se cambia a mano; después vendrá del GPS.
