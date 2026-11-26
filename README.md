@@ -3,7 +3,7 @@
 Proyecto universitario (INACAP) para la Confederación Nacional de Taxis Colectivos de Chile (CONATACOCH):
 
 - **App Android** (Kotlin + Jetpack Compose + Material 3) para **pasajeros** y **conductores**.
-- **Panel web de administración** en `https://conatacoch-api.onrender.com/admin` (lo entrega el mismo servidor;
+- **Panel web de administración** en `https://conatacoch-api-i25d.onrender.com/admin` (lo entrega el mismo servidor;
   código en `backend/public/admin`). Acceso con correo, contraseña y código TOTP de una app autenticadora.
 - **Servidor** Node.js + Express (`backend/`), PostgreSQL en Neon y MongoDB Atlas, publicado en Render.
 

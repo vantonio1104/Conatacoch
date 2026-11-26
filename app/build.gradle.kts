@@ -14,7 +14,7 @@ val localProperties = Properties().apply {
     val archivo = rootProject.file("local.properties")
     if (archivo.exists()) archivo.inputStream().use { load(it) }
 }
-val apiUrl: String = localProperties.getProperty("API_URL", "https://conatacoch-api.onrender.com").trim()
+val apiUrl: String = localProperties.getProperty("API_URL", "https://conatacoch-api-i25d.onrender.com").trim()
 
 android {
     namespace = "cl.conatacoch.app"

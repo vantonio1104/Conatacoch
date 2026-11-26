@@ -364,7 +364,7 @@ private fun SelectorPerfil(onPasajero: () -> Unit, onConductor: () -> Unit) {
             BotonPrincipal("Soy pasajero", onPasajero)
             Spacer(Modifier.height(12.dp))
             BotonSecundario("Soy conductor", onConductor)
-            // La administración usa el panel web: https://conatacoch-api.onrender.com/admin
+            // La administración usa el panel web: https://conatacoch-api-i25d.onrender.com/admin
         }
     }
 }

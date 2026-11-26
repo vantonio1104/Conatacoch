@@ -4,7 +4,7 @@ App Android de la Confederación Nacional de Taxis Colectivos de Chile. Proyecto
 Una sola app con dos perfiles: **pasajero** y **conductor**. La administración es un panel web (`backend/public/admin`,
 HTML/CSS/JS sin framework) que entrega el mismo servidor en `/admin`, con las vistas `Admin *` de Figma.
 
-Estado actual: la app usa el backend (`backend/server.js`) en https://conatacoch-api.onrender.com
+Estado actual: la app usa el backend (`backend/server.js`) en https://conatacoch-api-i25d.onrender.com
 (`API_URL` en `app/build.gradle.kts`, se cambia en `local.properties`; `API_URL=` vacío usa `data/fake`). Con servidor se guarda todo salvo los pagos:
 cuentas, conductores, vehículos y documentos, asignaciones, recorridos y trazados, reservas, turnos, servicios y avisos
 (PostgreSQL en Neon), y GPS, notificaciones y auditoría (MongoDB Atlas). Pagos siguen con datos de ejemplo.

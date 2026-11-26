@@ -4,16 +4,8 @@ Todo lo que falta, en un solo lugar. Al terminar cada punto, marcarlo con `[x]`.
 
 ## 1. Dirección del servidor
 
-El servidor quedó en **https://conatacoch-api-i25d.onrender.com** (el nombre `conatacoch-api` ya estaba usado en Render).
-Mientras tanto, para probar la app: en `local.properties` poner `API_URL=https://conatacoch-api-i25d.onrender.com`.
-
-Cambiar `conatacoch-api.onrender.com` por `conatacoch-api-i25d.onrender.com` en:
-
-- [ ] `app/build.gradle.kts` (dirección por defecto de `API_URL`)
-- [ ] `app/src/main/java/cl/conatacoch/app/ui/navigation/AppNavHost.kt` (comentario del panel web)
-- [ ] `README.md`
-- [ ] `CLAUDE.md`
-- [ ] Informe Final (anexos de instalación y manual del panel)
+- [x] Todo apunta a **https://conatacoch-api-i25d.onrender.com**: la app (dirección por defecto de `API_URL`, ya no hace
+      falta ponerla en `local.properties`), `README.md`, `CLAUDE.md` y el informe.
 
 ## 2. Cuentas y servicios
 
