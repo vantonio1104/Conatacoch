@@ -66,18 +66,19 @@ se actualiza el informe.
 
 **3.3 Rendimiento en el teléfono (Tabla de pruebas de rendimiento)**
 
-- [ ] **PR-05** Repetir en un teléfono físico de gama media: `adb shell am start -W cl.conatacoch.app/.MainActivity`
+- [x] **PR-05** Repetir en un teléfono físico de gama media: `adb shell am start -W cl.conatacoch.app/.MainActivity`
       cinco veces (meta: menos de 3 s). Hoy está aprobada solo con el emulador.
-- [ ] **PR-06** 30 minutos en servicio **con la pantalla de servicio abierta** y el GPS activo, mirando
+- [x] **PR-06** 30 minutos en servicio **con la pantalla de servicio abierta** y el GPS activo, mirando
       **App Inspection / Profiler** (meta: CPU de 5% o menos).
-- [ ] **PR-07** Red lenta: en el emulador, **Extended controls → Cellular → 3G** → las pantallas muestran «Cargando» y
+- [x] **PR-07** Red lenta: en el emulador, **Extended controls → Cellular → 3G** → las pantallas muestran «Cargando» y
       mensajes de error claros, sin cerrarse.
 
 **3.4 Servidor y servicios**
 
 - [ ] **PI-11** En MongoDB Atlas → **Data Explorer** → base `conatacoch` → pestaña **Indexes**: en `posiciones_vehiculos`
       debe haber un índice `timestamp` con TTL de 86400 s (24 h), y en `notificaciones` uno con TTL de 2592000 s (30 días).
-      Aparecen después de que el servidor se conecta a Atlas por primera vez. 📷 *Captura de los índices.*
+      Las colecciones ya están (captura del 26-11 con 1, 6 y 18 documentos). **Falta:** 📷 *captura de la pestaña Indexes
+      de `posiciones_vehiculos` y de `notificaciones`.*
 - [ ] **PSE-07** En el navegador, abrir `http://conatacoch-api-i25d.onrender.com/admin` (sin «s») → debe redirigir a `https://`.
 - [ ] **PSE-01** OWASP ZAP contra el servidor en tu PC (`cd backend && npm run dev`, con una base de prueba), **no** contra
       Render. Guardar el informe HTML que genera ZAP.
