@@ -76,19 +76,25 @@ se actualiza el informe.
 **3.4 Servidor y servicios**
 
 - [x] **PI-11** Índices TTL en MongoDB Atlas: 24 h en `posiciones_vehiculos` y 30 días en `notificaciones` (Figuras 45 y 46).
-- [ ] **PSE-07** En el navegador, abrir `http://conatacoch-api-i25d.onrender.com/admin` (sin «s») → debe redirigir a `https://`.
+- [x] **PSE-07** `http://conatacoch-api-i25d.onrender.com/admin` redirige a `https://`.
 - [x] **PSE-01** OWASP ZAP contra una copia local con base de pruebas (no Render). Informes en `docs/pruebas/`;
       resumen en la Tabla 41 del informe. Se corrigieron D-24 a D-26.
 
-**3.5 Usabilidad (Tabla de usabilidad)**
+**3.5 Usabilidad: queda para el piloto**
 
-- [ ] **PX-01 a PX-08**: con al menos 5 pasajeros y 3 conductores, pedirles las tareas de la tabla sin ayuda, anotar si
-      las completan y el tiempo, y al final aplicar el cuestionario SUS (meta: 68 o más).
+- [x] **PX-01 a PX-08** y el cuestionario SUS pasan a «Pendiente (piloto)» en el informe: se harán con pasajeros y
+      conductores reales de las líneas.
 
 **3.6 Carga masiva**
 
 - [x] **PR-02, PR-03 y PR-04** quedaron como «Pendiente (piloto)» en el informe, igual que PR-08: el plan gratis de
       Render no soporta esa carga y no se prueba contra el servidor en uso.
+
+## 3.7 Marcas amarillas que siguen en el informe
+
+- [ ] «El pipeline de GitHub Actions aún no está configurado» (sección de despliegue).
+- [ ] «Parcial: falta la política de privacidad y el consentimiento en el registro» (Ley 19.628 / 21.719).
+- [ ] «Parcial: falta probar con TalkBack» (accesibilidad).
 
 ## 4. Revisión de código: puntos no corregidos
 
