@@ -87,10 +87,10 @@ se actualiza el informe.
 - [ ] **PX-01 a PX-08**: con al menos 5 pasajeros y 3 conductores, pedirles las tareas de la tabla sin ayuda, anotar si
       las completan y el tiempo, y al final aplicar el cuestionario SUS (meta: 68 o más).
 
-**3.6 Carga masiva: decidir**
+**3.6 Carga masiva**
 
-- [ ] **PR-02, PR-03 y PR-04** piden 1.000 a 10.000 usuarios con JMeter. El plan gratis de Render no lo soporta y
-      además estarías atacando tu propio servidor de producción. Propuesta: pasarlas a «Pendiente (piloto)», igual que PR-08.
+- [x] **PR-02, PR-03 y PR-04** quedaron como «Pendiente (piloto)» en el informe, igual que PR-08: el plan gratis de
+      Render no soporta esa carga y no se prueba contra el servidor en uso.
 
 ## 4. Revisión de código: puntos no corregidos
 
