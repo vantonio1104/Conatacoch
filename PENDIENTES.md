@@ -75,13 +75,10 @@ se actualiza el informe.
 
 **3.4 Servidor y servicios**
 
-- [ ] **PI-11** En MongoDB Atlas → **Data Explorer** → base `conatacoch` → pestaña **Indexes**: en `posiciones_vehiculos`
-      debe haber un índice `timestamp` con TTL de 86400 s (24 h), y en `notificaciones` uno con TTL de 2592000 s (30 días).
-      Las colecciones ya están (captura del 26-11 con 1, 6 y 18 documentos). **Falta:** 📷 *captura de la pestaña Indexes
-      de `posiciones_vehiculos` y de `notificaciones`.*
+- [x] **PI-11** Índices TTL en MongoDB Atlas: 24 h en `posiciones_vehiculos` y 30 días en `notificaciones` (Figuras 45 y 46).
 - [ ] **PSE-07** En el navegador, abrir `http://conatacoch-api-i25d.onrender.com/admin` (sin «s») → debe redirigir a `https://`.
-- [ ] **PSE-01** OWASP ZAP contra el servidor en tu PC (`cd backend && npm run dev`, con una base de prueba), **no** contra
-      Render. Guardar el informe HTML que genera ZAP.
+- [x] **PSE-01** OWASP ZAP contra una copia local con base de pruebas (no Render). Informes en `docs/pruebas/`;
+      resumen en la Tabla 41 del informe. Se corrigieron D-24 a D-26.
 
 **3.5 Usabilidad (Tabla de usabilidad)**
 
