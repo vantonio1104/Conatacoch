@@ -19,7 +19,7 @@ Cambiar `conatacoch-api.onrender.com` por `conatacoch-api-i25d.onrender.com` en:
 
 ## 2. Cuentas y servicios
 
-- [ ] Configurar cron-job.org con `https://conatacoch-api-i25d.onrender.com/api/salud` cada 10 minutos (INSTALACION 2.5).
+- [x] Configurar cron-job.org con `https://conatacoch-api-i25d.onrender.com/api/salud` cada 10 minutos (INSTALACION 2.5).
 - [ ] Primer ingreso al panel web y alta del TOTP con la app autenticadora.
 - [ ] Opcional: en Render, en `DATABASE_URL`, cambiar `sslmode=require` por `sslmode=verify-full` para quitar el aviso
       «SECURITY WARNING» de los logs. Hoy no afecta: la conexión ya va cifrada.
