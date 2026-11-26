@@ -39,12 +39,12 @@ se actualiza el informe.
 
 **3.1 Pasajero (Tabla de pruebas integrales)**
 
-- [ ] **PS-01** Registro y acceso contra el servidor: «Crear cuenta» con contraseña de 15 caracteres o más → entra directo al mapa.
-- [ ] **PS-02** Ver colectivos: en el buscador elegir la línea 5003 → se ven el recorrido y los colectivos en servicio; al
-      tocar uno, el detalle muestra tiempo estimado y asientos. 📷 *Captura 1 del informe.*
-- [ ] **PS-03** Reserva y abordaje: reservar un asiento → aparece «Cerca de tu paradero»; en el conductor, tocar «Subió»
-      → la reserva pasa a completada en Historial. 📷 *Captura 2.*
-- [ ] **PS-04** Reserva vencida: reservar y esperar 3 minutos sin tocar «Subió» → pasa a «Expirada» en Historial y
+- [x] **PS-01** Registro y acceso contra el servidor: «Crear cuenta» con contraseña de 15 caracteres o más → entra directo al mapa.
+- [x] **PS-02** Ver colectivos: en el buscador elegir la línea 5003 → se ven el recorrido y los colectivos en servicio; al
+      tocar uno, el detalle muestra tiempo estimado y asientos. 📷 *Captura 1: lista (Figura 28).*
+- [ ] **PS-03** Reserva y abordaje: reservar un asiento → aparece «Cerca de tu paradero» (listo, 📷 Figura 29). **Falta:**
+      en el conductor, tocar «Subió» → la reserva pasa a completada en Historial.
+- [x] **PS-04** Reserva vencida: reservar y esperar 3 minutos sin tocar «Subió» → pasa a «Expirada» en Historial y
       llega la notificación.
 - [ ] **PS-15** Preferencias: en Perfil desactivar «Retrasos del colectivo»; el conductor envía «Voy con retraso»
       (AC-01) → el pasajero **no** ve esa notificación. Activarla y repetir → sí la ve.
