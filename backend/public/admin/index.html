@@ -14,7 +14,7 @@
       <img class="login-logo" src="logo.png" alt="CONATACOCH, Confederación Nacional de Taxis Colectivos de Chile">
       <h1 id="login-titulo">Panel de administración</h1>
       <p class="secundario">Ingresa con tu cuenta de administrador</p>
-      <form id="form-login" novalidate>
+      <form id="form-login" method="post" novalidate>
         <label for="login-correo">Correo</label>
         <input id="login-correo" name="email" type="email" autocomplete="username" required>
         <label for="login-clave">Contraseña</label>
@@ -38,7 +38,7 @@
       </ol>
       <img id="alta-qr" class="qr" alt="Código QR para registrar CONATACOCH en la app autenticadora" width="220" height="220">
       <p class="secundario">Clave: <code id="alta-clave" class="clave"></code></p>
-      <form id="form-alta" novalidate>
+      <form id="form-alta" method="post" novalidate>
         <label for="alta-codigo">Código de la aplicación autenticadora</label>
         <input id="alta-codigo" class="campo-codigo" inputmode="numeric" autocomplete="one-time-code" maxlength="7" required>
         <div id="alta-error"></div>
@@ -48,7 +48,7 @@
     <section id="cambio-clave" class="tarjeta login-tarjeta" aria-labelledby="cambio-titulo" hidden>
       <h1 id="cambio-titulo">Crea tu contraseña</h1>
       <p class="secundario">Entraste con una contraseña temporal. Crea una propia para usar el panel.</p>
-      <form id="form-cambio" novalidate>
+      <form id="form-cambio" method="post" novalidate>
         <label for="cambio-actual">Contraseña temporal</label>
         <input id="cambio-actual" type="password" autocomplete="current-password" required>
         <label for="cambio-nueva">Contraseña nueva</label>

@@ -23,6 +23,8 @@ const io = new Server(server, { cors: opcionesCors });
 app.locals.io = io;
 
 app.set('trust proxy', 1); // Render pone un proxy delante: así req.ip es la IP real del cliente
+app.disable('x-powered-by'); // no revelar que el servidor usa Express (hallazgo de OWASP ZAP)
+app.use((req, res, next) => { res.set('X-Content-Type-Options', 'nosniff'); next(); });
 app.use(cors(opcionesCors));
 // El registro de conductor trae las 2 fotos de la licencia (hasta 1 MB cada una, en base64).
 app.use('/api/auth/registro-conductor', express.json({ limit: '3mb' }));
@@ -35,7 +37,9 @@ const CSP_PANEL = [
   "connect-src 'self'", "font-src 'self'", "object-src 'none'", "base-uri 'none'", "form-action 'self'", "frame-ancestors 'none'",
 ].join('; ');
 app.use('/admin', (req, res, next) => {
-  res.set({ 'Content-Security-Policy': CSP_PANEL, 'X-Content-Type-Options': 'nosniff', 'Referrer-Policy': 'no-referrer' });
+  res.set({ 'Content-Security-Policy': CSP_PANEL, 'Referrer-Policy': 'no-referrer' });
+  // /admin → /admin/ aquí y no en express.static, que respondería con su propia CSP sin frame-ancestors.
+  if (req.path === '/' && !req.originalUrl.split('?')[0].endsWith('/')) return res.redirect(301, '/admin/');
   next();
 }, express.static(path.join(__dirname, 'public', 'admin')));
 // Leaflet (mapa global del panel) se entrega desde aquí, no desde un CDN, para mantener la CSP estricta.
