@@ -42,25 +42,27 @@ se actualiza el informe.
 - [x] **PS-01** Registro y acceso contra el servidor: «Crear cuenta» con contraseña de 15 caracteres o más → entra directo al mapa.
 - [x] **PS-02** Ver colectivos: en el buscador elegir la línea 5003 → se ven el recorrido y los colectivos en servicio; al
       tocar uno, el detalle muestra tiempo estimado y asientos. 📷 *Captura 1: lista (Figura 28).*
-- [ ] **PS-03** Reserva y abordaje: reservar un asiento → aparece «Cerca de tu paradero» (listo, 📷 Figura 29). **Falta:**
+- [x] **PS-03** Reserva y abordaje: reservar un asiento → aparece «Cerca de tu paradero» (listo, 📷 Figura 29). **Falta:**
       en el conductor, tocar «Subió» → la reserva pasa a completada en Historial.
 - [x] **PS-04** Reserva vencida: reservar y esperar 3 minutos sin tocar «Subió» → pasa a «Expirada» en Historial y
       llega la notificación.
-- [ ] **PS-15** Preferencias: en Perfil desactivar «Retrasos del colectivo»; el conductor envía «Voy con retraso»
+- [x] **PS-15** Preferencias: en Perfil desactivar «Retrasos del colectivo»; el conductor envía «Voy con retraso»
       (AC-01) → el pasajero **no** ve esa notificación. Activarla y repetir → sí la ve.
 
 **3.2 Conductor (Tabla de pruebas integrales)**
 
-- [ ] **PS-07** Registro y validación: registrarse con las dos fotos de la licencia (cámara del teléfono) → queda
+- [x] **PS-07** Registro y validación: registrarse con las dos fotos de la licencia (cámara del teléfono) → queda
       pendiente; en el panel, **Validar conductores** muestra las fotos legibles → «Aprobar y vincular».
-- [ ] **PS-08** Turnos: en el panel asignar un turno de hoy → en la app, la tarjeta «Tu asignación de hoy» muestra
+- [x] **PS-08** Turnos: en el panel asignar un turno de hoy → en la app, la tarjeta «Tu asignación de hoy» muestra
       línea, patente y horario. Sin turno hoy, el botón «Iniciar servicio» queda deshabilitado.
-- [ ] **PS-09** Servicio y fuera de servicio: «Iniciar servicio» → el colectivo aparece en el mapa del pasajero y en
+- [x] **PS-09** Servicio y fuera de servicio: «Iniciar servicio» → el colectivo aparece en el mapa del pasajero y en
       **Mapa en vivo** del panel; con una reserva activa, «Fuera de servicio» → la reserva se cancela y el pasajero recibe
       el aviso. 📷 *Captura 3 (panel de asientos y reservas).*
-- [ ] **PS-11** Emergencia: con el vehículo en movimiento solo se puede enviar AC-06 → en el panel, **Avisos** muestra la
+- [x] **PS-11** Emergencia: con el vehículo en movimiento solo se puede enviar AC-06 → en el panel, **Avisos** muestra la
       franja roja y «Ver en mapa» abre la ubicación.
-- [ ] Biometría (sin ID): cerrar sesión y entrar con huella o rostro.
+- [x] Biometría (sin ID): cerrar sesión y entrar con huella o rostro.
+
+- [ ] Opcional: repetir la captura del conductor (Figura 30) con la APK nueva, que ya no corta «Línea 5003» en la cabecera.
 
 **3.3 Rendimiento en el teléfono (Tabla de pruebas de rendimiento)**
 
