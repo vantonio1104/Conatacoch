@@ -41,4 +41,3 @@ La primera vez que un administrador entra al panel, configura su segundo factor 
 ./gradlew testDebugUnitTest    # pruebas JUnit
 cd backend && npm run dev      # servidor y panel en http://localhost:3000/admin
 ```
-Instalación y despliegue: `INSTALACION.md`. Pruebas: `PLAN_DE_PRUEBAS.md`.

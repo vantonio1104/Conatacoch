@@ -12,7 +12,7 @@ cuentas, conductores, vehículos y documentos, asignaciones, recorridos y trazad
   ocupado = se baja) y la lista de reservas (Subió / Eliminar). Las reservas vencen a los 3 minutos de hechas.
   Asientos libres = capacidad − ocupados − reservas activas; solo se reserva en colectivos en servicio.
   No existe el aviso AC-04 ni la pantalla de corrección de ocupación.
-Instalación, despliegue y cuentas de servicios: `INSTALACION.md`. No conectar Rutpay ni Firebase hasta que se pida.
+Variables del servidor: `backend/.env.example`. Pendientes antes de la entrega: `PENDIENTES.md`. No conectar Rutpay ni Firebase hasta que se pida.
 - `data/remote/ApiCliente.kt` (HTTP + token), `ApiAuthRepository`, `ApiPasajeroRepository` (delega pagos a
   `FakePasajeroRepository`), `ApiConductorRepository`, `ServidorMapaRepository` (trazado guardado
   por la administración; si no hay, OpenStreetMap). Backend: `backend/rutas/{publico,auth,pasajero,conductor,admin}.js`.

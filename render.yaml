@@ -1,4 +1,4 @@
-# Despliegue del backend en Render (plan gratis). Ver INSTALACION.md.
+# Despliegue del backend en Render (plan gratis). Variables: ver backend/.env.example.
 services:
   - type: web
     name: conatacoch-api
