@@ -90,11 +90,11 @@ se actualiza el informe.
 - [x] **PR-02, PR-03 y PR-04** quedaron como «Pendiente (piloto)» en el informe, igual que PR-08: el plan gratis de
       Render no soporta esa carga y no se prueba contra el servidor en uso.
 
-## 3.7 Marcas amarillas que siguen en el informe
+## 3.7 Marcas amarillas del informe (resueltas)
 
-- [ ] «El pipeline de GitHub Actions aún no está configurado» (sección de despliegue).
-- [ ] «Parcial: falta la política de privacidad y el consentimiento en el registro» (Ley 19.628 / 21.719).
-- [ ] «Parcial: falta probar con TalkBack» (accesibilidad).
+- [x] Pipeline de GitHub Actions: `.github/workflows/pruebas.yml` (servidor, panel y app en cada cambio a `main`).
+- [x] Política de privacidad y consentimiento en el registro: pasa al piloto.
+- [x] Prueba con TalkBack: pasa al piloto, junto con la usabilidad.
 
 ## 4. Revisión de código: puntos no corregidos
 
