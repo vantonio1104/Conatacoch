@@ -8,7 +8,7 @@ const { query, transaccion } = require('../db/postgres');
 const mongo = require('../db/mongo');
 const {
   ruta, ErrorHttp, normalizarEmail, emailValido, passwordValida, fechaIso, iniciarSesion, autenticar, MENSAJE_PASSWORD,
-  rutNormalizado, bloqueado, registrarFallo, limpiarIntentos, JWT_SECRET,
+  rutNormalizado, bloqueado, registrarFallo, limpiarIntentos, JWT_SECRET, texto, limitarRegistros,
 } = require('../util');
 
 const router = express.Router();
@@ -20,6 +20,7 @@ router.post('/api/auth/registro', ruta(async (req, res) => {
   if (!nombre) throw new ErrorHttp(400, 'Ingresa tu nombre');
   if (!emailValido(email)) throw new ErrorHttp(400, 'Ingresa un correo válido');
   if (!passwordValida(password)) throw new ErrorHttp(400, MENSAJE_PASSWORD);
+  limitarRegistros(req);
 
   const hash = await bcrypt.hash(password, 10);
   // Registro sin código por correo: la cuenta queda lista para usar y se entrega la sesión.
@@ -165,7 +166,7 @@ router.post('/api/auth/registro-conductor', ruta(async (req, res) => {
   const b = req.body;
   const email = normalizarEmail(b.correo);
   const obligatorios = ['rut', 'nombre', 'direccion', 'comuna', 'celular', 'telefonoEmergencia', 'licencia', 'comunaEmision'];
-  const falta = obligatorios.find((k) => !String(b[k] || '').trim());
+  const falta = obligatorios.find((k) => typeof b[k] !== 'string' || !b[k].trim());
   if (falta) throw new ErrorHttp(400, `Falta el campo ${falta}`);
   if (!emailValido(email)) throw new ErrorHttp(400, 'Ingresa un correo válido');
   if (!passwordValida(b.password)) throw new ErrorHttp(400, MENSAJE_PASSWORD);
@@ -177,6 +178,7 @@ router.post('/api/auth/registro-conductor', ruta(async (req, res) => {
   if (vencimiento <= emision) throw new ErrorHttp(400, 'El vencimiento de la licencia debe ser posterior a la emisión');
 
   const fotos = { FRENTE: fotoLicencia(b.fotoFrente, 'del frente'), REVERSO: fotoLicencia(b.fotoReverso, 'del reverso') };
+  limitarRegistros(req);
 
   const hash = await bcrypt.hash(b.password, 10);
   await transaccion(async (c) => {
@@ -194,7 +196,7 @@ router.post('/api/auth/registro-conductor', ruta(async (req, res) => {
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
        ON CONFLICT (rut) DO NOTHING RETURNING id`,
       [u.rows[0].id, b.nombre.trim(), rut, b.direccion.trim(), b.comuna.trim(), b.celular.trim(),
-        String(b.telefonoFijo || '').trim() || null, b.telefonoEmergencia.trim(), b.licencia, b.comunaEmision.trim(),
+        texto(b.telefonoFijo) || null, b.telefonoEmergencia.trim(), b.licencia, b.comunaEmision.trim(),
         emision, vencimiento],
     );
     if (cond.rowCount === 0) throw new ErrorHttp(409, 'Ese RUT ya está registrado');

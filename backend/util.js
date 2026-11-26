@@ -106,6 +106,23 @@ function registrarFallo(req, email) {
 }
 function limpiarIntentos(req, email) { intentosFallidos.delete(claveIntento(req, email)); }
 
+/**
+ * Límite de cuentas nuevas: 20 por dirección IP por hora. Frena registros automáticos que llenen la base
+ * (cada conductor guarda hasta 2 MB de fotos) y deja margen para una prueba con varias personas en la misma red.
+ */
+const REGISTROS_MAX = 20;
+const registrosPorIp = new Map();
+function limitarRegistros(req) {
+  const ahora = Date.now();
+  let r = registrosPorIp.get(req.ip);
+  if (!r || ahora - r.desde > 60 * 60 * 1000) {
+    r = { n: 0, desde: ahora };
+    registrosPorIp.set(req.ip, r);
+  }
+  if (r.n >= REGISTROS_MAX) throw new ErrorHttp(429, 'Se crearon demasiadas cuentas desde esta red. Inténtalo de nuevo en una hora.');
+  r.n += 1;
+}
+
 /** Duración del token: 8 horas para la administración (panel web) y 30 días para la app. */
 const SEGUNDOS_SESION = (rol) => (rol === 'ADMIN' ? 8 * 3600 : 30 * 24 * 3600);
 /** La administración sale tras 30 minutos sin actividad. */
@@ -163,5 +180,5 @@ function requiereRol(rol) {
 module.exports = {
   JWT_SECRET, MINUTOS_VIGENCIA_RESERVA, ruta, ErrorHttp, normalizarEmail, emailValido, passwordValida, texto,
   fechaIso, fechaOpcional, nombreCorto, iniciarSesion, autenticar, requiereRol, MENSAJE_PASSWORD,
-  rutNormalizado, patenteNormalizada, bloqueado, registrarFallo, limpiarIntentos, PASSWORD_MIN, PASSWORD_MAX,
+  rutNormalizado, patenteNormalizada, bloqueado, registrarFallo, limpiarIntentos, PASSWORD_MIN, PASSWORD_MAX, limitarRegistros,
 };
