@@ -85,7 +85,8 @@ se actualiza el informe.
 ## 3.7 Marcas amarillas del informe (resueltas)
 
 - [x] Pipeline de GitHub Actions: `.github/workflows/pruebas.yml` (servidor, panel y app en cada cambio a `main`).
-- [x] Política de privacidad y consentimiento en el registro: pasa al piloto.
+- [x] Política de privacidad: redactada en el informe (sección «Política de privacidad propuesta»). Para el piloto:
+      que CONATACOCH la apruebe y agregar en la app el aviso y la casilla de consentimiento en el registro.
 - [x] Prueba con TalkBack: pasa al piloto, junto con la usabilidad.
 
 ## 4. Revisión de código: puntos no corregidos
