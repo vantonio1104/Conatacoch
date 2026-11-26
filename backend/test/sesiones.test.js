@@ -74,3 +74,28 @@ test('SE-07 un token firmado sin sesión (formato anterior) se rechaza', async (
   const viejo = jwt.sign({ id: u.id, email: 'camila.reyes@correo.cl', rol: 'PASAJERO' }, process.env.JWT_SECRET, { expiresIn: '30d' });
   assert.equal((await reservas(viejo)).status, 401);
 });
+
+test('SE-08 el rol sale de la base: un conductor que cambia su token a ADMIN no entra al panel', async () => {
+  const t = await login('p.soto@correo.cl');
+  const { exp, iat, ...datos } = jwt.decode(t); // eslint-disable-line no-unused-vars
+  const falso = jwt.sign({ ...datos, rol: 'ADMIN', totp: true }, process.env.JWT_SECRET, { expiresIn: 300 });
+  const r = await request(app).get('/api/admin/cuentas').set(conToken(falso));
+  assert.equal(r.status, 403);
+});
+
+test('SE-09 una sesión de la administración sin el segundo factor no sirve', async () => {
+  const admin = await loginAdmin(app);
+  const { exp, iat, totp, ...datos } = jwt.decode(admin); // eslint-disable-line no-unused-vars
+  const sinTotp = jwt.sign(datos, process.env.JWT_SECRET, { expiresIn: 300 });
+  assert.equal((await request(app).get('/api/admin/cuentas').set(conToken(admin))).status, 200);
+  assert.equal((await request(app).get('/api/admin/cuentas').set(conToken(sinTotp))).status, 401);
+});
+
+test('SE-10 en Render el servidor no arranca sin JWT_SECRET', () => {
+  const { spawnSync } = require('child_process');
+  const env = { ...process.env, RENDER: 'true' };
+  delete env.JWT_SECRET;
+  const r = spawnSync(process.execPath, ['-e', "require('./util')"], { cwd: require('path').join(__dirname, '..'), env, encoding: 'utf8' });
+  assert.notEqual(r.status, 0);
+  assert.match(r.stderr, /JWT_SECRET/);
+});

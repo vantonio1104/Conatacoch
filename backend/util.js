@@ -3,7 +3,11 @@ const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
 const { query } = require('./db/postgres');
 
-const JWT_SECRET = process.env.JWT_SECRET || 'conatacoch_secret_key_2026';
+// Publicado (Render define RENDER) el servidor no arranca sin su clave: la de desarrollo está en el repositorio público.
+if (!process.env.JWT_SECRET && (process.env.RENDER || process.env.NODE_ENV === 'production')) {
+  throw new Error('Falta JWT_SECRET: defínela en las variables del servidor.');
+}
+const JWT_SECRET = process.env.JWT_SECRET || 'solo-desarrollo-local';
 if (!process.env.JWT_SECRET) console.warn('[aviso] JWT_SECRET no está configurado: se usa una clave de desarrollo.');
 
 /** Una reserva vence a los 3 minutos si el conductor no confirma el abordaje (o la elimina antes). */
@@ -153,17 +157,18 @@ function autenticar(req, res, next) {
   }
   if (!usuario.sid) return res.status(401).json(SESION_VENCIDA);
   query(
-    `SELECT s.revocada, s.expira < NOW() AS vencida, u.activo, u.debe_cambiar_clave,
+    `SELECT s.revocada, s.expira < NOW() AS vencida, u.activo, u.debe_cambiar_clave, r.nombre AS rol,
             s.ultimo_uso < NOW() - make_interval(mins => $2) AS inactiva,
             s.ultimo_uso < NOW() - INTERVAL '1 minute' AS refrescar
-     FROM sesiones s JOIN usuarios u ON u.id = s.usuario_id WHERE s.id = $1`,
+     FROM sesiones s JOIN usuarios u ON u.id = s.usuario_id JOIN roles r ON r.id = u.rol_id WHERE s.id = $1`,
     [usuario.sid, MINUTOS_INACTIVIDAD_ADMIN],
   ).then(async ({ rows: [s] }) => {
-    if (!s || s.revocada || s.vencida || !s.activo || (usuario.rol === 'ADMIN' && s.inactiva)) {
+    // El rol se toma de la base, no del token. La administración además debe haber pasado por el segundo factor.
+    if (!s || s.revocada || s.vencida || !s.activo || (s.rol === 'ADMIN' && (s.inactiva || !usuario.totp))) {
       return res.status(401).json(SESION_VENCIDA);
     }
     if (s.refrescar) await query('UPDATE sesiones SET ultimo_uso = NOW() WHERE id = $1', [usuario.sid]);
-    req.usuario = { ...usuario, debeCambiarClave: s.debe_cambiar_clave };
+    req.usuario = { ...usuario, rol: s.rol, debeCambiarClave: s.debe_cambiar_clave };
     next();
   }).catch(next);
 }
