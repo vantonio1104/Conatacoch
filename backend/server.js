@@ -55,8 +55,8 @@ app.use((err, req, res, next) => { // eslint-disable-line no-unused-vars
   if (err instanceof ErrorHttp) return res.status(err.status).json({ error: err.message });
   if (err.type === 'entity.parse.failed') return res.status(400).json({ error: 'JSON inválido' });
   if (err.type === 'entity.too.large') return res.status(413).json({ error: 'Datos demasiado grandes' });
-  // PostgreSQL rechazó un dato mal formado (id que no es número, fecha imposible) o un texto más largo que su columna.
-  if (['22P02', '22003', '22007', '22008'].includes(err.code)) return res.status(400).json({ error: 'Algún dato no tiene el formato correcto' });
+  // PostgreSQL rechazó un dato mal formado (id que no es número, fecha imposible, carácter nulo) o un texto más largo que su columna.
+  if (['22P02', '22003', '22007', '22008', '22021'].includes(err.code)) return res.status(400).json({ error: 'Algún dato no tiene el formato correcto' });
   if (err.code === '22001') return res.status(400).json({ error: 'Algún texto es demasiado largo' });
   console.error(err);
   res.status(500).json({ error: 'Error interno del servidor' });

@@ -47,6 +47,11 @@ test('EN-03 registro de conductor con campos que no son texto responde 400', asy
   assert.equal(r.status, 400);
 });
 
+test('EN-05 un texto con el carácter nulo (\\u0000) responde 400', async () => {
+  const r = await request(app).post('/api/auth/registro').send({ nombre: 'Nulo\u0000', email: 'nulo@correo.cl', password: CLAVE });
+  assert.equal(r.status, 400);
+});
+
 test('EN-04 una misma red puede crear hasta 20 cuentas por hora; después responde 429', async () => {
   const estados = [];
   for (let i = 0; i < 22; i++) {
